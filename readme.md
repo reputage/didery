@@ -1,17 +1,17 @@
 ````
 GET POST endpoints for public key rotation
-    GET
-        DID
-        History
-        Current key
-        Changed 
-        Signatures
+	GET
+		DID
+		History
+		Current key
+		Changed 
+		Signatures
 	
 GET POST endpoints for encrypted blobs
-    GET
-        DID
-        BLOB
-        Signature
+	GET
+		DID
+		BLOB
+		Signature
 	
 GET POST endpoints for relay servers
 	GET
@@ -23,8 +23,8 @@ GET POST endpoints for relay servers
 GET endpoint for server stats
 
 GET endpoint for Error Log
-    GET
-        Title
-        Msg
-        Timestamp
+	GET
+		Title
+		Msg
+		Timestamp
 ````
