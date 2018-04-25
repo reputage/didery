@@ -89,11 +89,11 @@ API
 The API consists of several ReST endpoints grouped according to the type of data resource that is being manipulated by the API. Each resource has HTTP verbs that do the manipulation.
 
 /history  POST   [api](#add-rotation-history)             
-/history?did={did} GET [api](#get-rotation-history)
-/history?all=true GET [api](#get-all-rotation-histories)
+/history?did={did} GET [api](#get-rotation-history)        
+/history?all=true GET [api](#get-all-rotation-histories)    
 
-/blob POST [api](#add-otp-encrypted-key)
-/blob?did={did} GET [api](#get-encrypted-key)
+/blob POST [api](#add-otp-encrypted-key)    
+/blob?did={did} GET [api](#get-encrypted-key)   
 /blob?all=true GET [api](#get-all-encrypted-keys)
 
 ## Key Rotation History
