@@ -93,7 +93,7 @@ The API consists of several ReST endpoints grouped according to the type of data
 /history GET [api](#get-all-rotation-histories)    
 
 /blob POST [api](#add-otp-encrypted-key)    
-/blob/did} GET [api](#get-encrypted-key)   
+/blob/{did} GET [api](#get-encrypted-key)   
 /blob GET [api](#get-all-encrypted-keys)
 
 /relay POST [api](#add-relay-server)    
