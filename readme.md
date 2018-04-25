@@ -90,14 +90,103 @@ The API consists of several ReST endpoints grouped according to the type of data
 
 /history  POST   [api](#add-rotation-history)             
 /history?did={did} GET [api](#get-rotation-history)
-/history?all=true GET [api](#get-all-histories)
+/history?all=true GET [api](#get-all-rotation-histories)
 
+/blob POST [api](#add-otp-encrypted-key)
+/blob?did={did} GET [api](#get-encrypted-key)
+/blob?all=true GET [api](#get-all-encrypted-keys)
 
 ## Key Rotation History
 
+#### Add Rotation History
+
+```json
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+    "changed" : "2000-01-01T00:00:00+00:00",
+    "signer": 2,
+    "signers": 
+    [
+        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+    ]
+}
+```
+	
 #### Get Rotation History
 
+```json
+{
+    "history":
+    {
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "changed" : "2000-01-01T00:00:00+00:00",
+        "signer": 2,
+        "signers": 
+        [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+        ]
+    },
+    "signatures":
+    [
+        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    ]
+}
 ```
+
+#### Get All Rotation Histories
+
+```json
+{
+    "data": [{
+        "history":
+        {
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "changed" : "2000-01-01T00:00:00+00:00",
+            "signer": 2,
+            "signers": 
+            [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            ]
+        },
+        "signatures":
+        [
+            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+        ]
+    },
+    {
+        "history":
+        {
+            "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+            "changed" : "2000-01-01T00:00:00+00:00",
+            "signer": 1,
+            "signers": 
+            [
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+            ]
+        },
+        "signatures":
+        [
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+        ]
+    }]
+}
+```
+
+```json
 {
     "data":
     {
@@ -120,28 +209,40 @@ The API consists of several ReST endpoints grouped according to the type of data
 }
 ```
 
-#### Add Rotation History
+## OTP Encrypted Private Key Store
 
-```
+#### Add OTP Encrypted Key
+
+```json
 {
     "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-    "changed" : "2000-01-01T00:00:00+00:00",
-    "signer": 2,
-    "signers": 
-    [
-        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
-    ]
+    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+}    
+```
+
+#### Get Encrypted Key
+
+```json
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
 }
 ```
-	
-GET POST endpoints for encrypted blobs
-	GET
-		DID
-		BLOB
-		Signature
+
+#### Get All Encrypted Keys
+
+```json
+{
+    "data": [{
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+    },
+    {
+        "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+    }]
+}
+```
 	
 GET POST endpoints for relay servers
 	GET
