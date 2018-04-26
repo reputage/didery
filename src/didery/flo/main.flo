@@ -1,1 +1,14 @@
 # Main Flow
+
+house main
+
+	framer didery be active first didery
+		frame didery
+			print Starting Server
+			bid start server
+
+	framer server be inactive via .main.server
+	    frame server
+			do didery server open at enter
+			do didery server service
+			do didery server close at exit
