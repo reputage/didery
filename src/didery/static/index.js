@@ -1,3 +1,0 @@
-var m = require("mithril");
-
-

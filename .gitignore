@@ -619,4 +619,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-.gitignore
+src/didery/static/bin
+src/didery/static/dist
+
