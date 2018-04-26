@@ -1,4 +1,4 @@
-from didery.controllers import rhistory
+from didery.controllers import history as rhistory
 
 
 HISTORY_BASE_PATH = "/history"
@@ -12,6 +12,6 @@ def loadEndPoints(app, store):
         ioflo datastore
     """
     history = rhistory.History(store)
-    app.add_route('{}/{{reputee_name}}'.format(HISTORY_BASE_PATH), history)
+    app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
 
