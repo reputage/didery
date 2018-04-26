@@ -1,4 +1,3 @@
-import socket
 import falcon
 
 from ioflo.aid import getConsole
@@ -8,7 +7,7 @@ from ioflo.base import doify
 
 from didery import routing
 
-console = getConsole() 
+console = getConsole()
 
 """
 Usage pattern
