@@ -13,6 +13,10 @@ class Error:
         """
         self.store = store
 
+    """
+    For manual testing of the endpoint:
+        http localhost:8000/errors
+    """
     def on_get(self, req, resp):
         """
         Handle and respond to incoming GET request.
