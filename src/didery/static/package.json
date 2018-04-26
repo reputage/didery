@@ -1,0 +1,15 @@
+{
+  "name": "didery",
+  "version": "1.0.0",
+  "description": "Administrator interface for key management server.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Brady Hammond & Nick Telfer",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mithril": "^1.1.6"
+  }
+}
