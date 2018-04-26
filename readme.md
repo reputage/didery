@@ -234,7 +234,7 @@ The API consists of several ReST endpoints grouped according to the type of data
 POST
 ```json
 {
-    "host address": "127.0.0.1",
+    "host_address": "127.0.0.1",
     "port": 7541,
     "name": "alpha",
     "main": true,
@@ -246,7 +246,7 @@ POST
 PUT
 ```json
 {
-    "host address": "127.0.0.1",
+    "host_address": "127.0.0.1",
     "port": 7541,
     "name": "alpha",
     "main": true,
@@ -259,7 +259,7 @@ GET
 ```json
 {
     "1": {
-        "host address": "127.0.0.1",
+        "host_address": "127.0.0.1",
         "port": 7541,
         "name": "alpha",
         "main": true,
@@ -268,7 +268,7 @@ GET
         "status": "connected",
     },
     "2": {
-        "host address": "127.0.0.1",
+        "host_address": "127.0.0.1",
         "port": 7542,
         "name": "beta",
         "main": false,
