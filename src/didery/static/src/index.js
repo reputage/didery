@@ -1,4 +1,4 @@
 var m = require("mithril");
 
-m.render(document.body, "hello world")
+m.render(document.body, "hello world");
 
