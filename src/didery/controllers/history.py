@@ -20,6 +20,48 @@ def validatePost(req, resp, resource, params):
     required = ["id", "changed", "signer", "signers"]
     helping.validateRequiredFields(required, body)
 
+    try:
+        if not isinstance(body['signers'], list):
+            body['signers'] = json.loads(
+                body['signers'].replace("'", '"')
+            )
+    except ValueError:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signers field must be a list or array.')
+
+    if body['id'] == "":
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'id field cannot be empty.')
+
+    if body['changed'] == "":
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'changed field cannot be empty.')
+
+    if len(body['signers']) < 2:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signers field must contain at least the current public key and its first pre-rotation.')
+
+    try:
+        int(body['signer'])
+    except ValueError:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signer field must be a number.')
+
+    if int(body['signer']) < 0 or int(body['signer']) >= len(body['signers']):
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signer field must be between 0 and size of signers field.')
+
+    if int(body['signer']) + 1 == len(body['signers']):
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'Missing pre rotated key in the signers field.')
+
 
 class History:
     def __init__(self, store=None):
