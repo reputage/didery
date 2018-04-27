@@ -4,6 +4,22 @@ try:
 except ImportError:
     import json
 
+from ..help import helping
+
+
+def validatePost(req, resp, resource, params):
+    """
+    Validate incoming POST request and prepare
+    body of request for processing.
+    :param req: Request object
+    """
+
+    helping.parseReqBody(req)
+    body = req.body
+
+    required = ["id", "changed", "signer", "signers"]
+    helping.validateRequiredFields(required, body)
+
 
 class History:
     def __init__(self, store=None):
@@ -95,26 +111,14 @@ class History:
     For manual testing of the endpoint:
         http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
+    @falcon.before(validatePost)
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
         :param req: Request object
         :param resp: Response object
         """
-        try:
-            raw_json = req.stream.read()
-        except Exception as ex:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Error',
-                                   'Error reading request body.')
-
-        try:
-            result_json = json.loads(raw_json, encoding='utf-8')
-        except ValueError:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed JSON',
-                                   'Could not decode the request body. The '
-                                   'JSON was incorrect.')
+        result_json = req.body
 
         response_json = {
             "history": result_json,
