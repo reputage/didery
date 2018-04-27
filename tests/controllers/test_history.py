@@ -10,7 +10,7 @@ from didery.routing import *
 def testPostValidation(client):
     # Test missing id field
     body = b'{' \
-            b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+            b'"changed": "2000-01-01T00:00:00+00:00", ' \
             b'"signer": 2, ' \
             b'"signers": ' \
             b'[' \
@@ -49,7 +49,7 @@ def testPostValidation(client):
 
     # Test missing signer field
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signers": ' \
            b'[' \
            b'    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
@@ -68,7 +68,7 @@ def testPostValidation(client):
 
     # Test missing signers field
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2' \
            b'}'
     response = client.simulate_post(HISTORY_BASE_PATH, body=body)
@@ -81,7 +81,7 @@ def testPostValidation(client):
 
     # Test empty id field
     body = b'{"id": "", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
            b'"signers": ' \
            b'[' \
@@ -101,7 +101,7 @@ def testPostValidation(client):
 
     # Test empty changed field
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "", ' \
+           b'"changed": "", ' \
            b'"signer": 2, ' \
            b'"signers": ' \
            b'[' \
@@ -121,7 +121,7 @@ def testPostValidation(client):
 
     # Test invalid signers value
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
            b'"signers": ""' \
            b'}'
@@ -135,7 +135,7 @@ def testPostValidation(client):
 
     # Test that signers field has two keys
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
            b'"signers": ' \
            b'[' \
@@ -151,7 +151,7 @@ def testPostValidation(client):
     assert response.content == exp_result
 
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
            b'"signers": ' \
            b'[]' \
@@ -165,7 +165,7 @@ def testPostValidation(client):
     assert response.content == exp_result
 
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 0, ' \
            b'"signers": ' \
            b'[' \
@@ -178,7 +178,7 @@ def testPostValidation(client):
 
     # Test that signer field is an int
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": "a", ' \
            b'"signers": ' \
            b'[' \
@@ -198,7 +198,7 @@ def testPostValidation(client):
 
     # Test that signer field is a valid index into signers field
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 4, ' \
            b'"signers": ' \
            b'[' \
@@ -218,7 +218,7 @@ def testPostValidation(client):
 
     # Test that there is a pre-rotated key included in signers field
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 3, ' \
            b'"signers": ' \
            b'[' \
@@ -239,7 +239,7 @@ def testPostValidation(client):
 
 def testValidPost(client):
     body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
-           b'"changed" : "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
            b'"signers": ' \
            b'[' \
