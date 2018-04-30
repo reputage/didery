@@ -7,9 +7,39 @@ body
 {
     background-color: #EBEBEB;
     font-family: 'Raleway', sans-serif !important;
+    padding: 16px !important;
 }
 
 .hide
 {
     display: none;
+}
+
+.ui.tabular.menu .item {
+    color: #808080;
+}
+
+.ui.tabular.menu .active.item {
+    color: #000000;
+}
+
+.menu-item-text
+{
+    margin-right: 4px;
+}
+
+@media screen and (max-width : 1024px)
+{
+    .menu-item-text
+    {
+        display: none;
+    }
+}
+
+@media screen and (max-width : 568px)
+{
+    #search
+    {
+        display: none;
+    }
 }
