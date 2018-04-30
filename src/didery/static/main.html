@@ -2,10 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hello World</title>
+    <title>Didery</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
+    <link rel="stylesheet" href="node_modules/semantic-ui/dist/semantic.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <script src="bin/app.js"></script>
-    <script src="transcrypt/__javascript__/hello.js"></script>
+    <div class="ui vertical left visible sidebar sticky menu">
+        <div class="item">
+            <a class="ui centered image small" href="/">
+                <img src="images/logo-extended.png">
+            </a>
+        </div>
+        <a class="item"><b>Server Status</b><i class="chart bar icon"></i></a>
+        <a class="item"><b>Public Keys</b><i class="key icon"></i></a>
+        <a class="item"><b>Encrypted Blobs</b><i class="unlock alternate icon"></i></a>
+        <a class="item"><b>Relay Servers</b><i class="server icon"></i></a>
+        <a class="item"><b>Error Logs</b><i class="exclamation circle icon"></i></a>
+    </div>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/semantic-ui/dist/semantic.min.js"></script>
+    <script src="node_modules/mithril/mithril.min.js"></script>
+    <script>
+        $(window).ready(function () {
+           responsiveSidebar();
+        });
+
+        $(window).resize(function () {
+           responsiveSidebar();
+        });
+
+        function responsiveSidebar() {
+            if (window.innerWidth < 1024) {
+                $(".sidebar").addClass('top').removeClass('left');
+            } else {
+                $(".sidebar").removeClass('top').addClass('left');
+            }
+        }
+    </script>
 </body>
 </html>

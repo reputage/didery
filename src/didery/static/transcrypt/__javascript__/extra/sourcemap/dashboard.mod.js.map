@@ -1,0 +1,11 @@
+{
+	"version": 3,
+	"file": "/Users/brady/Desktop/Programmering/Xaltry/didery/src/didery/static/transcrypt/__javascript__/dashboard.mod.js",
+	"sources": [
+		"/Users/brady/Desktop/Programmering/Xaltry/didery/src/didery/static/transcrypt/dashboard.py"
+	],
+	"sourcesContent": [
+		"# ================================================== #\n#                     DASHBOARD                      #\n# ================================================== #\n# Author: Brady Hammond                              #\n# Created: 04/26/2018                                #\n# Last Edited:                                       #\n# Last Edited By:                                    #\n# ================================================== #\n#                      IMPORTS                       #\n# ================================================== #\n\n# ================================================== #\n#                  CLASS DEFINITIONS                 #\n# ================================================== #\n\nclass Tab:\n    Name = \"\"\n    Data_tab = \"\"\n    Active = False\n\n    def __init__(self):\n        self._menu_attrs = {\"data-tab\": self.Data_tab}\n        self._tab_attrs = {\"data-tab\": self.Data_tab}\n        self._menu = \"a.item\"\n        self._tab = \"div.ui.bottom.attached.tab.segment\"\n\n        if self.Active:\n            self._menu += \".active\"\n            self._tab += \".active\"\n\n    # ============================================== #\n\n    def menu_item(self):\n        return m(self._menu, self._menu_attrs, self.Name)\n\n    # ============================================== #\n\n    def tab_item(self):\n        return m(self._tab, self._tab_attrs, self.main_view())\n\n    # ============================================== #\n\n    def main_view(self):\n        return m(\"div\", \"hello \" + self.Name)\n\n# ================================================== #\n#                        EOF                         #\n# ================================================== #"
+	],
+	"mappings": "AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAeA;AAAA;AACA;AACA;AACA;AAEA;AACA;AACA;AACA;AACA;AAEA;AAAA;AAAA;AAAA;AAAA;AAMA;AACA;AAAA;AAIA;AACA;AAAA;AAIA;AACA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA"
+}

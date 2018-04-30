@@ -1,6 +1,6 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-04-26 15:45:20
-function hello () {
+// Transcrypt'ed from Python, 2018-04-29 16:03:12
+function main () {
     var __symbols__ = ['__py3.6__', '__esv5__'];
     var __all__ = {};
     var __world__ = __all__;
@@ -2198,15 +2198,95 @@ function hello () {
         }
     };
     __all__.__setslice__ = __setslice__;
+	__nest__ (
+		__all__,
+		'dashboard', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'dashboard';
+					var Tab = __class__ ('Tab', [object], {
+						__module__: __name__,
+						Name: '',
+						Data_tab: '',
+						Active: false,
+						get __init__ () {return __get__ (this, function (self) {
+							self._menu_attrs = dict ({'data-tab': self.Data_tab});
+							self._tab_attrs = dict ({'data-tab': self.Data_tab});
+							self._menu = 'a.item';
+							self._tab = 'div.ui.bottom.attached.tab.segment';
+							if (self.Active) {
+								self._menu += '.active';
+								self._tab += '.active';
+							}
+						});},
+						get menu_item () {return __get__ (this, function (self) {
+							return m (self._menu, self._menu_attrs, self.Name);
+						});},
+						get tab_item () {return __get__ (this, function (self) {
+							return m (self._tab, self._tab_attrs, self.main_view ());
+						});},
+						get main_view () {return __get__ (this, function (self) {
+							return m ('div', 'hello ' + self.Name);
+						});}
+					});
+					__pragma__ ('<all>')
+						__all__.Tab = Tab;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'router', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var dashboard = {};
+					var __name__ = 'router';
+					__nest__ (dashboard, '', __init__ (__world__.dashboard));
+					var Router = __class__ ('Router', [object], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							self.tabs = dashboard.Tabs ();
+						});},
+						get route () {return __get__ (this, function (self, root) {
+							if (typeof root == 'undefined' || (root != null && root .hasOwnProperty ("__kwargtrans__"))) {;
+								var root = null;
+							};
+							if (root === null) {
+								var root = document.body;
+							}
+							m.route (root, '/dashboard', dict ({'/dashboard': dict ({'render': self.tabs.view})}));
+						});}
+					});
+					__pragma__ ('<use>' +
+						'dashboard' +
+					'</use>')
+					__pragma__ ('<all>')
+						__all__.Router = Router;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
 	(function () {
+		var router = {};
 		var __name__ = '__main__';
-		m.render (document.body, 'Hello python');
+		__nest__ (router, '', __init__ (__world__.router));
+		router.Router ().route (__kwargtrans__ ({root: document.body}));
+		__pragma__ ('<use>' +
+			'router' +
+		'</use>')
 		__pragma__ ('<all>')
 			__all__.__name__ = __name__;
 		__pragma__ ('</all>')
 	}) ();
     return __all__;
 }
-window ['hello'] = hello ();
+window ['main'] = main ();
 
-//# sourceMappingURL=extra/sourcemap/hello.js.map
+//# sourceMappingURL=extra/sourcemap/main.js.map

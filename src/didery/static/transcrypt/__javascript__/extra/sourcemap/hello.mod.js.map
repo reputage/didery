@@ -5,7 +5,7 @@
 		"/Users/brady/Desktop/Programmering/Xaltry/didery/src/didery/static/transcrypt/hello.py"
 	],
 	"sourcesContent": [
-		"m.render(document.body, \"Hello python\")"
+		"m.render(document.body, \"Hello Python\")"
 	],
 	"mappings": "AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA"
 }
