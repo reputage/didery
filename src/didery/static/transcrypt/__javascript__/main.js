@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-04-29 21:09:29
+// Transcrypt'ed from Python, 2018-04-29 21:25:11
 function main () {
     var __symbols__ = ['__py3.6__', '__esv5__'];
     var __all__ = {};
@@ -2259,7 +2259,7 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div.ui.top.attached.tabular.menu', m ('a.active.item', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon')), m ('a.item', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon')), m ('a.item', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon')), m ('a.item', m ('span.menu-item-text', 'Relay Servers'), m ('i.server.icon')), m ('a.item', m ('span.menu-item-text', 'Error Logs'), m ('i.exclamation.circle.icon')), m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon')))));
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.active.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Relay Servers'), m ('i.server.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Error Logs'), m ('i.exclamation.circle.icon')), m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), m ('div.ui.bottom.attached.segment', m ('p', 'Content Will be visible here.')));
 						});}
 					});
 					__pragma__ ('<all>')

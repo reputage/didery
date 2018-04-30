@@ -66,27 +66,30 @@ class Tabs:
             menu_items.append(tab.menu_item())
             tab_items.append(tab.tab_item())
 
-        return m("div.ui.top.attached.tabular.menu",
-                 m("a.active.item",
-                   m("span.menu-item-text", "Server Status"),
-                    m("i.chart.bar.icon")),
-                 m("a.item",
-                   m("span.menu-item-text", "Public Keys"),
+        return m("div",
+                 m("div.ui.top.attached.tabular.menu",
+                   m("a.active.item.tab",
+                     m("span.menu-item-text", "Server Status"),
+                     m("i.chart.bar.icon")),
+                   m("a.item.tab",
+                     m("span.menu-item-text", "Public Keys"),
                      m("i.key.icon")),
-                 m("a.item",
-                   m("span.menu-item-text", "Encrypted Blobs"),
+                   m("a.item.tab",
+                     m("span.menu-item-text", "Encrypted Blobs"),
                      m("i.unlock.alternate.icon")),
-                 m("a.item",
-                   m("span.menu-item-text", "Relay Servers"),
+                   m("a.item.tab",
+                     m("span.menu-item-text", "Relay Servers"),
                      m("i.server.icon")),
-                 m("a.item",
-                   m("span.menu-item-text", "Error Logs"),
+                   m("a.item.tab",
+                     m("span.menu-item-text", "Error Logs"),
                      m("i.exclamation.circle.icon")),
-                 m("div.right.menu",
-                   m("div.item",
-                     m("div#search.ui.transparent.icon.input",
-                       m("input[type=text][placeholder=Search...]"),
-                       m("i.search.link.icon")))))
+                   m("div.right.menu",
+                     m("div.item",
+                       m("div#search.ui.transparent.icon.input",
+                         m("input[type=text][placeholder=Search...]"),
+                           m("i.search.link.icon"))))),
+                 m("div.ui.bottom.attached.segment",
+                   m("p", "Content Will be visible here.")))
 
 # ================================================== #
 #                        EOF                         #
