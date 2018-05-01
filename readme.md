@@ -108,10 +108,10 @@ This endpoint is meant for storing the rotation history of public keys for a par
 #### Add Rotation History
 The POST endpoint can be used for adding new rotation histories.  Each request should include the following fields:
 
-__id__ - decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  
-__changed__ - date changed. Mitigates replay attacks    
-__signer__ - 0 based index into signers field   
-__signers__ - list of all public keys. Must contain at least two keys.  
+__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  *Required*  
+__changed__ - [string] date changed. Mitigates replay attacks *Required*     
+__signer__ - [integer] 0 based index into signers field *Required*    
+__signers__ - [list/array] list of all public keys. Must contain at least two keys. *Required*      
 
 
 #####Request
@@ -282,8 +282,8 @@ This endpoint stores one time pad(otp) encrypted private keys for later recovery
 #### Add OTP Encrypted Key
 The POST endpoint can be used for storing new otp encrypted blobs. Each request should include the following fields:
 
-__id__ - decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  
-__blob__ - otp encrypted private keys
+__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*    
+__blob__ - [string] otp encrypted private keys *Required*    
 
 #####Request
 http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
@@ -386,10 +386,10 @@ This endpoint is just for managing the back end.  This allows you to tell the se
 #### Add Relay Server
 The POST endpoint allows you to add new servers to the broadcast list.  The server uses [RAET](https://github.com/RaetProtocol/raet) to communicate.  The following fields can be used:
 
-__host_address__ - ip address of server. *Required*   
-__port__ - server port to use. *Required*   
-__name__ - name for the server. *Required*   
-__main__ - The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.
+__host_address__ - [string] ip address of server. *Required*   
+__port__ - [integer] server port to use. *Required*   
+__name__ - [string] name for the server. *Required*   
+__main__ - [boolean] The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.
 
 #####Request
 http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
