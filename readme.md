@@ -432,7 +432,7 @@ Server: Ioflo WSGI Server
 #### Update Relay Server
 
 #####Request
-http PUT localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
+http PUT localhost:8000/relay/1 host_address="127.0.0.1" port=7541 name="alpha" main=true
 ```
 PUT /relay/1 HTTP/1.1
 Accept: application/json, */*
