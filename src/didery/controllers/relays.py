@@ -46,17 +46,6 @@ def validatePost(req, resp, resource, params):
                                    'Malformed Field',
                                    'main field must be a boolean value.')
 
-    if 'auto' in body:
-        if body['auto'] == "":
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed Field',
-                                   'auto field cannot be empty.')
-
-        if type(body['auto']) != bool:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed Field',
-                                   'auto field must be a boolean value.')
-
     try:
         int(body['port'])
     except ValueError:
@@ -111,8 +100,7 @@ class Relay:
                 "name": "alpha",
                 "main": True,
                 "uid": "1",
-                "auto": True,
-                "status": "connected",
+                "status": "connected"
             },
             "2": {
                 "host address": "127.0.0.1",
@@ -120,8 +108,7 @@ class Relay:
                 "name": "beta",
                 "main": False,
                 "uid": "2",
-                "auto": True,
-                "status": "connected",
+                "status": "connected"
             }
         }
 
@@ -129,7 +116,7 @@ class Relay:
 
     """
     For manual testing of the endpoint:
-        http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true auto=true
+        http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
     """
     @falcon.before(validatePost)
     def on_post(self, req, resp):
@@ -147,7 +134,7 @@ class Relay:
 
     """
     For manual testing of the endpoint:
-        http PUT localhost:8000/relay/1 host_address="127.0.0.1" port=7541 name="alpha" main=true auto=true
+        http PUT localhost:8000/relay/1 host_address="127.0.0.1" port=7541 name="alpha" main=true
     """
     @falcon.before(validatePut)
     def on_put(self, req, resp, uid):
@@ -182,8 +169,7 @@ class Relay:
             "name": "alpha",
             "main": True,
             "uid": uid,
-            "auto": True,
-            "status": "disconnected",
+            "status": "disconnected"
         }
 
         resp.body = json.dumps(body, ensure_ascii=False)

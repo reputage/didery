@@ -104,10 +104,28 @@ The API consists of several ReST endpoints grouped according to the type of data
 /errors GET [api](#get-all-errors)  
 
 ## Key Rotation History
-
+This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.
 #### Add Rotation History
+The POST endpoint can be used for adding new rotation histories.  Each request should include the following fields:
 
-```json
+__id__ - decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  
+__changed__ - date changed. Mitigates replay attacks    
+__signer__ - 0 based index into signers field   
+__signers__ - list of all public keys. Must contain at least two keys.  
+
+
+#####Request
+http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
+```
+POST /history HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 324
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+    
 {
     "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
     "changed" : "2000-01-01T00:00:00+00:00",
@@ -121,10 +139,57 @@ The API consists of several ReST endpoints grouped according to the type of data
     ]
 }
 ```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 535
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:03:01 GMT
+Server: Ioflo WSGI Server
+
+{
+    "history": {
+        "changed": "2000-01-01T00:00:00+00:00",
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "signer": "2",
+        "signers": [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+        ]
+    },
+    "signatures": [
+        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    ]
+}
+```
 	
 #### Get Rotation History
 
-```json
+#####Request
+http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
+```
+GET /history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 533
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:11:20 GMT
+Server: Ioflo WSGI Server
+
+    
 {
     "history":
     {
@@ -149,7 +214,25 @@ The API consists of several ReST endpoints grouped according to the type of data
 
 #### Get All Rotation Histories
 
-```json
+#####Request
+http localhost:8000/history
+```
+GET /history HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 1032
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:20:39 GMT
+Server: Ioflo WSGI Server
+    
 {
     "data": [{
         "history":
@@ -194,87 +277,238 @@ The API consists of several ReST endpoints grouped according to the type of data
 ```
 
 ## OTP Encrypted Private Key Store
+This endpoint stores one time pad(otp) encrypted private keys for later recovery if a key is lost. The DID and the encrypted text blob are the only parameters.
 
 #### Add OTP Encrypted Key
+The POST endpoint can be used for storing new otp encrypted blobs. Each request should include the following fields:
 
-```json
+__id__ - decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  
+__blob__ - otp encrypted private keys
+
+#####Request
+http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+```
+POST /blob HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 246
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+    
 {
     "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
     "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-}    
+}
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 246
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:27:27 GMT
+Server: Ioflo WSGI Server
+    
+{
+    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+}
+
 ```
 
 #### Get Encrypted Key
 
-```json
+#####Request
+http localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
+```
+GET /blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 246
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:30:04 GMT
+Server: Ioflo WSGI Server
+    
 {
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 }
+
 ```
 
 #### Get All Encrypted Keys
 
-```json
+#####Request
+http localhost:8000/blob
+```
+GET /blob HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 506
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:32:04 GMT
+Server: Ioflo WSGI Server
+    
 {
-    "data": [{
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-    },
-    {
-        "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-    }]
+    "data": [
+        {
+            "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+        },
+        {
+            "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+            "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+        }
+    ]
 }
+
 ```
 	
 ## Relay Servers
+This endpoint is just for managing the back end.  This allows you to tell the server to broadcast updates to other trusted servers.
 
 #### Add Relay Server
-POST
-```json
+The POST endpoint allows you to add new servers to the broadcast list.  The server uses [RAET](https://github.com/RaetProtocol/raet) to communicate.  The following fields can be used:
+
+__host_address__ - ip address of server. *Required*   
+__port__ - server port to use. *Required*   
+__name__ - name for the server. *Required*   
+__main__ - The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.
+
+#####Request
+http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
+```
+POST /relay HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 77
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+
 {
-    "host address": "127.0.0.1",
-    "port": 7541,
-    "name": "alpha",
+    "host_address": "127.0.0.1",
     "main": true,
-    "auto": true
+    "name": "alpha",
+    "port": "7541"
 }
+```
+    
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 111
+Content-Type: application/json; charset=UTF-8
+Date: Tue, 01 May 2018 01:22:31 GMT
+Server: Ioflo WSGI Server
+
+{
+    "host_address": "127.0.0.1",
+    "main": true,
+    "name": "alpha",
+    "port": "7541",
+    "status": "connected",
+    "uid": "1"
+}
+
 ```
 
 #### Update Relay Server
-PUT
-```json
+
+#####Request
+http PUT localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
+```
+PUT /relay/1 HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 75
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+
 {
-    "host address": "127.0.0.1",
-    "port": 7541,
-    "name": "alpha",
+    "host_address": "127.0.0.1",
     "main": true,
-    "auto": true
+    "name": "alpha",
+    "port": 7541
+}
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 109
+Content-Type: application/json; charset=UTF-8
+Date: Tue, 01 May 2018 01:26:19 GMT
+Server: Ioflo WSGI Server
+
+{
+    "host_address": "127.0.0.1",
+    "main": true,
+    "name": "alpha",
+    "port": 7541,
+    "status": "connected",
+    "uid": "1"
 }
 ```
 
 #### Get All Relay Servers
-GET
-```json
+
+#####Request
+http localhost:8000/relay
+```
+GET /relay HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 232
+Content-Type: application/json; charset=UTF-8
+Date: Tue, 01 May 2018 01:29:12 GMT
+Server: Ioflo WSGI Server
+
 {
     "1": {
         "host address": "127.0.0.1",
-        "port": 7541,
-        "name": "alpha",
         "main": true,
-        "uid": "1",
-        "auto": true,
+        "name": "alpha",
+        "port": 7541,
         "status": "connected",
+        "uid": "1"
     },
     "2": {
         "host address": "127.0.0.1",
-        "port": 7542,
-        "name": "beta",
         "main": false,
-        "uid": "2",
-        "auto": true,
+        "name": "beta",
+        "port": 7542,
         "status": "connected",
+        "uid": "2"
     }
 }
 ```
@@ -283,23 +517,72 @@ GET
 A relay server can be deleted by sending and HTTP DELETE request with the uid of the relay server.
 /relay/{uid} DELETE
 
+#####Request
+http DELETE localhost:8000/relay/10
+```
+DELETE /relay/10 HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 0
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 113
+Content-Type: application/json; charset=UTF-8
+Date: Tue, 01 May 2018 01:31:46 GMT
+Server: Ioflo WSGI Server
+
+{
+    "host_address": "127.0.0.1",
+    "main": true,
+    "name": "alpha",
+    "port": 7541,
+    "status": "disconnected",
+    "uid": "10"
+}
+```
+
 ## Error Logs
+Provides a snapshot of errors encountered on the server
 
 #### Get All Errors
 
-```json
+#####Request
+http localhost:8000/errors
+```
+GET /errors HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 311
+Content-Type: application/json; charset=UTF-8
+Date: Tue, 01 May 2018 01:33:05 GMT
+Server: Ioflo WSGI Server
+
 {
-  "data": [
-      {
-          "title": "Invalid Signature.",
-          "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
-          "time": "2000-01-01T00:00:00+00:00"
-      },
-      {
-          "title": "Relay Unreachable.",
-          "msg": "Could not establish a connection with relay servers.",
-          "time": "2000-01-01T11:00:00+00:00"
-      }
-  ]
+    "data": [
+        {
+            "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
+            "time": "2000-01-01T00:00:00+00:00",
+            "title": "Invalid Signature."
+        },
+        {
+            "msg": "Could not establish a connection with relay servers.",
+            "time": "2000-01-01T11:00:00+00:00",
+            "title": "Relay Unreachable."
+        }
+    ]
 }
 ```

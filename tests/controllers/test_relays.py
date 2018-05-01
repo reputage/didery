@@ -12,8 +12,7 @@ def testPostValidation(client):
     body = b'{' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -27,8 +26,7 @@ def testPostValidation(client):
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -42,8 +40,7 @@ def testPostValidation(client):
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -58,8 +55,7 @@ def testPostValidation(client):
            b'"host_address": "", ' \
            b'"port": "a", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -74,8 +70,7 @@ def testPostValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": "", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -90,8 +85,7 @@ def testPostValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -106,8 +100,7 @@ def testPostValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": "", ' \
-           b'"auto": true' \
+           b'"main": ""' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -122,8 +115,7 @@ def testPostValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": "a", ' \
-           b'"auto": true' \
+           b'"main": "a"' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -133,45 +125,12 @@ def testPostValidation(client):
     assert response.status == falcon.HTTP_400
     assert response.content == exp_result
 
-    # Test empty auto
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": ""' \
-           b'}'
-    response = client.simulate_post(RELAY_BASE_PATH, body=body)
-
-    exp_result = b'{"title": "Malformed Field", "description": ' \
-                 b'"auto field cannot be empty."}'
-
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
-
-    # Test invalid bool for auto
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": "a"' \
-           b'}'
-    response = client.simulate_post(RELAY_BASE_PATH, body=body)
-
-    exp_result = b'{"title": "Malformed Field", "description": ' \
-                 b'"auto field must be a boolean value."}'
-
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
-
     # Test invalid port values
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"port": "a", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -185,8 +144,7 @@ def testPostValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 70000, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
 
@@ -202,8 +160,7 @@ def testValidPost(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
     assert response.status == falcon.HTTP_200
@@ -217,8 +174,7 @@ def testPutValidation(client):
     body = b'{' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -232,8 +188,7 @@ def testPutValidation(client):
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -247,8 +202,7 @@ def testPutValidation(client):
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -263,8 +217,7 @@ def testPutValidation(client):
            b'"host_address": "", ' \
            b'"port": "a", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -279,8 +232,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": "", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -295,8 +247,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -311,8 +262,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": "", ' \
-           b'"auto": true' \
+           b'"main": ""' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -327,8 +277,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": "a", ' \
-           b'"auto": true' \
+           b'"main": "a"' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -338,45 +287,12 @@ def testPutValidation(client):
     assert response.status == falcon.HTTP_400
     assert response.content == exp_result
 
-    # Test empty auto
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": ""' \
-           b'}'
-    response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
-
-    exp_result = b'{"title": "Malformed Field", "description": ' \
-                 b'"auto field cannot be empty."}'
-
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
-
-    # Test invalid bool for auto
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": "a"' \
-           b'}'
-    response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
-
-    exp_result = b'{"title": "Malformed Field", "description": ' \
-                 b'"auto field must be a boolean value."}'
-
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
-
     # Test invalid port values
     body = b'{' \
            b'"host_address": "127.0.0.1", ' \
            b'"port": "a", ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -390,8 +306,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 70000, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
 
@@ -406,8 +321,7 @@ def testPutValidation(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}".format(RELAY_BASE_PATH), body=body)
 
@@ -424,8 +338,7 @@ def testValidPut(client):
            b'"host_address": "127.0.0.1", ' \
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"auto": true' \
+           b'"main": true' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
     print(response.content)
