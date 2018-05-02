@@ -5,6 +5,89 @@ except ImportError:
     import json
 
 from didery.routing import *
+from didery.help import helping
+
+
+SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
+DID = b"did:igo:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+
+
+def testPostSignValidation(client):
+    headers = {"Signature": ""}
+
+    # Test missing Signature Header
+    body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
+           b'"signer": 2, ' \
+           b'"signers": ' \
+           b'[' \
+           b'    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
+           b'    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=", ' \
+           b'    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=", ' \
+           b'    "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=" ' \
+           b']' \
+           b'}'
+
+    exp_result = b'{"title": "Validation Error", "description": "Invalid or ' \
+                 b'missing Signature header."}'
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+    assert response.status == falcon.HTTP_401
+    assert response.content == exp_result
+
+    exp_result = b'{"title": "Missing header value", "description": "The Signature ' \
+                 b'header is required."}'
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body)
+    assert response.status == falcon.HTTP_400
+    assert response.content == exp_result
+
+    # Test partial signature header
+    headers = {
+        "Signature": 'signer="' + helping.signResource(body, SK) + '"'
+    }
+
+    exp_result = b'{"title": "Validation Error", "description": "' \
+                 b'Signature header missing signature for \\"rotation\\"."}'
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+    assert response.status == falcon.HTTP_401
+    assert response.content == exp_result
+
+    headers = {
+        "Signature": 'rotation="' + helping.signResource(body, SK) + '"'
+    }
+
+    exp_result = b'{"title": "Validation Error", "description": "' \
+                 b'Signature header missing signature for \\"signer\\"."}'
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+    assert response.status == falcon.HTTP_401
+    assert response.content == exp_result
+
+
+def testValidPostSignature(client):
+    body = b'{"id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
+           b'"signer": 2, ' \
+           b'"signers": ' \
+           b'[' \
+           b'    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
+           b'    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=", ' \
+           b'    "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+           b'    "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=" ' \
+           b']' \
+           b'}'
+
+    headers = {
+        "Signature": 'signer="' + helping.signResource(body, SK) + '"; rotation="' + helping.signResource(body, SK) + '"'
+    }
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+    print(response.content)
+    assert response.status == falcon.HTTP_200
+    # TODO:
+    # assert response.content == exp_result
 
 
 def testPostValidation(client):

@@ -1,10 +1,14 @@
 from collections import OrderedDict as ODict
 import falcon
+import libnacl
+import base64
 
 try:
     import simplejson as json
 except ImportError:
     import json
+
+from .. import didering
 
 
 def parseSignatureHeader(signature):
@@ -64,7 +68,7 @@ def parseSignatureHeader(signature):
     return sigs
 
 
-def validateSignedResource(signature, resource, verkey, method="igo"):
+def validateSignedResource(signature, resource, verkey, method="dad"):
     """
     Returns dict of deserialized resource if signature verifies for resource given
     verification key verkey in base64 url safe unicode format
@@ -88,38 +92,29 @@ def validateSignedResource(signature, resource, verkey, method="igo"):
         try:
             rsrc = json.loads(resource, object_pairs_hook=ODict)
         except ValueError as ex:
-            raise reputing.ValidationError("Invalid JSON")  # invalid json
+            raise didering.ValidationError("Invalid JSON")  # invalid json
 
-        if not rsrc:  # resource must not be empty
-            raise reputing.ValidationError("Empty body")
-
-        if not isinstance(rsrc, dict):  # must be dict subclass
-            raise reputing.ValidationError("JSON not dict")
-
-        if "reputee" not in rsrc:  # did field required
-            raise reputing.ValidationError("Missing did field")
-
-        ddid = rsrc["reputee"]
+        ddid = rsrc["id"]
 
         try:  # correct did format  pre:method:keystr
             pre, meth, keystr = ddid.split(":")
         except ValueError as ex:
-            raise reputing.ValidationError("Invalid format did field")
+            raise didering.ValidationError("Invalid format did field")
 
         if pre != "did" or meth != method:
-            raise reputing.ValidationError("Invalid format did field") # did format bad
+            raise didering.ValidationError("Invalid format did field") # did format bad
 
         if len(verkey) != 44:
-            raise reputing.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
+            raise didering.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
 
         if not verify64u(signature, resource, verkey):
-            raise reputing.ValidationError("Unverifiable signature")  # signature fails
+            raise didering.ValidationError("Unverifiable signature")  # signature fails
 
-    except reputing.ValidationError:
+    except didering.ValidationError:
         raise
 
     except Exception as ex:  # unknown problem
-        raise reputing.ValidationError("Unexpected error")
+        raise didering.ValidationError("Unexpected error")
 
     return rsrc
 
@@ -144,6 +139,7 @@ def parseReqBody(req):
                                'JSON was incorrect.')
 
     req.body = result_json
+    return raw_json
 
 
 def validateRequiredFields(required, resource):
@@ -157,3 +153,52 @@ def validateRequiredFields(required, resource):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Missing Required Field',
                                    'Request must contain {} field.'.format(req))
+
+
+def keyToKey64u(key):
+    """
+    Convert and return bytes key to unicode base64 url-file safe version
+    """
+    return base64.urlsafe_b64encode(key).decode("utf-8")
+
+
+def key64uToKey(key64u):
+    """
+    Convert and return unicode base64 url-file safe key64u to bytes key
+    """
+    return base64.urlsafe_b64decode(key64u.encode("utf-8"))
+
+
+def signResource(resource, sKey):
+    sig = libnacl.crypto_sign(resource, sKey)
+    sig = sig[:libnacl.crypto_sign_BYTES]
+
+    return keyToKey64u(sig)
+
+
+def verify(sig, msg, vk):
+    """
+    Returns True if signature sig of message msg is verified with
+    verification key vk Otherwise False
+    All of sig, msg, vk are bytes
+    """
+    try:
+        result = libnacl.crypto_sign_open(sig + msg, vk)
+    except Exception as ex:
+        return False
+    return True if result else False
+
+
+def verify64u(signature, message, verkey):
+    """
+    Returns True if signature is valid for message with respect to verification
+    key verkey
+
+    signature and verkey are encoded as unicode base64 url-file strings
+    and message is unicode string as would be the case for a json object
+
+    """
+    sig = key64uToKey(signature)
+    vk = key64uToKey(verkey)
+    # msg = message.encode("utf-8")
+    return verify(sig, message, vk)

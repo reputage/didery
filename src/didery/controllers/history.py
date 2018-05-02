@@ -5,6 +5,7 @@ except ImportError:
     import json
 
 from ..help import helping
+from .. import didering
 
 
 def validatePost(req, resp, resource, params):
@@ -14,11 +15,31 @@ def validatePost(req, resp, resource, params):
     :param req: Request object
     """
 
-    helping.parseReqBody(req)
+    raw = helping.parseReqBody(req)
     body = req.body
 
     required = ["id", "changed", "signer", "signers"]
     helping.validateRequiredFields(required, body)
+
+    signature = req.get_header("Signature", required=True)
+    sigs = helping.parseSignatureHeader(signature)
+
+    if len(sigs) == 0:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Invalid or missing Signature header.')
+
+    sig = sigs.get('signer')  # str not bytes
+    if not sig:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing signature for "signer".')
+
+    sig = sigs.get('rotation')  # str not bytes
+    if not sig:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing signature for "rotation".')
 
     try:
         if not isinstance(body['signers'], list):
@@ -61,6 +82,21 @@ def validatePost(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Malformed Field',
                                'Missing pre rotated key in the signers field.')
+
+    index = int(body['signer'])
+    try:
+        helping.validateSignedResource(sig, raw, body['signers'][index])
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Could not validate the request body. {}'.format(ex))
+
+    try:
+        helping.validateSignedResource(sig, raw, body['signers'][index+1])
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Could not validate the request body. {}'.format(ex))
 
 
 class History:
