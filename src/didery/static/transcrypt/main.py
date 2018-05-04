@@ -15,6 +15,9 @@ import router
 #                       MAIN                         #
 # ================================================== #
 
+"""
+Sets up route(s) and renders view for default route.
+"""
 router.Router().route(root=document.body)
 
 # ================================================== #

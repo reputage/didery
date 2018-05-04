@@ -16,12 +16,24 @@ import dashboard
 # ================================================== #
 
 class Router:
+    """
+    Class for routing between urls and pages.
+    """
     def __init__(self):
+        """
+        Initialize Router object. Load navigation tabs.
+        """
         self.tabs = dashboard.Tabs()
 
     # ============================================== #
 
     def route(self, root=None):
+        """
+        Sets up project routes.
+
+            Parameters:
+            root - DOM for root page
+        """
         if root is None:
             root = document.body
         m.route(root, "/dashboard",
