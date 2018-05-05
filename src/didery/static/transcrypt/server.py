@@ -234,7 +234,7 @@ class History:
 
 # ================================================== #
 
-class OTPBlob:
+class OTPBlobs:
     """
     Class for otp blob server call.
     """
