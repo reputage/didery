@@ -1,3 +1,11 @@
+'''
+    Tests can be run from the terminal with the following command:
+        pytest tests/controllers
+
+    To see test coverage install pytest-cov with pip then run this command:
+        py.test --cov-report term-missing --cov=src/didery/controllers/ tests/controllers/
+'''
+
 import falcon
 try:
     import simplejson as json

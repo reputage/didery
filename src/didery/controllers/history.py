@@ -332,6 +332,7 @@ class History:
                 """
 
         # TODO validate that previously rotated keys are not changed with this request
+        # TODO make sure time in changed field is greater than existing changed field
 
         result_json = req.body
 
