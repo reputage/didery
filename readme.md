@@ -349,7 +349,7 @@ __blob__ - [string] otp encrypted private keys *Required*
 __changed__ - [date string]  date string for preventing replay attacks *Required*  
 
 ##### Request   
-http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw" changed="2000-01-01T00:00:00+00:00"
 ```
 POST /blob HTTP/1.1
 Accept: application/json, */*
@@ -361,9 +361,9 @@ Host: localhost:8000
 User-Agent: HTTPie/0.9.9
     
 {
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
     "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-    "changed": "2000-01-01T00:00:00+00:00"
+    "changed": "2000-01-01T00:00:00+00:00",
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 }
 ```
 
@@ -391,7 +391,7 @@ __blob__ - [string] otp encrypted private keys *Required*
 __changed__ - [date string]  date string for preventing replay attacks *Required*  
 
 ##### Request   
-http PUT localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+http PUT localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw" changed="2000-01-01T00:00:00+00:00"
 ```
 PUT /blob HTTP/1.1
 Accept: application/json, */*
@@ -403,9 +403,9 @@ Host: localhost:8000
 User-Agent: HTTPie/0.9.9
     
 {
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
     "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-    "changed": "2000-01-01T00:00:00+00:00"
+    "changed": "2000-01-01T00:00:00+00:00",
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 }
 ```
 
@@ -499,10 +499,11 @@ The POST endpoint allows you to add new servers to the broadcast list.  The serv
 __host_address__ - [string] ip address of server. *Required*   
 __port__ - [integer] server port to use. *Required*   
 __name__ - [string] name for the server. *Required*   
-__main__ - [boolean] The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.
+__main__ - [boolean] The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.  
+__changed__ - [date string]  date string for preventing replay attacks *Required*  
 
 ##### Request   
-http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
+http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true changed="2000-01-01T00:00:00+00:00"
 ```
 POST /relay HTTP/1.1
 Accept: application/json, */*
@@ -514,6 +515,7 @@ Host: localhost:8000
 User-Agent: HTTPie/0.9.9
 
 {
+    "changed": "2000-01-01T00:00:00+00:00",
     "host_address": "127.0.0.1",
     "main": true,
     "name": "alpha",
@@ -530,6 +532,7 @@ Date: Tue, 01 May 2018 01:22:31 GMT
 Server: Ioflo WSGI Server
 
 {
+    "changed": "2000-01-01T00:00:00+00:00",
     "host_address": "127.0.0.1",
     "main": true,
     "name": "alpha",
@@ -540,9 +543,17 @@ Server: Ioflo WSGI Server
 ```
 
 #### Update Relay Server
+The PUT endpoint allows you to update existing servers in the broadcast list using the servers uid.  The server uses [RAET](https://github.com/RaetProtocol/raet) to communicate.  The following fields can be used:
+
+__host_address__ - [string] ip address of server. *Required*   
+__port__ - [integer] server port to use. *Required*   
+__name__ - [string] name for the server. *Required*   
+__main__ - [boolean] The main parameter, if True, will allow that RoadStack to accept a vacuous join handshake from another RoadStack.  
+__changed__ - [date string]  date string for preventing replay attacks *Required*  
+
 
 ##### Request   
-http PUT localhost:8000/relay/1 host_address="127.0.0.1" port=7541 name="alpha" main=true
+http PUT localhost:8000/relay/1 host_address="127.0.0.1" port=7541 name="alpha" main=true changed="2000-01-01T00:00:00+00:00"
 ```
 PUT /relay/1 HTTP/1.1
 Accept: application/json, */*
@@ -554,6 +565,7 @@ Host: localhost:8000
 User-Agent: HTTPie/0.9.9
 
 {
+    "changed": "2000-01-01T00:00:00+00:00",
     "host_address": "127.0.0.1",
     "main": true,
     "name": "alpha",
@@ -570,6 +582,7 @@ Date: Tue, 01 May 2018 01:26:19 GMT
 Server: Ioflo WSGI Server
 
 {
+    "changed": "2000-01-01T00:00:00+00:00",
     "host_address": "127.0.0.1",
     "main": true,
     "name": "alpha",
@@ -602,6 +615,7 @@ Server: Ioflo WSGI Server
 
 {
     "1": {
+        "changed": "2000-01-01T00:00:00+00:00",
         "host address": "127.0.0.1",
         "main": true,
         "name": "alpha",
@@ -610,6 +624,7 @@ Server: Ioflo WSGI Server
         "uid": "1"
     },
     "2": {
+        "changed": "2000-01-01T00:00:00+00:00",
         "host address": "127.0.0.1",
         "main": false,
         "name": "beta",
@@ -645,6 +660,7 @@ Date: Tue, 01 May 2018 01:31:46 GMT
 Server: Ioflo WSGI Server
 
 {
+    "changed": "2000-01-01T00:00:00+00:00",
     "host_address": "127.0.0.1",
     "main": true,
     "name": "alpha",
