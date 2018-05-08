@@ -7,7 +7,7 @@ except ImportError:
 from ..help import helping
 
 
-def validatePost(req, resp, resource, params):
+def basicValidation(req, resp, resource, params):
     """
     Validate incoming POST request and prepare
     body of request for processing.
@@ -17,7 +17,7 @@ def validatePost(req, resp, resource, params):
     helping.parseReqBody(req)
     body = req.body
 
-    required = ["host_address", "port", "name"]
+    required = ["host_address", "port", "name", "changed"]
     helping.validateRequiredFields(required, body)
 
     if body['host_address'] == "":
@@ -34,6 +34,11 @@ def validatePost(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Malformed Field',
                                'name field cannot be empty.')
+
+    if body['changed'] == "":
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'changed field cannot be empty.')
 
     if 'main' in body:
         if body['main'] == "":
@@ -60,7 +65,7 @@ def validatePost(req, resp, resource, params):
 
 
 def validatePut(req, resp, resource, params):
-    validatePost(req, resp, resource, params)
+    basicValidation(req, resp, resource, params)
 
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -100,7 +105,8 @@ class Relay:
                 "name": "alpha",
                 "main": True,
                 "uid": "1",
-                "status": "connected"
+                "status": "connected",
+                "changed" : "2000-01-01T00:00:00+00:00"
             },
             "2": {
                 "host address": "127.0.0.1",
@@ -108,7 +114,8 @@ class Relay:
                 "name": "beta",
                 "main": False,
                 "uid": "2",
-                "status": "connected"
+                "status": "connected",
+                "changed": "2000-01-01T00:00:00+00:00"
             }
         }
 
@@ -118,7 +125,7 @@ class Relay:
     For manual testing of the endpoint:
         http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
     """
-    @falcon.before(validatePost)
+    @falcon.before(basicValidation)
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
@@ -169,7 +176,8 @@ class Relay:
             "name": "alpha",
             "main": True,
             "uid": uid,
-            "status": "disconnected"
+            "status": "disconnected",
+            "changed": "2000-01-01T00:00:00+00:00"
         }
 
         resp.body = json.dumps(body, ensure_ascii=False)
