@@ -9,8 +9,6 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import ujson as json
-
 # ================================================== #
 #                 CONSTANTS & GLOBALS                #
 # ================================================== #
@@ -146,9 +144,14 @@ class Errors:
                 }
             ]
         """
-        errors = json.loads(data)
-        for error in errors:
+
+        for error in data['data']:
             self.errors.append(error)
+        """
+        errors = dict(JSON.parse(data))
+        for key, value in errors.items():
+            self.errors.append(value)
+        """
 
 # ================================================== #
 
@@ -228,9 +231,10 @@ class History:
             }
 
         """
-        history = json.loads(data)
-        for entry in history['data']:
-            self.history.append(entry)
+
+        history = dict(JSON.parse(data))
+        for key, value in history['data'].items():
+            self.history.append(value)
 
 # ================================================== #
 
@@ -280,9 +284,9 @@ class OTPBlobs:
                 }]
             }
         """
-        blobs = json.loads(data)
-        for blob in blobs['data']:
-            self.blobs.append(blob)
+        blobs = dict(JSON.parse(data))
+        for key, value in blobs['data'].items():
+            self.blobs.append(value)
 
 # ================================================== #
 
@@ -339,9 +343,9 @@ class Relays:
                 }
             }
         """
-        relays = json.loads(data)
-        for relay in relays:
-            self.relays.append(relay)
+        relays = dict(JSON.parse(data))
+        for key, value in relays.items():
+            self.relays.append(value)
 
 # ================================================== #
 #                       MAIN                         #
