@@ -1,8 +1,8 @@
 class DideringError(Exception):
     """
-    Base Class for bluepea exceptions
+    Base Class for didery exceptions
 
-    To use   raise BluepeaError("Error: message")
+    To use   raise DideringError("Error: message")
     """
 
 

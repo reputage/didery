@@ -202,3 +202,22 @@ def verify64u(signature, message, verkey):
     vk = key64uToKey(verkey)
     # msg = message.encode("utf-8")
     return verify(sig, message, vk)
+
+
+def extractDidParts(did, method="dad"):
+    """
+    Parses and returns keystr from did
+    raises ValueError if fails parsing
+    """
+    try:  # correct did format  pre:method:keystr
+        pre, meth, keystr = did.split(":")
+    except ValueError as ex:
+        raise ValueError("Malformed DID value")
+
+    if pre != "did":
+        raise ValueError("Invalid DID identifier")
+
+    if meth != method:
+        raise ValueError("Invalid DID method")
+
+    return keystr

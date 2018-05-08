@@ -1,3 +1,7 @@
+Background
+==========
+This project is based on the key management ideas from this white paper: [DAD Spec](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/DecentralizedAutonomicData.md)
+
 Requests
 ========
 
