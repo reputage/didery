@@ -92,7 +92,8 @@ API
 
 The API consists of several ReST endpoints grouped according to the type of data resource that is being manipulated by the API. Each resource has HTTP verbs that do the manipulation.
 
-/history  POST   [api](#add-rotation-history)             
+/history  POST   [api](#add-rotation-history)    
+/history/{did} POST [api](#rotation-event)           
 /history/{did} GET [api](#get-rotation-history)        
 /history GET [api](#get-all-rotation-histories)    
 
@@ -110,16 +111,16 @@ The API consists of several ReST endpoints grouped according to the type of data
 ## Key Rotation History
 This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.
 #### Add Rotation History
-The POST endpoint can be used for adding new rotation histories.  Each request should include the following fields:
+The POST endpoint can be used for adding new rotation histories.  There can be only one inception event per did.  All updates must be sent through the PUT endpoint.  Each request should have a Signature field in its header with the following format: signer=["signature"]. The signer tag contains the signature from the private key corresponding to the public key at position 0 in the signers field. Each request should also include the following fields:
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  *Required*  
 __changed__ - [string] date changed. Mitigates replay attacks *Required*     
-__signer__ - [integer] 0 based index into signers field *Required*    
+__signer__ - [integer] 0 based index into signers field. Must be 0 on POST requests *Required*    
 __signers__ - [list/array] list of all public keys. Must contain at least two keys. *Required*      
 
 
 #####Request
-http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
+http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=0 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=']"
 ```
 POST /history HTTP/1.1
 Accept: application/json, */*
@@ -129,17 +130,16 @@ Content-Length: 324
 Content-Type: application/json
 Host: localhost:8000
 User-Agent: HTTPie/0.9.9
+Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
     
 {
     "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
     "changed" : "2000-01-01T00:00:00+00:00",
-    "signer": 2,
+    "signer": 0,
     "signers": 
     [
         "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
     ]
 }
 ```
@@ -156,15 +156,74 @@ Server: Ioflo WSGI Server
     "history": {
         "changed": "2000-01-01T00:00:00+00:00",
         "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "signer": "2",
+        "signer": "0",
         "signers": [
             "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
         ]
     },
     "signatures": [
+        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
+    ]
+}
+```
+
+#### Rotation Event
+The PUT endpoint is used for validating and storing rotation events.  The resource must already exist or a 404 error will be returned. Previously used public keys in the rotation history cannot be changed only new pre-rotated keys can be added through this endpoint. Each request should have a Signature field in its header with the following format: signer=["signature"]; rotation=["signature"].  The signer tag should contain the signature of the old public/private key pair and the rotation tag should contain the signature of the new public/private key pair. Each request should also include the following fields:
+
+__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  *Required*  
+__changed__ - [string] date changed. Mitigates replay attacks *Required*     
+__signer__ - [integer] 0 based index into signers field. PUT requests signer field will always be 1 or greater *Required*    
+__signers__ - [list/array] list of all public keys. Must contain at least two keys. *Required*      
+
+
+#####Request
+http PUT localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=1 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=']"
+```
+PUT /history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 324
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="; rotation="o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+    "changed" : "2000-01-01T00:00:00+00:00",
+    "signer": 1,
+    "signers": 
+    [
+        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+    ]
+}
+```
+
+#####Response
+```
+HTTP/1.1 200 OK
+Content-Length: 535
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:03:01 GMT
+Server: Ioflo WSGI Server
+
+{
+    "history": {
+        "changed": "2000-01-01T00:00:00+00:00",
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "signer": "1",
+        "signers": [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+        ]
+    },
+    "signatures":
+    [
         "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
         "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
     ]
