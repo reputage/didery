@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-05-08 03:43:26
+// Transcrypt'ed from Python, 2018-05-09 04:12:41
 function main () {
     var __symbols__ = ['__py3.6__', '__esv6__'];
     var __all__ = {};
@@ -2222,73 +2222,11 @@ function main () {
     __all__.__setslice__ = __setslice__;
 	__nest__ (
 		__all__,
-		'dashboard', {
+		'components.fields', {
 			__all__: {
 				__inited__: false,
 				__init__: function (__all__) {
-					var server = {};
-					var __name__ = 'dashboard';
-					__nest__ (server, '', __init__ (__world__.server));
-					var Tab = __class__ ('Tab', [object], {
-						__module__: __name__,
-						Name: '',
-						Icon: '',
-						DataTab: '',
-						Active: false,
-						get __init__ () {return __get__ (this, function (self) {
-							self._menu_attrs = dict ({'data-tab': self.DataTab});
-							self._tab_attrs = dict ({'data-tab': self.DataTab});
-							self._menu = 'a.item';
-							self._tab = 'div.ui.bottom.attached.tab.segment';
-							if (self.Active) {
-								self._menu += '.active';
-								self._tab += '.active';
-							}
-						});},
-						get menu_item () {return __get__ (this, function (self) {
-							return m (self._menu, self._menu_attrs, self.Name);
-						});},
-						get tab_item () {return __get__ (this, function (self) {
-							return m (self._tab, self._tab_attrs, self.main_view ());
-						});},
-						get main_view () {return __get__ (this, function (self) {
-							return m ('div', 'hello ' + self.Name);
-						});}
-					});
-					var TabledTab = __class__ ('TabledTab', [Tab], {
-						__module__: __name__,
-						get __init__ () {return __get__ (this, function (self) {
-							__super__ (TabledTab, '__init__') (self);
-							self.table = null;
-							self.setup_table ();
-							self.copiedDetails = '';
-							self._detailsId = self.DataTab + 'DetailsCodeBlock';
-							self._copiedId = self.DataTab + 'CopiedCodeBlock';
-							self._copyButtonId = self.DataTab + 'CopyButton';
-							self._clearButtonId = self.DataTab + 'ClearButton';
-						});},
-						get setup_table () {return __get__ (this, function (self) {
-							self.table = Table (list ([]));
-						});},
-						get _copyDetails () {return __get__ (this, function (self) {
-							self.copiedDetails = self.table.detailSelected;
-						});},
-						get _getRows () {return __get__ (this, function (self) {
-							return jQuery ("[data-tab='{0}'].tab table > tbody > tr".format (self.DataTab));
-						});},
-						get _getLabel () {return __get__ (this, function (self) {
-							return jQuery (".menu a[data-tab='{0}'] .ui.label".format (self.DataTab));
-						});},
-						get _clearCopy () {return __get__ (this, function (self) {
-							self.copiedDetails = '';
-						});},
-						get menu_item () {return __get__ (this, function (self) {
-							return m (self._menu, self._menu_attrs, m ('div.menu-item-text', self.Name), m (self.Icon), m ('div.ui.label.small', '{0}/{1}'.format (self.table.shown, self.table.total)));
-						});},
-						get main_view () {return __get__ (this, function (self) {
-							return m ('div', m ('div.table-container', m (self.table.view)), m ('div.ui.hidden.divider'), m ('div.ui.two.cards', dict ({'style': 'height: 45%;'}), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Details'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._copyDetails, 'id': self._copyButtonId}), 'Copy'))), m ('pre.content.code-block', dict ({'id': self._detailsId}), self.table.detailSelected)), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Copied'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._clearCopy, 'id': self._clearButtonId}), 'Clear'))), m ('pre.content.code-block', dict ({'id': self._copiedId}), self.copiedDetails))));
-						});}
-					});
+					var __name__ = 'components.fields';
 					var Field = __class__ ('Field', [object], {
 						__module__: __name__,
 						Title: null,
@@ -2377,6 +2315,123 @@ function main () {
 						Header: 'did:dad:',
 						Title: 'DID'
 					});
+					__pragma__ ('<all>')
+						__all__.DIDField = DIDField;
+						__all__.DateField = DateField;
+						__all__.EpochField = EpochField;
+						__all__.Field = Field;
+						__all__.FillField = FillField;
+						__all__.IDField = IDField;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'components.tab', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'components.tab';
+					var Tab = __class__ ('Tab', [object], {
+						__module__: __name__,
+						Name: '',
+						Icon: '',
+						DataTab: '',
+						Active: false,
+						get __init__ () {return __get__ (this, function (self) {
+							self._menu_attrs = dict ({'data-tab': self.DataTab});
+							self._tab_attrs = dict ({'data-tab': self.DataTab});
+							self._menu = 'a.item';
+							self._tab = 'div.ui.bottom.attached.tab.segment';
+							if (self.Active) {
+								self._menu += '.active';
+								self._tab += '.active';
+							}
+						});},
+						get menu_item () {return __get__ (this, function (self) {
+							return m (self._menu, self._menu_attrs, self.Name);
+						});},
+						get tab_item () {return __get__ (this, function (self) {
+							return m (self._tab, self._tab_attrs, self.main_view ());
+						});},
+						get main_view () {return __get__ (this, function (self) {
+							return m ('div', 'hello ' + self.Name);
+						});}
+					});
+					__pragma__ ('<all>')
+						__all__.Tab = Tab;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'components.tabledtab', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'components.tabledtab';
+					var tab =  __init__ (__world__.components.tab);
+					var TabledTab = __class__ ('TabledTab', [tab.Tab], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							__super__ (TabledTab, '__init__') (self);
+							self.table = null;
+							self.setup_table ();
+							self.copiedDetails = '';
+							self._detailsId = self.DataTab + 'DetailsCodeBlock';
+							self._copiedId = self.DataTab + 'CopiedCodeBlock';
+							self._copyButtonId = self.DataTab + 'CopyButton';
+							self._clearButtonId = self.DataTab + 'ClearButton';
+						});},
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = Table (list ([]));
+						});},
+						get _copyDetails () {return __get__ (this, function (self) {
+							self.copiedDetails = self.table.detailSelected;
+						});},
+						get _getRows () {return __get__ (this, function (self) {
+							return jQuery ("[data-tab='{0}'].tab table > tbody > tr".format (self.DataTab));
+						});},
+						get _getLabel () {return __get__ (this, function (self) {
+							return jQuery (".menu a[data-tab='{0}'] .ui.label".format (self.DataTab));
+						});},
+						get _clearCopy () {return __get__ (this, function (self) {
+							self.copiedDetails = '';
+						});},
+						get menu_item () {return __get__ (this, function (self) {
+							return m (self._menu, self._menu_attrs, m ('div.menu-item-text', self.Name), m (self.Icon), m ('div.ui.label.small', '{0}/{1}'.format (self.table.shown, self.table.total)));
+						});},
+						get main_view () {return __get__ (this, function (self) {
+							return m ('div', m ('div.table-container', m (self.table.view)), m ('div.ui.hidden.divider'), m ('div.ui.two.cards', dict ({'style': 'height: 45%;'}), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Details'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._copyDetails, 'id': self._copyButtonId}), 'Copy'))), m ('pre.content.code-block', dict ({'id': self._detailsId}), self.table.detailSelected)), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Copied'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._clearCopy, 'id': self._clearButtonId}), 'Clear'))), m ('pre.content.code-block', dict ({'id': self._copiedId}), self.copiedDetails))));
+						});}
+					});
+					__pragma__ ('<use>' +
+						'components.tab' +
+					'</use>')
+					__pragma__ ('<all>')
+						__all__.TabledTab = TabledTab;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'components.tables', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var server = {};
+					var __name__ = 'components.tables';
+					__nest__ (server, '', __init__ (__world__.server));
+					var field =  __init__ (__world__.components.fields);
 					var Table = __class__ ('Table', [object], {
 						__module__: __name__,
 						no_results_text: 'No results found.',
@@ -2572,7 +2627,7 @@ function main () {
 					var ErrorsTable = __class__ ('ErrorsTable', [Table], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							var fields = list ([FillField ('Title'), FillField ('Message'), DateField ('Time')]);
+							var fields = list ([field.FillField ('Title'), field.FillField ('Message'), field.DateField ('Time')]);
 							__super__ (ErrorsTable, '__init__') (self, fields);
 						});},
 						get refresh () {return __get__ (this, function (self) {
@@ -2594,20 +2649,62 @@ function main () {
 							}
 						});}
 					});
-					var Errors = __class__ ('Errors', [TabledTab], {
+					__pragma__ ('<use>' +
+						'components.fields' +
+						'server' +
+					'</use>')
+					__pragma__ ('<all>')
+						__all__.ErrorsTable = ErrorsTable;
+						__all__.Table = Table;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'components.tabs', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'components.tabs';
+					var tabledtab =  __init__ (__world__.components.tabledtab);
+					var tables =  __init__ (__world__.components.tables);
+					var Errors = __class__ ('Errors', [tabledtab.TabledTab], {
 						__module__: __name__,
 						Name: 'Errors',
-						Icon: 'i.chart.bar.icon',
+						Icon: 'i.exclamation.circle.icon',
 						DataTab: 'errors',
 						Active: true,
 						get setup_table () {return __get__ (this, function (self) {
-							self.table = ErrorsTable ();
+							self.table = tables.ErrorsTable ();
 						});}
 					});
-					var Tabs = __class__ ('Tabs', [object], {
+					__pragma__ ('<use>' +
+						'components.tabledtab' +
+						'components.tables' +
+					'</use>')
+					__pragma__ ('<all>')
+						__all__.Errors = Errors;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
+		'dashboard', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'dashboard';
+					var tabs =  __init__ (__world__.components.tabs);
+					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([Errors ()]);
+							self.tabs = list ([tabs.Errors ()]);
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -2649,25 +2746,14 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', menu_items, m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Relay Servers'), m ('i.server.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Error Logs'), m ('i.exclamation.circle.icon')), m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Relay Servers'), m ('i.server.icon')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +
-						'server' +
+						'components.tabs' +
 					'</use>')
 					__pragma__ ('<all>')
-						__all__.DIDField = DIDField;
-						__all__.DateField = DateField;
-						__all__.EpochField = EpochField;
-						__all__.Errors = Errors;
-						__all__.ErrorsTable = ErrorsTable;
-						__all__.Field = Field;
-						__all__.FillField = FillField;
-						__all__.IDField = IDField;
-						__all__.Tab = Tab;
-						__all__.Table = Table;
-						__all__.TabledTab = TabledTab;
-						__all__.Tabs = Tabs;
+						__all__.Manager = Manager;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
 				}
@@ -2686,7 +2772,7 @@ function main () {
 					var Router = __class__ ('Router', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = dashboard.Tabs ();
+							self.tabs = dashboard.Manager ();
 						});},
 						get route () {return __get__ (this, function (self, root) {
 							if (typeof root == 'undefined' || (root != null && root .hasOwnProperty ("__kwargtrans__"))) {;

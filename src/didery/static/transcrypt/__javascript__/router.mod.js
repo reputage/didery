@@ -10,7 +10,7 @@
 					var Router = __class__ ('Router', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = dashboard.Tabs ();
+							self.tabs = dashboard.Manager ();
 						});},
 						get route () {return __get__ (this, function (self, root) {
 							if (typeof root == 'undefined' || (root != null && root .hasOwnProperty ("__kwargtrans__"))) {;
