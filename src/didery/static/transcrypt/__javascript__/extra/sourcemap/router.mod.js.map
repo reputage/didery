@@ -1,0 +1,11 @@
+{
+	"version": 3,
+	"file": "/Users/bradyhammond/Documents/Xaltry/didery/src/didery/static/transcrypt/__javascript__/router.mod.js",
+	"sources": [
+		"/Users/bradyhammond/Documents/Xaltry/didery/src/didery/static/transcrypt/router.py"
+	],
+	"sourcesContent": [
+		"# ================================================== #\n#                      ROUTER                        #\n# ================================================== #\n# Author: Brady Hammond                              #\n# Created: 04/26/2018                                #\n# Last Edited:                                       #\n# Last Edited By:                                    #\n# ================================================== #\n#                      IMPORTS                       #\n# ================================================== #\n\nimport dashboard\n\n# ================================================== #\n#                  CLASS DEFINITIONS                 #\n# ================================================== #\n\nclass Router:\n    \"\"\"\n    Class for routing between urls and pages.\n    \"\"\"\n    def __init__(self):\n        \"\"\"\n        Initialize Router object. Load navigation tabs.\n        \"\"\"\n        self.tabs = dashboard.Manager()\n\n    # ============================================== #\n\n    def route(self, root=None):\n        \"\"\"\n        Sets up project routes.\n\n            Parameters:\n            root - DOM for root page\n        \"\"\"\n        if root is None:\n            root = document.body\n        m.route(root, \"/dashboard\",\n            {\n                \"/dashboard\": {\"render\": self.tabs.view}\n            })\n\n# ================================================== #\n#                        EOF                         #\n# ================================================== #"
+	],
+	"mappings": "AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAsCA;AAtCA;AAWA;AAMA;AAAA;AAIA;AAIA;AAAA;AAIA;AAAA;AAAA;AAAA;AAOA;AACA;AAAA;AACA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA"
+}
