@@ -2,8 +2,10 @@ from didery.controllers import history as histories
 from didery.controllers import otp_blob as blobs
 from didery.controllers import relays
 from didery.controllers import errors
+from didery.controllers import static
 
-
+STATIC_BASE_PATH = "/static"
+DEFAULT_STATIC_BASE_PATH = "/"
 HISTORY_BASE_PATH = "/history"
 BLOB_BASE_PATH = "/blob"
 RELAY_BASE_PATH = "/relay"
@@ -17,6 +19,10 @@ def loadEndPoints(app, store):
     :param store: Store
         ioflo datastore
     """
+
+    sink = static.StaticSink()
+    app.add_sink(sink, prefix=DEFAULT_STATIC_BASE_PATH)
+
     history = histories.History(store)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
