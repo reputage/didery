@@ -1,0 +1,25 @@
+{
+  "name": "didery",
+  "version": "1.0.0",
+  "description": "Administrator interface for key management server.",
+  "main": "main.js",
+  "scripts": {
+    "start": "webpack src/index.js --output-path='bin' --output-filename='app.js' -d --watch",
+    "build": "webpack src/index.js --output-path='bin' --output-filename='app.js' -p",
+    "test": "ospec"
+  },
+  "keywords": [],
+  "author": "Brady Hammond & Nick Telfer",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "mithril": "^1.1.6",
+    "semantic-ui": "^2.3.1"
+  },
+  "devDependencies": {
+    "budo": "^11.2.0",
+    "gulp": "^3.9.1",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.15"
+  }
+}
