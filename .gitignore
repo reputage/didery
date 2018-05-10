@@ -621,4 +621,5 @@ Temporary Items
 
 src/didery/static/bin
 src/didery/static/dist
-
+didery.egg-info/
+.pytest_cache/
