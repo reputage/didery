@@ -96,7 +96,7 @@ setup(
     license='Apache2',
     description='DIDery Project Backend',
     long_description="Redundant persistent backup of key rotation events and otp encrypted private keys.",
-    author='Nicholas Telfer',
+    author='Nicholas Telfer, Brady Hammond',
     author_email='nick.telfer@consensys.net',
     url='https://github.com/reputage/didery.git',
     packages=find_packages('src'),
