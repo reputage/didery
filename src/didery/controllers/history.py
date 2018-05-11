@@ -1,4 +1,5 @@
 import falcon
+import arrow
 try:
     import simplejson as json
 except ImportError:
@@ -156,6 +157,13 @@ def validatePut(req, resp, resource, params):
                                'Malformed "changed" Field',
                                'changed field cannot be empty.')
 
+    try:
+        dt = arrow.get(body["changed"])
+    except arrow.parser.ParserError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed "changed" Field',
+                               'ISO datetime could not be parsed.')
+
     if len(body['signers']) < 3:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Invalid Request',
@@ -302,7 +310,7 @@ class History:
         result_json = req.body
         sigs = req.signatures
 
-        # TODO uncomment code below
+        # TODO uncomment code below once lmdb is implemented
         # if result_json['id'] in tempDB:
         #     raise falcon.HTTPError(falcon.HTTP_400,
         #                            'Resource Already Exists',
@@ -330,12 +338,38 @@ class History:
                 :param resp: Response object
                 :param did: decentralized identifier
                 """
-        # TODO Check resource already exists
-        # TODO validate that previously rotated keys are not changed with this request
-        # TODO make sure time in changed field is greater than existing changed field
-
         result_json = req.body
         sigs = req.signatures
+        blob = tempDB[did]
+
+        if blob is None:
+            raise falcon.HTTPError(falcon.HTTP_404,
+                                   'Resource Does Not Exists',
+                                   'Resource with did "{}" does not exist. Use POST request.'.format(result_json['id']))
+
+        # TODO validate that previously rotated keys are not changed with this request
+        current = blob['history']['signers']
+        update = result_json['signers']
+
+        if len(update) <= len(current):
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Malformed "signers" Field',
+                                   'Signers field missing previously verified keys.')
+
+        for key, val in enumerate(current):
+            if update[key] != val:
+                raise falcon.HTTPError(falcon.HTTP_400,
+                                       'Malformed "signers" Field',
+                                       'Signers field missing previously verified keys.')
+
+        # TODO make sure time in changed field is greater than existing changed field
+        cdt = arrow.get(blob['history']['changed'])
+        udt = arrow.get(result_json['changed'])
+
+        if cdt <= udt:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Invalid "changed" Field',
+                                   '"changed" field not later than previous update.')
 
         response_json = {
             "history": result_json,
