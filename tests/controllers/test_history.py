@@ -656,7 +656,7 @@ def testPutValidation(client):
            b'    "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="' \
            b']' \
            b'}'
-    print("TEST__________________________________________________")
+
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
     # Test that signer field is an int
@@ -749,7 +749,7 @@ def testPutValidation(client):
     verifyRequest(client.simulate_put, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
 
-def testGet(client):
+def testGetAll(client):
     response = client.simulate_get(HISTORY_BASE_PATH)
     exp_result = b'{"data": [' \
                  b'{"history": {' \
@@ -770,7 +770,43 @@ def testGet(client):
                  b']' \
                  b'}'
 
-    print(response.content)
+    assert response.status == falcon.HTTP_200
+    assert response.content == exp_result
+
+
+def testGetOne(client):
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+
+    # Test basic valid Get One
+    response = client.simulate_get(url)
+
+    exp_result = b'{"history": {' \
+                 b'"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"changed": "2000-01-01T00:00:01+00:00", ' \
+                 b'"signer": 1, ' \
+                 b'"signers": [' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="' \
+                 b']' \
+                 b'}, ' \
+                 b'"signatures": {' \
+                 b'"signer": "nsf4Dhz_R44dZsbggmXFH0tcaviXqbuIYRHZeK4vQt6W5hTiyOrI9H9ARyGm2oTgkBzcm7-cx7glgLjDwgfeCw==", ' \
+                 b'"rotation": "nsf4Dhz_R44dZsbggmXFH0tcaviXqbuIYRHZeK4vQt6W5hTiyOrI9H9ARyGm2oTgkBzcm7-cx7glgLjDwgfeCw=="' \
+                 b'}' \
+                 b'}'
 
     assert response.status == falcon.HTTP_200
+    assert response.content == exp_result
+
+    # Test GET with non existent resource
+    response = client.simulate_get("{0}/{1}".format(
+        HISTORY_BASE_PATH,
+        "did:dad:COf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
+    )
+
+    exp_result = b'{"title": "Resource Does Not Exist", "description": "Could not find resource with ' \
+                 b'did \\"did:dad:COf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=\\"."}'
+
+    assert response.status == falcon.HTTP_404
     assert response.content == exp_result

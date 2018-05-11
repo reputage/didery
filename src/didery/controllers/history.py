@@ -232,6 +232,10 @@ class History:
             URL parameter specifying a rotation history
         """
         if did is not None:
+            if did not in tempDB:
+                raise falcon.HTTPError(falcon.HTTP_404,
+                                       'Resource Does Not Exist',
+                                       'Could not find resource with did "{}".'.format(did))
             body = tempDB[did]
         else:
             body = {
@@ -288,7 +292,7 @@ class History:
 
         if blob is None:
             raise falcon.HTTPError(falcon.HTTP_404,
-                                   'Resource Does Not Exists',
+                                   'Resource Does Not Exist',
                                    'Resource with did "{}" does not exist. Use POST request.'.format(result_json['id']))
 
         # TODO make sure time in changed field is greater than existing changed field
