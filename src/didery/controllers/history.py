@@ -30,13 +30,13 @@ def validatePost(req, resp, resource, params):
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
-                               'Invalid or missing Signature header.')
+                               'Empty Signature header.')
 
     sig = sigs.get('signer')  # str not bytes
     if not sig:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
-                               'Signature header missing signature for "signer".')
+                               'Signature header missing "signer" tag and signature.')
 
     try:
         if not isinstance(body['signers'], list):
@@ -88,7 +88,7 @@ def validatePost(req, resp, resource, params):
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
-                               'Could not validate the request body. {}.'.format(ex))
+                               'Could not validate the request body and signature. {}.'.format(ex))
 
     # Prevent bad actors from trying to commandeer a DID before its owner posts it
     if didkey != body['signers'][0]:

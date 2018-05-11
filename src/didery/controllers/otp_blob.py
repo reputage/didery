@@ -5,6 +5,7 @@ except ImportError:
     import json
 
 from ..help import helping
+from .. import didering
 
 
 def basicValidation(req, resp, resource, params):
@@ -13,11 +14,25 @@ def basicValidation(req, resp, resource, params):
         body of request for processing.
         :param req: Request object
     """
-    helping.parseReqBody(req)
+    raw = helping.parseReqBody(req)
     body = req.body
 
     required = ["id", "blob", "changed"]
     helping.validateRequiredFields(required, body)
+
+    signature = req.get_header("Signature", required=True)
+    sigs = helping.parseSignatureHeader(signature)
+
+    if len(sigs) == 0:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Empty Signature header.')
+
+    sig = sigs.get('signer')  # str not bytes
+    if not sig:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing "signer" tag and signature.')
 
     if body['id'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -34,10 +49,37 @@ def basicValidation(req, resp, resource, params):
                                'Malformed Field',
                                'changed field cannot be empty.')
 
+    try:
+        didKey = helping.extractDidParts(body['id'])
+    except ValueError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Invalid DID',
+                               str(ex))
+
+    return raw, sig, didKey
+
+
+def validatePost(req, resp, resource, params):
+    """
+    Validate incoming POST requests.
+    :param req: Request object
+    :param resp: Response object
+    :param resource: OtpBlob object
+    :param params: dict of url params
+    """
+    raw, sig, didKey = basicValidation(req, resp, resource, params)
+
+    try:
+        helping.validateSignedResource(sig, raw, didKey)
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Could not validate the request body and signature. {}.'.format(ex))
+
 
 def validatePut(req, resp, resource, params):
     """
-    Validate incoming PUT request.
+    Validate incoming PUT requests.
     :param req: Request object
     :param resp: Response object
     :param resource: OtpBlob object
@@ -49,13 +91,20 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'DID value missing from url.')
 
-    basicValidation(req, resp, resource, params)
+    raw, sig, didKey = basicValidation(req, resp, resource, params)
 
     # Prevent did data from being clobbered
     if params['did'] != req.body['id']:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Malformed "id" Field',
                                'Url did must match id field did.')
+
+    try:
+        helping.validateSignedResource(sig, raw, didKey)
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Could not validate the request body and signature. {}.'.format(ex))
 
 
 class OtpBlob:
@@ -105,7 +154,7 @@ class OtpBlob:
         For manual testing of the endpoint:
         http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
     """
-    @falcon.before(basicValidation)
+    @falcon.before(validatePost)
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.

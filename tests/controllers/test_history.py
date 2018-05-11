@@ -13,28 +13,14 @@ except ImportError:
     import json
 
 from didery.routing import *
-from didery.help import helping
+from didery.help import helping as h
 
 
 SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
 VK = b"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
 DID = "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
 
-
-def verifyRequest(reqFunc, url, body, headers=None, exp_result=None, exp_status=None):
-    if headers is None:
-        headers = {
-            "Signature": 'signer="{0}"; rotation="{1}"'.format(helping.signResource(body, SK),
-                                                               helping.signResource(body, SK))
-        }
-
-    response = reqFunc(url, body=body, headers=headers)
-
-    print("status: {0},  content: {1}".format(response.status, response.content))
-    if exp_result is not None:
-        assert response.content == exp_result
-    if exp_status is not None:
-        assert response.status == exp_status
+verifyRequest = h.verifyRequest
 
 
 def testValidPost(client):
@@ -71,8 +57,7 @@ def testPostSignValidation(client):
            b']' \
            b'}'
 
-    exp_result = b'{"title": "Validation Error", "description": "Invalid or ' \
-                 b'missing Signature header."}'
+    exp_result = b'{"title": "Validation Error", "description": "Empty Signature header."}'
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
     assert response.status == falcon.HTTP_401
@@ -87,11 +72,11 @@ def testPostSignValidation(client):
 
     # Test missing signer tag in signature header
     headers = {
-        "Signature": 'test="' + helping.signResource(body, SK) + '"'
+        "Signature": 'test="' + h.signResource(body, SK) + '"'
     }
 
     exp_result = b'{"title": "Validation Error", "description": "' \
-                 b'Signature header missing signature for \\"signer\\"."}'
+                 b'Signature header missing \\"signer\\" tag and signature."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers, exp_result, falcon.HTTP_401)
 
@@ -108,7 +93,7 @@ def testPostSignValidation(client):
            b']' \
            b'}'
 
-    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request body. ' \
+    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request body and signature. ' \
                  b'Unverifiable signature."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
@@ -169,7 +154,7 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test valid  did format in id field
+    # Test valid did format in id field
     body = b'{"id": "did:fake:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=", ' \
            b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 2, ' \
@@ -439,7 +424,7 @@ def testPutSignValidation(client):
 
     # Test partial signature header
     headers = {
-        "Signature": 'signer="' + helping.signResource(body, SK) + '"'
+        "Signature": 'signer="' + h.signResource(body, SK) + '"'
     }
 
     exp_result = b'{"title": "Validation Error", "description": "' \
@@ -448,7 +433,7 @@ def testPutSignValidation(client):
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
     headers = {
-        "Signature": 'rotation="' + helping.signResource(body, SK) + '"'
+        "Signature": 'rotation="' + h.signResource(body, SK) + '"'
     }
 
     exp_result = b'{"title": "Validation Error", "description": "' \
@@ -456,7 +441,7 @@ def testPutSignValidation(client):
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
-    # Test invalid signatures
+    # Test invalid signer signature
     body = b'{"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
            b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 1, ' \
@@ -474,6 +459,7 @@ def testPutSignValidation(client):
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
+    # Test invalid rotation signature
     body = b'{"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
            b'"changed": "2000-01-01T00:00:00+00:00", ' \
            b'"signer": 1, ' \
