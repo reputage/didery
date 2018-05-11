@@ -26,6 +26,7 @@ def validatePost(req, resp, resource, params):
 
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
+    req.signatures = sigs
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -111,6 +112,7 @@ def validatePut(req, resp, resource, params):
 
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
+    req.signatures = sigs
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -298,15 +300,13 @@ class History:
         :param resp: Response object
         """
         result_json = req.body
+        sigs = req.signatures
 
         # TODO uncomment code below
         # if result_json['id'] in tempDB:
         #     raise falcon.HTTPError(falcon.HTTP_400,
         #                            'Resource Already Exists',
         #                            'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
-
-        signature = req.get_header("Signature", required=True)
-        sigs = helping.parseSignatureHeader(signature)
 
         response_json = {
             "history": result_json,
@@ -330,14 +330,12 @@ class History:
                 :param resp: Response object
                 :param did: decentralized identifier
                 """
-
+        # TODO Check resource already exists
         # TODO validate that previously rotated keys are not changed with this request
         # TODO make sure time in changed field is greater than existing changed field
 
         result_json = req.body
-
-        signature = req.get_header("Signature", required=True)
-        sigs = helping.parseSignatureHeader(signature)
+        sigs = req.signatures
 
         response_json = {
             "history": result_json,
