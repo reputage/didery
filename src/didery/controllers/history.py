@@ -117,14 +117,14 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'Invalid or missing Signature header.')
 
-    sig = sigs.get('signer')  # str not bytes
-    if not sig:
+    signer = sigs.get('signer')  # str not bytes
+    if not signer:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
                                'Signature header missing signature for "signer".')
 
-    sig = sigs.get('rotation')  # str not bytes
-    if not sig:
+    rotation = sigs.get('rotation')  # str not bytes
+    if not rotation:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
                                'Signature header missing signature for "rotation".')
@@ -186,14 +186,14 @@ def validatePut(req, resp, resource, params):
 
     index = body['signer']
     try:
-        helping.validateSignedResource(sig, raw, body['signers'][index])
+        helping.validateSignedResource(signer, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
     try:
-        helping.validateSignedResource(sig, raw, body['signers'][index-1])
+        helping.validateSignedResource(rotation, raw, body['signers'][index-1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
