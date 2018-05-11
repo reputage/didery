@@ -232,66 +232,10 @@ class History:
             URL parameter specifying a rotation history
         """
         if did is not None:
-            body = {
-                "history":
-                {
-                    "id": did,
-                    "changed" : "2000-01-01T00:00:00+00:00",
-                    "signer": 2,
-                    "signers":
-                    [
-                        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
-                    ]
-                },
-                "signatures":
-                [
-                    "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-                ]
-            }
+            body = tempDB[did]
         else:
             body = {
-                "data": [{
-                    "history":
-                    {
-                        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                        "changed" : "2000-01-01T00:00:00+00:00",
-                        "signer": 2,
-                        "signers":
-                        [
-                            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
-                        ]
-                    },
-                    "signatures":
-                    [
-                        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-                    ]
-                }, {
-                    "history":
-                    {
-                        "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                        "changed" : "2000-01-01T00:00:00+00:00",
-                        "signer": 1,
-                        "signers":
-                        [
-                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
-                        ]
-                    },
-                    "signatures":
-                    [
-                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
-                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-                    ]
-                }]
+                "data": list(tempDB.values())
             }
 
         resp.body = json.dumps(body, ensure_ascii=False)
@@ -347,6 +291,15 @@ class History:
                                    'Resource Does Not Exists',
                                    'Resource with did "{}" does not exist. Use POST request.'.format(result_json['id']))
 
+        # TODO make sure time in changed field is greater than existing changed field
+        cdt = arrow.get(blob['history']['changed'])
+        udt = arrow.get(result_json['changed'])
+
+        if cdt >= udt:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Invalid "changed" Field',
+                                   '"changed" field not later than previous update.')
+
         # TODO validate that previously rotated keys are not changed with this request
         current = blob['history']['signers']
         update = result_json['signers']
@@ -361,15 +314,6 @@ class History:
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Malformed "signers" Field',
                                        'Signers field missing previously verified keys.')
-
-        # TODO make sure time in changed field is greater than existing changed field
-        cdt = arrow.get(blob['history']['changed'])
-        udt = arrow.get(result_json['changed'])
-
-        if cdt <= udt:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Invalid "changed" Field',
-                                   '"changed" field not later than previous update.')
 
         response_json = {
             "history": result_json,

@@ -647,7 +647,7 @@ def testPutValidation(client):
 
     # Test that signers field has three keys
     body = b'{"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
-           b'"changed": "2000-01-01T00:00:00+00:00", ' \
+           b'"changed": "2000-01-01T00:00:01+00:00", ' \
            b'"signer": 1, ' \
            b'"signers": ' \
            b'[' \
@@ -656,6 +656,7 @@ def testPutValidation(client):
            b'    "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="' \
            b']' \
            b'}'
+    print("TEST__________________________________________________")
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
     # Test that signer field is an int
@@ -746,3 +747,30 @@ def testPutValidation(client):
                  b'"DID value missing from url."}'
 
     verifyRequest(client.simulate_put, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+
+
+def testGet(client):
+    response = client.simulate_get(HISTORY_BASE_PATH)
+    exp_result = b'{"data": [' \
+                 b'{"history": {' \
+                 b'"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"changed": "2000-01-01T00:00:01+00:00", ' \
+                 b'"signer": 1, ' \
+                 b'"signers": [' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
+                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="' \
+                 b']' \
+                 b'}, ' \
+                 b'"signatures": {' \
+                 b'"signer": "nsf4Dhz_R44dZsbggmXFH0tcaviXqbuIYRHZeK4vQt6W5hTiyOrI9H9ARyGm2oTgkBzcm7-cx7glgLjDwgfeCw==", ' \
+                 b'"rotation": "nsf4Dhz_R44dZsbggmXFH0tcaviXqbuIYRHZeK4vQt6W5hTiyOrI9H9ARyGm2oTgkBzcm7-cx7glgLjDwgfeCw=="' \
+                 b'}' \
+                 b'}' \
+                 b']' \
+                 b'}'
+
+    print(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert response.content == exp_result
