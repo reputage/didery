@@ -332,5 +332,60 @@ class ErrorsTable(Table):
             return obj.time
 
 # ================================================== #
+
+class RelaysTable(Table):
+    """
+    Class for relays table.
+    """
+    def __init__(self):
+        """
+        Initializes RelaysTable object. Sets up relays table fields.
+        """
+        fields = [
+            field.FillField("Host"),
+            field.FillField("Port"),
+            field.FillField("Name"),
+            field.FillField("Main"),
+            field.IDField("UID"),
+            field.FillField("Status")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        relays = server.manager.relays
+        return relays.refreshRelays().then(lambda: self._setData(relays.relays))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+        if field.name == "host":
+            return obj["host address"]
+        elif field.name == "port":
+            return obj["port"]
+        elif field.name == "name":
+            return obj["name"]
+        elif field.name == "main":
+            return obj["main"]
+        elif field.name == "uid":
+            return obj["uid"]
+        elif field.name == "status":
+            return obj["status"]
+
+# ================================================== #
+
+# ================================================== #
 #                        EOF                         #
 # ================================================== #

@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-05-09 04:12:41
+// Transcrypt'ed from Python, 2018-05-11 23:16:01
 function main () {
     var __symbols__ = ['__py3.6__', '__esv6__'];
     var __all__ = {};
@@ -2649,12 +2649,47 @@ function main () {
 							}
 						});}
 					});
+					var RelaysTable = __class__ ('RelaysTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.FillField ('Host'), field.FillField ('Port'), field.FillField ('Name'), field.FillField ('Main'), field.IDField ('UID'), field.FillField ('Status')]);
+							__super__ (RelaysTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var relays = server.manager.relays;
+							return relays.refreshRelays ().then ((function __lambda__ () {
+								return self._setData (relays.relays);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'host') {
+								return obj ['host address'];
+							}
+							else if (field.py_name == 'port') {
+								return obj ['port'];
+							}
+							else if (field.py_name == 'name') {
+								return obj ['name'];
+							}
+							else if (field.py_name == 'main') {
+								return obj ['main'];
+							}
+							else if (field.py_name == 'uid') {
+								return obj ['uid'];
+							}
+							else if (field.py_name == 'status') {
+								return obj ['status'];
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
 					'</use>')
 					__pragma__ ('<all>')
 						__all__.ErrorsTable = ErrorsTable;
+						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
@@ -2681,12 +2716,23 @@ function main () {
 							self.table = tables.ErrorsTable ();
 						});}
 					});
+					var Relays = __class__ ('Relays', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Relays',
+						Icon: 'i.server.icon',
+						DataTab: 'relays',
+						Active: false,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.RelaysTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
 					'</use>')
 					__pragma__ ('<all>')
 						__all__.Errors = Errors;
+						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
 				}
@@ -2704,7 +2750,7 @@ function main () {
 					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([tabs.Errors ()]);
+							self.tabs = list ([tabs.Relays (), tabs.Errors ()]);
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -2746,7 +2792,7 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon')), m ('a.item.tab', m ('span.menu-item-text', 'Relay Servers'), m ('i.server.icon')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +
@@ -2929,9 +2975,8 @@ function main () {
 							return request ('/history').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var history = dict (JSON.parse (data));
-							for (var [key, value] of history ['data'].py_items ()) {
-								self.history.append (value);
+							for (var history of data ['data']) {
+								self.history.append (history);
 							}
 						});}
 					});
@@ -2947,9 +2992,8 @@ function main () {
 							return request ('/relay').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var blobs = dict (JSON.parse (data));
-							for (var [key, value] of blobs ['data'].py_items ()) {
-								self.blobs.append (value);
+							for (var blob of data ['data']) {
+								self.blobs.append (blob);
 							}
 						});}
 					});
@@ -2965,9 +3009,8 @@ function main () {
 							return request ('/relay').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var relays = dict (JSON.parse (data));
-							for (var [key, value] of relays.py_items ()) {
-								self.relays.append (value);
+							for (var relay of dict (data).py_items ()) {
+								self.relays.append (relay [1]);
 							}
 						});}
 					});

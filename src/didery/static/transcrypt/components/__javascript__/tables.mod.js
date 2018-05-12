@@ -225,12 +225,47 @@
 							}
 						});}
 					});
+					var RelaysTable = __class__ ('RelaysTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.FillField ('Host'), field.FillField ('Port'), field.FillField ('Name'), field.FillField ('Main'), field.IDField ('UID'), field.FillField ('Status')]);
+							__super__ (RelaysTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var relays = server.manager.relays;
+							return relays.refreshRelays ().then ((function __lambda__ () {
+								return self._setData (relays.relays);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'host') {
+								return obj ['host address'];
+							}
+							else if (field.py_name == 'port') {
+								return obj ['port'];
+							}
+							else if (field.py_name == 'name') {
+								return obj ['name'];
+							}
+							else if (field.py_name == 'main') {
+								return obj ['main'];
+							}
+							else if (field.py_name == 'uid') {
+								return obj ['uid'];
+							}
+							else if (field.py_name == 'status') {
+								return obj ['status'];
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
 					'</use>')
 					__pragma__ ('<all>')
 						__all__.ErrorsTable = ErrorsTable;
+						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')

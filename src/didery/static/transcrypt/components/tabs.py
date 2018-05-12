@@ -31,6 +31,23 @@ class Errors(tabledtab.TabledTab):
         """
         self.table = tables.ErrorsTable()
 
+class Relays(tabledtab.TabledTab):
+    """
+    Class for errors tab.
+    """
+    Name = "Relays"
+    Icon = "i.server.icon"
+    DataTab = "relays"
+    Active = False
+
+    def setup_table(self):
+        """
+        Sets up errors table.
+        """
+        self.table = tables.RelaysTable()
+
+# ================================================== #
+
 # ================================================== #
 #                        EOF                         #
 # ================================================== #
