@@ -146,7 +146,7 @@
 						});},
 						get _refreshBlobs () {return __get__ (this, function (self) {
 							clearArray (self.blobs);
-							return request ('/relay').then (self._parseAll);
+							return request ('/blob').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
 							for (var blob of data ['data']) {

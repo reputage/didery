@@ -386,6 +386,46 @@ class RelaysTable(Table):
 
 # ================================================== #
 
+class BlobsTable(Table):
+    """
+    Class for blobs table.
+    """
+    def __init__(self):
+        """
+        Initializes BlobsTable object. Sets up blobs table fields.
+        """
+        fields = [
+            field.DIDField("DID"),
+            field.FillField("Blob")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        blobs = server.manager.otpBlobs
+        return blobs.refreshBlobs().then(lambda: self._setData(blobs.blobs))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+
+        if field.name == "did":
+            return obj.id
+        elif field.name == "blob":
+            return obj.blob
+
 # ================================================== #
 #                        EOF                         #
 # ================================================== #

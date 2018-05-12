@@ -255,7 +255,7 @@ class OTPBlobs:
         """
 
         clearArray(self.blobs)
-        return request("/relay").then(self._parseAll)
+        return request("/blob").then(self._parseAll)
 
     # ============================================== #
 

@@ -259,11 +259,34 @@
 							}
 						});}
 					});
+					var BlobsTable = __class__ ('BlobsTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.DIDField ('DID'), field.FillField ('Blob')]);
+							__super__ (BlobsTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var blobs = server.manager.otpBlobs;
+							return blobs.refreshBlobs ().then ((function __lambda__ () {
+								return self._setData (blobs.blobs);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'did') {
+								return obj.id;
+							}
+							else if (field.py_name == 'blob') {
+								return obj.blob;
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
 					'</use>')
 					__pragma__ ('<all>')
+						__all__.BlobsTable = BlobsTable;
 						__all__.ErrorsTable = ErrorsTable;
 						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;

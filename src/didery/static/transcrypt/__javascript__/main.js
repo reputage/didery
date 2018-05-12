@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-05-11 23:26:52
+// Transcrypt'ed from Python, 2018-05-12 00:14:26
 function main () {
     var __symbols__ = ['__py3.6__', '__esv6__'];
     var __all__ = {};
@@ -2683,11 +2683,34 @@ function main () {
 							}
 						});}
 					});
+					var BlobsTable = __class__ ('BlobsTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.DIDField ('DID'), field.FillField ('Blob')]);
+							__super__ (BlobsTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var blobs = server.manager.otpBlobs;
+							return blobs.refreshBlobs ().then ((function __lambda__ () {
+								return self._setData (blobs.blobs);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'did') {
+								return obj.id;
+							}
+							else if (field.py_name == 'blob') {
+								return obj.blob;
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
 					'</use>')
 					__pragma__ ('<all>')
+						__all__.BlobsTable = BlobsTable;
 						__all__.ErrorsTable = ErrorsTable;
 						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
@@ -2726,11 +2749,22 @@ function main () {
 							self.table = tables.RelaysTable ();
 						});}
 					});
+					var Blobs = __class__ ('Blobs', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Encrypted Blobs',
+						Icon: 'i.unlock.alternate.icon',
+						DataTab: 'blobs',
+						Active: false,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.BlobsTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
 					'</use>')
 					__pragma__ ('<all>')
+						__all__.Blobs = Blobs;
 						__all__.Errors = Errors;
 						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
@@ -2750,7 +2784,7 @@ function main () {
 					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([tabs.Relays (), tabs.Errors ()]);
+							self.tabs = list ([tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -2792,7 +2826,7 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Encrypted Blobs'), m ('i.unlock.alternate.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +
@@ -2989,7 +3023,7 @@ function main () {
 						});},
 						get _refreshBlobs () {return __get__ (this, function (self) {
 							clearArray (self.blobs);
-							return request ('/relay').then (self._parseAll);
+							return request ('/blob').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
 							for (var blob of data ['data']) {
