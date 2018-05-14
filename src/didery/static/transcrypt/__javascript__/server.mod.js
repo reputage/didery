@@ -132,9 +132,8 @@
 							return request ('/history').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var history = dict (JSON.parse (data));
-							for (var [key, value] of history ['data'].py_items ()) {
-								self.history.append (value);
+							for (var history of data ['data']) {
+								self.history.append (history);
 							}
 						});}
 					});
@@ -147,12 +146,11 @@
 						});},
 						get _refreshBlobs () {return __get__ (this, function (self) {
 							clearArray (self.blobs);
-							return request ('/relay').then (self._parseAll);
+							return request ('/blob').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var blobs = dict (JSON.parse (data));
-							for (var [key, value] of blobs ['data'].py_items ()) {
-								self.blobs.append (value);
+							for (var blob of data ['data']) {
+								self.blobs.append (blob);
 							}
 						});}
 					});
@@ -168,9 +166,8 @@
 							return request ('/relay').then (self._parseAll);
 						});},
 						get _parseAll () {return __get__ (this, function (self, data) {
-							var relays = dict (JSON.parse (data));
-							for (var [key, value] of relays.py_items ()) {
-								self.relays.append (value);
+							for (var relay of dict (data).py_items ()) {
+								self.relays.append (relay [1]);
 							}
 						});}
 					});

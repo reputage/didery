@@ -17,12 +17,34 @@
 							self.table = tables.ErrorsTable ();
 						});}
 					});
+					var Relays = __class__ ('Relays', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Relays',
+						Icon: 'i.server.icon',
+						DataTab: 'relays',
+						Active: false,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.RelaysTable ();
+						});}
+					});
+					var Blobs = __class__ ('Blobs', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Encrypted Blobs',
+						Icon: 'i.unlock.alternate.icon',
+						DataTab: 'blobs',
+						Active: false,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.BlobsTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
 					'</use>')
 					__pragma__ ('<all>')
+						__all__.Blobs = Blobs;
 						__all__.Errors = Errors;
+						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
 				}

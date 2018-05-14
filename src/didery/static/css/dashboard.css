@@ -28,7 +28,60 @@ body
     margin-right: 4px;
 }
 
-@media screen and (max-width : 1024px)
+.table-container {
+    height: 30%;
+}
+.table-container table {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+.table-container table thead {
+    /* head takes the height it requires,
+    and it's not scaled when table is resized */
+    flex: 0 0 auto;
+    width: calc(100% - 0.7em);
+}
+.table-container table tbody {
+    /* body takes all the remaining available space */
+    flex: 1 1 auto;
+    display: block;
+    overflow-y: scroll;
+}
+.table-container table tbody tr {
+    width: 100%;
+}
+.table-container table thead,
+.table-container table tbody tr {
+    display: table;
+    table-layout: fixed;
+}
+
+
+div .ui.card>.content.small-header {
+    flex-grow: 0;
+}
+
+pre.content.code-block {
+    overflow-x: auto;
+}
+
+td {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+}
+
+.spinning {
+    -webkit-animation:spin 1s linear infinite;
+    -moz-animation:spin 1s linear infinite;
+    animation:spin 1s linear infinite;
+}
+
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
+@media screen and (max-width : 1135px)
 {
     .menu-item-text
     {
@@ -36,10 +89,18 @@ body
     }
 }
 
-@media screen and (max-width : 568px)
+@media screen and (max-width : 783px)
 {
     #search
     {
         display: none;
+    }
+}
+
+@media screen and (max-width : 575px)
+{
+    .menu-item-number
+    {
+        display: none !important;
     }
 }

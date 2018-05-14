@@ -131,8 +131,8 @@ class Errors:
             data - Returned error data
 
             Example:
-            [
-                {
+            {
+            "data": [{
                     "title": "Invalid Signature.",
                     "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
                     "time": "2000-01-01T00:00:00+00:00"
@@ -141,17 +141,12 @@ class Errors:
                     "title": "Relay Unreachable.",
                     "msg": "Could not establish a connection with relay servers.",
                     "time": "2000-01-01T11:00:00+00:00"
-                }
-            ]
+                }]
+            }
         """
 
         for error in data['data']:
             self.errors.append(error)
-        """
-        errors = dict(JSON.parse(data))
-        for key, value in errors.items():
-            self.errors.append(value)
-        """
 
 # ================================================== #
 
@@ -232,9 +227,8 @@ class History:
 
         """
 
-        history = dict(JSON.parse(data))
-        for key, value in history['data'].items():
-            self.history.append(value)
+        for history in data['data']:
+            self.history.append(history)
 
 # ================================================== #
 
@@ -261,7 +255,7 @@ class OTPBlobs:
         """
 
         clearArray(self.blobs)
-        return request("/relay").then(self._parseAll)
+        return request("/blob").then(self._parseAll)
 
     # ============================================== #
 
@@ -284,9 +278,8 @@ class OTPBlobs:
                 }]
             }
         """
-        blobs = dict(JSON.parse(data))
-        for key, value in blobs['data'].items():
-            self.blobs.append(value)
+        for blob in data['data']:
+            self.blobs.append(blob)
 
 # ================================================== #
 
@@ -343,9 +336,8 @@ class Relays:
                 }
             }
         """
-        relays = dict(JSON.parse(data))
-        for key, value in relays.items():
-            self.relays.append(value)
+        for relay in dict(data).items():
+            self.relays.append(relay[1])
 
 # ================================================== #
 #                       MAIN                         #

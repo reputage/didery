@@ -34,7 +34,7 @@
 							self.copiedDetails = '';
 						});},
 						get menu_item () {return __get__ (this, function (self) {
-							return m (self._menu, self._menu_attrs, m ('div.menu-item-text', self.Name), m (self.Icon), m ('div.ui.label.small', '{0}/{1}'.format (self.table.shown, self.table.total)));
+							return m (self._menu, self._menu_attrs, m ('div.menu-item-text', self.Name), m (self.Icon), m ('div.ui.label.small.menu-item-number', '{0}/{1}'.format (self.table.shown, self.table.total)));
 						});},
 						get main_view () {return __get__ (this, function (self) {
 							return m ('div', m ('div.table-container', m (self.table.view)), m ('div.ui.hidden.divider'), m ('div.ui.two.cards', dict ({'style': 'height: 45%;'}), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Details'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._copyDetails, 'id': self._copyButtonId}), 'Copy'))), m ('pre.content.code-block', dict ({'id': self._detailsId}), self.table.detailSelected)), m ('div.ui.card', m ('div.content.small-header', m ('div.header', m ('span', 'Copied'), m ('span.ui.mini.right.floated.button', dict ({'onclick': self._clearCopy, 'id': self._clearButtonId}), 'Clear'))), m ('pre.content.code-block', dict ({'id': self._copiedId}), self.copiedDetails))));

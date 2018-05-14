@@ -25,7 +25,7 @@ class Manager:
         Initialize Tabs object. Load in all tabs and setup
         document level functions.
         """
-        self.tabs = [tabs.Errors()]
+        self.tabs = [tabs.Blobs(), tabs.Relays(), tabs.Errors()]
 
         self._refreshing = False
         self._refreshPromise = None
@@ -85,16 +85,12 @@ class Manager:
                  m("div.ui.top.attached.tabular.menu",
                    m("a.item.tab",
                      m("span.menu-item-text", "Server Status"),
-                     m("i.chart.bar.icon")),
+                     m("i.chart.bar.icon"),
+                     m("div.ui.label.small.menu-item-number", "0/0")),
                    m("a.item.tab",
                      m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Encrypted Blobs"),
-                     m("i.unlock.alternate.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Relay Servers"),
-                     m("i.server.icon")),
+                     m("i.key.icon"),
+                     m("div.ui.label.small.menu-item-number", "0/0")),
                    menu_items,
                    m("div.right.menu",
                      m("div.item",
