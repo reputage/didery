@@ -4,7 +4,7 @@ This project is based on the key management ideas from this white paper: [DAD Sp
 
 Installation
 ============
-Install [python 3.6](https://www.python.org/downloads/) for your os if it is not already there.
+This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
 Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git).
 ```
