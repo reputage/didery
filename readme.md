@@ -2,6 +2,23 @@ Background
 ==========
 This project is based on the key management ideas from this white paper: [DAD Spec](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/DecentralizedAutonomicData.md).  The project also utilizes Decentralized Identifiers(DID) as specified in the [W3C Spec](https://w3c-ccg.github.io/did-spec/).
 
+Installation
+============
+Install [python 3.6](https://www.python.org/downloads/) for your os if it is not already there
+
+Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git).
+```
+pip3 install -e /path/to/didery
+```
+The didry micro web service is run via the didery daemon that is installed with the pip3 install above.
+
+To run the daemon, execute the following from the command line after first changing the -f argument to point to the appropriate location on your disk.
+
+```
+didery -f /path/to/didery/src/didery/flo/main.flo -b didery.core
+```
+After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen on port 8080 for web requests.
+
 Requests
 ========
 
