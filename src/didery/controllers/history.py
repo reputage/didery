@@ -12,13 +12,7 @@ from .. import didering
 tempDB = {}
 
 
-def validatePost(req, resp, resource, params):
-    """
-    Validate incoming POST request and prepare
-    body of request for processing.
-    :param req: Request object
-    """
-
+def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
     body = req.body
 
@@ -33,109 +27,6 @@ def validatePost(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Validation Error',
                                'Empty Signature header.')
-
-    sig = sigs.get('signer')  # str not bytes
-    if not sig:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
-                               'Signature header missing "signer" tag and signature.')
-
-    try:
-        if not isinstance(body['signers'], list):
-            body['signers'] = json.loads(
-                body['signers'].replace("'", '"')
-            )
-    except ValueError:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'signers field must be a list or array.')
-
-    if body['id'] == "":
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'id field cannot be empty.')
-
-    try:
-        didkey = helping.extractDidParts(body['id'])
-    except ValueError as ex:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Invalid DID',
-                               str(ex))
-
-    if body['changed'] == "":
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'changed field cannot be empty.')
-
-    if len(body['signers']) < 2:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'signers field must contain at least the current public key and its first pre-rotation.')
-
-    try:
-        int(body['signer'])
-    except ValueError:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'signer field must be a number.')
-
-    if int(body['signer']) != 0:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'signer field must equal 0 on creation of new rotation history.')
-
-    index = int(body['signer'])
-    try:
-        helping.validateSignedResource(sig, raw, body['signers'][index])
-    except didering.ValidationError as ex:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
-                               'Could not validate the request body and signature. {}.'.format(ex))
-
-    # Prevent bad actors from trying to commandeer a DID before its owner posts it
-    if didkey != body['signers'][0]:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
-                               'The DIDs key must match the first key in the signers field.')
-
-
-def validatePut(req, resp, resource, params):
-    if 'did' not in params:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Validation Error',
-                               'DID value missing from url.')
-
-    raw = helping.parseReqBody(req)
-    body = req.body
-
-    required = ["id", "changed", "signer", "signers"]
-    helping.validateRequiredFields(required, body)
-
-    signature = req.get_header("Signature", required=True)
-    sigs = helping.parseSignatureHeader(signature)
-    req.signatures = sigs
-
-    if len(sigs) == 0:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
-                               'Invalid or missing Signature header.')
-
-    signer = sigs.get('signer')  # str not bytes
-    if not signer:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
-                               'Signature header missing signature for "signer".')
-
-    rotation = sigs.get('rotation')  # str not bytes
-    if not rotation:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
-                               'Signature header missing signature for "rotation".')
-
-    if params['did'] not in tempDB:
-        raise falcon.HTTPError(falcon.HTTP_404,
-                               'Resource Not Found',
-                               'Resource with did "{}" not found.'.format(params['did']))
 
     try:
         if not isinstance(body['signers'], list):
@@ -158,6 +49,89 @@ def validatePut(req, resp, resource, params):
                                'changed field cannot be empty.')
 
     try:
+        req.body['signer'] = int(body['signer'])
+    except ValueError:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed "signer" Field',
+                               'signer field must be a number.')
+
+    return raw, sigs
+
+
+def validatePost(req, resp, resource, params):
+    """
+    Validate incoming POST request and prepare
+    body of request for processing.
+    :param req: Request object
+    """
+    raw, sigs = basicValidation(req, resp, resource, params)
+    body = req.body
+
+    sig = sigs.get('signer')  # str not bytes
+    if not sig:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing "signer" tag and signature.')
+
+    try:
+        didkey = helping.extractDidParts(body['id'])
+    except ValueError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Invalid DID',
+                               str(ex))
+
+    if len(body['signers']) < 2:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signers field must contain at least the current public key and its first pre-rotation.')
+
+    if body['signer'] != 0:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'signer field must equal 0 on creation of new rotation history.')
+
+    index = body['signer']
+    try:
+        helping.validateSignedResource(sig, raw, body['signers'][index])
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Could not validate the request body and signature. {}.'.format(ex))
+
+    # Prevent bad actors from trying to commandeer a DID before its owner posts it
+    if didkey != body['signers'][0]:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Field',
+                               'The DIDs key must match the first key in the signers field.')
+
+
+def validatePut(req, resp, resource, params):
+    if 'did' not in params:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'DID value missing from url.')
+
+    raw, sigs = basicValidation(req, resp, resource, params)
+    body = req.body
+
+    signer = sigs.get('signer')  # str not bytes
+    if not signer:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing signature for "signer".')
+
+    rotation = sigs.get('rotation')  # str not bytes
+    if not rotation:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Validation Error',
+                               'Signature header missing signature for "rotation".')
+
+    if params['did'] not in tempDB:
+        raise falcon.HTTPError(falcon.HTTP_404,
+                               'Resource Not Found',
+                               'Resource with did "{}" not found.'.format(params['did']))
+
+    try:
         dt = arrow.get(body["changed"])
     except arrow.parser.ParserError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -169,13 +143,6 @@ def validatePut(req, resp, resource, params):
                                'Invalid Request',
                                'PUT endpoint is for rotation events. Must contain at least the original key, a '
                                'current signing key, and a pre-rotated key.')
-
-    try:
-        body['signer'] = int(body['signer'])
-    except ValueError:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "signer" Field',
-                               'signer field must be a number.')
 
     if body['signer'] < 1 or body['signer'] >= len(body['signers']):
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -293,15 +260,15 @@ class History:
                 """
         result_json = req.body
         sigs = req.signatures
-        blob = tempDB[did]
+        resource = tempDB[did]
 
-        if blob is None:
+        if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404,
                                    'Resource Does Not Exist',
                                    'Resource with did "{}" does not exist. Use POST request.'.format(result_json['id']))
 
         # TODO make sure time in changed field is greater than existing changed field
-        cdt = arrow.get(blob['history']['changed'])
+        cdt = arrow.get(resource['history']['changed'])
         udt = arrow.get(result_json['changed'])
 
         if cdt >= udt:
@@ -310,7 +277,7 @@ class History:
                                    '"changed" field not later than previous update.')
 
         # TODO validate that previously rotated keys are not changed with this request
-        current = blob['history']['signers']
+        current = resource['history']['signers']
         update = result_json['signers']
 
         if len(update) <= len(current):
