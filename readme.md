@@ -6,7 +6,7 @@ Installation
 ============
 This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
-Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git).
+Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install it:
 ```
 $ pip3 install -e /path/to/didery
 ```
@@ -27,7 +27,7 @@ To run the daemon, execute the following from the command line after first chang
 ```
 $ didery -f /path/to/didery/src/didery/flo/main.flo -b didery.core
 ```
-After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen on port 8080 for web requests.
+After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen for web requests on port 8080.
 
 You can manage the backend from your browser by going to [localhost:8080](localhost:8080).
 
