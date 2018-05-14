@@ -4,7 +4,7 @@ This project is based on the key management ideas from this white paper: [DAD Sp
 
 Installation
 ============
-Install [python 3.6](https://www.python.org/downloads/) for your os if it is not already there
+Install [python 3.6](https://www.python.org/downloads/) for your os if it is not already there.
 
 Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git).
 ```
@@ -18,6 +18,22 @@ To run the daemon, execute the following from the command line after first chang
 didery -f /path/to/didery/src/didery/flo/main.flo -b didery.core
 ```
 After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen on port 8080 for web requests.
+
+A common issue with running the software is that your system doesn't have libsodium 13 or greater installed. Run these commands and try again:
+
+Mac
+```
+$ brew install libsodium
+```  
+Linux
+```
+$ wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.13.tar.gz  
+$ tar -zxvf libsodium-1.0.13.tar.gz  
+$ cd libsodium-1.0.13  
+$ ./configure  
+$ make && make check  
+$ sudo make install  
+```
 
 Requests
 ========
