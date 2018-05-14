@@ -8,16 +8,28 @@ Install [python 3.6](https://www.python.org/downloads/) for your os if it is not
 
 Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git).
 ```
-pip3 install -e /path/to/didery
+$ pip3 install -e /path/to/didery
 ```
+Install node and npm on your system.  You can find instructions [here](https://nodejs.org/en/download/). Or if you use Ubuntu run this command:
+```
+$ sudo apt install npm
+```
+Then run these commands:
+```
+cd /path/to/didery/src/didery/static/
+npm install
+```
+
 The didry micro web service is run via the didery daemon that is installed with the pip3 install above.
 
 To run the daemon, execute the following from the command line after first changing the -f argument to point to the appropriate location on your disk.
 
 ```
-didery -f /path/to/didery/src/didery/flo/main.flo -b didery.core
+$ didery -f /path/to/didery/src/didery/flo/main.flo -b didery.core
 ```
 After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen on port 8080 for web requests.
+
+You can manage the backend from your browser by going to [localhost:8080](localhost:8080).
 
 A common issue with running the software is that your system doesn't have libsodium 13 or greater installed. Run these commands and try again:
 
