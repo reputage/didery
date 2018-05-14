@@ -169,6 +169,17 @@ def key64uToKey(key64u):
     return base64.urlsafe_b64decode(key64u.encode("utf-8"))
 
 
+def makeDid(vk, method="dad"):
+    """
+    Create and return Did from bytes vk.
+    vk is 32 byte verifier key from EdDSA (Ed25519) keypair
+    """
+    # convert verkey to jsonable unicode string of base64 url-file safe
+    vk64u = base64.urlsafe_b64encode(vk).decode("utf-8")
+    did = "did:{}:{}".format(method, vk64u)
+    return did
+
+
 def signResource(resource, sKey):
     sig = libnacl.crypto_sign(resource, sKey)
     sig = sig[:libnacl.crypto_sign_BYTES]

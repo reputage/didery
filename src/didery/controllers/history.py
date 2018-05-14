@@ -223,7 +223,7 @@ class History:
         http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
         http localhost:8000/history
     """
-    def on_get(self, req, resp, did=None):
+    def on_get(self, req, resp, did=None, offset=0, limit=10):
         """
         Handle and respond to incoming GET request.
         :param req: Request object
@@ -231,6 +231,10 @@ class History:
         :param did: string
             URL parameter specifying a rotation history
         """
+        if offset >= len(tempDB):
+            resp.body = json.dumps({}, ensure_ascii=False)
+            return
+
         if did is not None:
             if did not in tempDB:
                 raise falcon.HTTPError(falcon.HTTP_404,
@@ -238,8 +242,9 @@ class History:
                                        'Could not find resource with did "{}".'.format(did))
             body = tempDB[did]
         else:
+            values = list(tempDB.values())
             body = {
-                "data": list(tempDB.values())
+                "data": values[offset:offset+limit]
             }
 
         resp.body = json.dumps(body, ensure_ascii=False)
