@@ -25,7 +25,6 @@ def loadEndPoints(app, store):
 
     history = histories.History(store)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
-    app.add_route('{}/{{did}}/{{offset:int(min=0)}}/{{limit:int(min=1, max=100)}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
 
     blob = blobs.OtpBlob(store)

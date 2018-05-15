@@ -12,6 +12,41 @@ from .. import didering
 tempDB = {}
 
 
+def parseQString(req, resp, resource, params):
+    req.offset = None
+    req.limit = None
+
+    if req.query_string:
+        queries = req.query_string.split('&')
+        for query in queries:
+            key, val = qStringValidation(query)
+            if key == 'offset':
+                req.offset = val
+            if key == 'limit':
+                req.limit = val
+
+
+def qStringValidation(query):
+    keyval = query.split('=')
+
+    if len(keyval) != 2:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string missing value(s).')
+
+    key = keyval[0]
+    val = keyval[1]
+
+    try:
+        val = int(val)
+    except ValueError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string value must be a number.')
+
+    return key, val
+
+
 def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
     body = req.body
@@ -54,6 +89,13 @@ def basicValidation(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Malformed "signer" Field',
                                'signer field must be a number.')
+
+    try:
+        dt = arrow.get(body["changed"])
+    except arrow.parser.ParserError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed "changed" Field',
+                               'ISO datetime could not be parsed.')
 
     return raw, sigs
 
@@ -126,18 +168,6 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'Signature header missing signature for "rotation".')
 
-    if params['did'] not in tempDB:
-        raise falcon.HTTPError(falcon.HTTP_404,
-                               'Resource Not Found',
-                               'Resource with did "{}" not found.'.format(params['did']))
-
-    try:
-        dt = arrow.get(body["changed"])
-    except arrow.parser.ParserError as ex:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "changed" Field',
-                               'ISO datetime could not be parsed.')
-
     if len(body['signers']) < 3:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Invalid Request',
@@ -190,7 +220,8 @@ class History:
         http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
         http localhost:8000/history
     """
-    def on_get(self, req, resp, did=None, offset=0, limit=10):
+    @falcon.before(parseQString)
+    def on_get(self, req, resp, did=None):
         """
         Handle and respond to incoming GET request.
         :param req: Request object
@@ -198,23 +229,27 @@ class History:
         :param did: string
             URL parameter specifying a rotation history
         """
+        offset = req.offset or 0
+        limit = req.limit or 10
+
         if offset >= len(tempDB):
             resp.body = json.dumps({}, ensure_ascii=False)
             return
 
         if did is not None:
             if did not in tempDB:
-                raise falcon.HTTPError(falcon.HTTP_404,
-                                       'Resource Does Not Exist',
-                                       'Could not find resource with did "{}".'.format(did))
+                raise falcon.HTTPError(falcon.HTTP_404)
+
             body = tempDB[did]
         else:
             values = list(tempDB.values())
             body = {
                 "data": values[offset:offset+limit]
             }
+            resp.append_header('X-Total-Count', len(tempDB))
 
         resp.body = json.dumps(body, ensure_ascii=False)
+
 
     """
     For manual testing of the endpoint:
@@ -260,12 +295,11 @@ class History:
                 """
         result_json = req.body
         sigs = req.signatures
-        resource = tempDB[did]
 
-        if resource is None:
-            raise falcon.HTTPError(falcon.HTTP_404,
-                                   'Resource Does Not Exist',
-                                   'Resource with did "{}" does not exist. Use POST request.'.format(result_json['id']))
+        if did not in tempDB:
+            raise falcon.HTTPError(falcon.HTTP_404)
+
+        resource = tempDB[did]
 
         # TODO make sure time in changed field is greater than existing changed field
         cdt = arrow.get(resource['history']['changed'])
@@ -283,13 +317,13 @@ class History:
         if len(update) <= len(current):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Malformed "signers" Field',
-                                   'Signers field missing previously verified keys.')
+                                   'signers field is missing keys.')
 
         for key, val in enumerate(current):
             if update[key] != val:
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Malformed "signers" Field',
-                                       'Signers field missing previously verified keys.')
+                                       'signers field missing previously verified keys.')
 
         response_json = {
             "history": result_json,
