@@ -280,6 +280,7 @@ class History:
         tempDB[result_json['id']] = response_json
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
+        resp.status = falcon.HTTP_201
 
     """
     For manual testing of the endpoint:

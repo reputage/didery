@@ -161,7 +161,7 @@ def basicValidation(reqFunc, url, data):
 def testValidPost(client):
     body = json.dumps(postData, ensure_ascii=False).encode('utf-8')
 
-    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_200)
+    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
     # TODO:
     # assert response.content == expected_response
 
@@ -272,7 +272,7 @@ def testPostValidation(client):
     body['signers'] = ["NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="]
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_200)
+    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
     # Test that signer field is a valid index into signers field
     body = deepcopy(postData)
