@@ -25,36 +25,36 @@ def basicValidation(req, resp, resource, params):
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Empty Signature header.')
 
     sig = sigs.get('signer')  # str not bytes
     if not sig:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Signature header missing "signer" tag and signature.')
 
     if body['id'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'id field cannot be empty.')
 
     if body['blob'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'blob field cannot be empty.')
 
     if body['changed'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'changed field cannot be empty.')
 
     try:
         didKey = helping.extractDidParts(body['id'])
     except ValueError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Invalid DID',
-                               str(ex))
+                               'Validation Error',
+                               "Invalid did format. {}".format(str(ex)))
 
     return raw, sig, didKey
 
@@ -73,7 +73,7 @@ def validatePost(req, resp, resource, params):
         helping.validateSignedResource(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Could not validate the request body and signature. {}.'.format(ex))
 
 
@@ -96,14 +96,14 @@ def validatePut(req, resp, resource, params):
     # Prevent did data from being clobbered
     if params['did'] != req.body['id']:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "id" Field',
+                               'Validation Error',
                                'Url did must match id field did.')
 
     try:
         helping.validateSignedResource(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Could not validate the request body and signature. {}.'.format(ex))
 
 

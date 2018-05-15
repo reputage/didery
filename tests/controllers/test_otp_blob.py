@@ -66,7 +66,7 @@ def basicValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"id field cannot be empty."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -77,7 +77,7 @@ def basicValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"blob field cannot be empty."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -89,7 +89,7 @@ def basicValidation(reqFunc, url):
            b'"changed": ""' \
            b'}'
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"changed field cannot be empty."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -101,8 +101,8 @@ def basicValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Invalid DID method"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID method"}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -112,8 +112,8 @@ def basicValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Malformed DID value"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID value"}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -123,8 +123,8 @@ def basicValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Invalid DID identifier"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID identifier"}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -139,7 +139,7 @@ def signatureValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Validation Error", "description": "Empty Signature header."}'
+    exp_result = b'{"title": "Authorization Error", "description": "Empty Signature header."}'
 
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
 
@@ -155,7 +155,7 @@ def signatureValidation(reqFunc, url):
         "Signature": 'test="' + h.signResource(body, SK) + '"'
     }
 
-    exp_result = b'{"title": "Validation Error", "description": "' \
+    exp_result = b'{"title": "Authorization Error", "description": "' \
                  b'Signature header missing \\"signer\\" tag and signature."}'
 
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
@@ -167,7 +167,7 @@ def signatureValidation(reqFunc, url):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request body and signature. ' \
+    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request body and signature. ' \
                  b'Unverifiable signature."}'
 
     headers = {"Signature": 'signer="{0}"'.format(h.signResource(body, BAD_SK))}
@@ -205,7 +205,7 @@ def testPutSignValidation(client):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Malformed \\"id\\" Field", "description": "Url did must match id field did."}'
+    exp_result = b'{"title": "Validation Error", "description": "Url did must match id field did."}'
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -230,7 +230,7 @@ def testPutValidation(client):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
 
-    exp_result = b'{"title": "Malformed \\"id\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"Url did must match id field did."}'
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)

@@ -127,7 +127,7 @@ def parseReqBody(req):
         raw_json = req.stream.read()
     except Exception as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Error',
+                               'Request Error',
                                'Error reading request body.')
 
     try:
@@ -223,7 +223,7 @@ def extractDidParts(did, method="dad"):
     try:  # correct did format  pre:method:keystr
         pre, meth, keystr = did.split(":")
     except ValueError as ex:
-        raise ValueError("Malformed DID value")
+        raise ValueError("Invalid DID value")
 
     if pre != "did":
         raise ValueError("Invalid DID identifier")

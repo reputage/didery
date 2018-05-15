@@ -60,7 +60,7 @@ def basicValidation(req, resp, resource, params):
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Empty Signature header.')
 
     try:
@@ -70,31 +70,31 @@ def basicValidation(req, resp, resource, params):
             )
     except ValueError:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "signers" Field',
+                               'Validation Error',
                                'signers field must be a list or array.')
 
     if body['id'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "id" Field',
+                               'Validation Error',
                                'id field cannot be empty.')
 
     if body['changed'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "changed" Field',
+                               'Validation Error',
                                'changed field cannot be empty.')
 
     try:
         req.body['signer'] = int(body['signer'])
     except ValueError:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "signer" Field',
+                               'Validation Error',
                                'signer field must be a number.')
 
     try:
         dt = arrow.get(body["changed"])
     except arrow.parser.ParserError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "changed" Field',
+                               'Validation Error',
                                'ISO datetime could not be parsed.')
 
     return raw, sigs
@@ -112,24 +112,24 @@ def validatePost(req, resp, resource, params):
     sig = sigs.get('signer')  # str not bytes
     if not sig:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Signature header missing "signer" tag and signature.')
 
     try:
         didkey = helping.extractDidParts(body['id'])
     except ValueError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Invalid DID',
-                               str(ex))
+                               'Validation Error',
+                               "Invalid did format. {}".format(str(ex)))
 
     if len(body['signers']) < 2:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'signers field must contain at least the current public key and its first pre-rotation.')
 
     if body['signer'] != 0:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'signer field must equal 0 on creation of new rotation history.')
 
     index = body['signer']
@@ -137,13 +137,13 @@ def validatePost(req, resp, resource, params):
         helping.validateSignedResource(sig, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Could not validate the request body and signature. {}.'.format(ex))
 
     # Prevent bad actors from trying to commandeer a DID before its owner posts it
     if didkey != body['signers'][0]:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'The DIDs key must match the first key in the signers field.')
 
 
@@ -159,36 +159,36 @@ def validatePut(req, resp, resource, params):
     signer = sigs.get('signer')  # str not bytes
     if not signer:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Signature header missing signature for "signer".')
 
     rotation = sigs.get('rotation')  # str not bytes
     if not rotation:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Signature header missing signature for "rotation".')
 
     if len(body['signers']) < 3:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Invalid Request',
+                               'Validation Error',
                                'PUT endpoint is for rotation events. Must contain at least the original key, a '
                                'current signing key, and a pre-rotated key.')
 
     if body['signer'] < 1 or body['signer'] >= len(body['signers']):
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "signer" Field',
+                               'Validation Error',
                                '"signer" cannot reference the first or last key in the "signers" '
                                'field on PUT requests.')
 
     if body['signer'] + 1 == len(body['signers']):
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "signer" Field',
+                               'Validation Error',
                                'Missing pre rotated key in the signers field.')
 
     # Prevent did data from being clobbered
     if params['did'] != body['id']:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed "id" Field',
+                               'Validation Error',
                                'Url did must match id field did.')
 
     index = body['signer']
@@ -196,14 +196,14 @@ def validatePut(req, resp, resource, params):
         helping.validateSignedResource(signer, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
     try:
         helping.validateSignedResource(rotation, raw, body['signers'][index-1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
-                               'Validation Error',
+                               'Authorization Error',
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
 
@@ -308,7 +308,7 @@ class History:
 
         if cdt >= udt:
             raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Invalid "changed" Field',
+                                   'Validation Error',
                                    '"changed" field not later than previous update.')
 
         # TODO validate that previously rotated keys are not changed with this request
@@ -317,13 +317,13 @@ class History:
 
         if len(update) <= len(current):
             raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed "signers" Field',
+                                   'Validation Error',
                                    'signers field is missing keys.')
 
         for key, val in enumerate(current):
             if update[key] != val:
                 raise falcon.HTTPError(falcon.HTTP_400,
-                                       'Malformed "signers" Field',
+                                       'Validation Error',
                                        'signers field missing previously verified keys.')
 
         response_json = {

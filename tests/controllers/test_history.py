@@ -112,7 +112,7 @@ def basicValidation(reqFunc, url, data):
     body['id'] = ""
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"id\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"id field cannot be empty."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -122,7 +122,7 @@ def basicValidation(reqFunc, url, data):
     body['changed'] = ""
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"changed\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"changed field cannot be empty."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -132,7 +132,7 @@ def basicValidation(reqFunc, url, data):
     body['signers'] = ""
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"signers\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field must be a list or array."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -142,7 +142,7 @@ def basicValidation(reqFunc, url, data):
     body['signer'] = "a"
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"signer\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signer field must be a number."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -152,7 +152,7 @@ def basicValidation(reqFunc, url, data):
     body['changed'] = "01-01T00:00:00+00:00"
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"changed\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"ISO datetime could not be parsed."}'
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -172,7 +172,7 @@ def testPostSignValidation(client):
     # Test missing Signature Header
     body = json.dumps(postData, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Empty Signature header."}'
+    exp_result = b'{"title": "Authorization Error", "description": "Empty Signature header."}'
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
     assert response.status == falcon.HTTP_401
@@ -190,7 +190,7 @@ def testPostSignValidation(client):
         "Signature": 'test="' + h.signResource(body, SK) + '"'
     }
 
-    exp_result = b'{"title": "Validation Error", "description": "' \
+    exp_result = b'{"title": "Authorization Error", "description": "' \
                  b'Signature header missing \\"signer\\" tag and signature."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers, exp_result, falcon.HTTP_401)
@@ -200,7 +200,7 @@ def testPostSignValidation(client):
     body['signers'][0] = "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request body and signature. ' \
+    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request body and signature. ' \
                  b'Unverifiable signature."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
@@ -210,7 +210,7 @@ def testPostSignValidation(client):
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed Field", "description": "The DIDs key must match the first key in the ' \
+    exp_result = b'{"title": "Validation Error", "description": "The DIDs key must match the first key in the ' \
                  b'signers field."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -224,8 +224,8 @@ def testPostValidation(client):
     body['id'] = "did:fake:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Invalid DID method"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID method"}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -233,8 +233,8 @@ def testPostValidation(client):
     body['id'] = "did:fake"
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Malformed DID value"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID value"}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -242,8 +242,8 @@ def testPostValidation(client):
     body['id'] = "fake:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Invalid DID", "description": ' \
-                 b'"Invalid DID identifier"}'
+    exp_result = b'{"title": "Validation Error", "description": ' \
+                 b'"Invalid did format. Invalid DID identifier"}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -252,7 +252,7 @@ def testPostValidation(client):
     body['signers'] = ["Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="]
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field must contain at least the current public key and its first pre-rotation."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -262,7 +262,7 @@ def testPostValidation(client):
     body['signers'] = []
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field must contain at least the current public key and its first pre-rotation."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -279,7 +279,7 @@ def testPostValidation(client):
     body['signer'] = 4
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signer field must equal 0 on creation of new rotation history."}'
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -294,14 +294,14 @@ def testPutSignValidation(client):
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"id\\" Field", "description": "Url did must match id field did."}'
+    exp_result = b'{"title": "Validation Error", "description": "Url did must match id field did."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test missing Signature Header
     body = json.dumps(putData, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Empty Signature header."}'
+    exp_result = b'{"title": "Authorization Error", "description": "Empty Signature header."}'
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
@@ -317,7 +317,7 @@ def testPutSignValidation(client):
         "Signature": 'signer="' + h.signResource(body, SK) + '"'
     }
 
-    exp_result = b'{"title": "Validation Error", "description": "' \
+    exp_result = b'{"title": "Authorization Error", "description": "' \
                  b'Signature header missing signature for \\"rotation\\"."}'
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
@@ -326,7 +326,7 @@ def testPutSignValidation(client):
         "Signature": 'rotation="' + h.signResource(body, SK) + '"'
     }
 
-    exp_result = b'{"title": "Validation Error", "description": "' \
+    exp_result = b'{"title": "Authorization Error", "description": "' \
                  b'Signature header missing signature for \\"signer\\"."}'
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
@@ -336,7 +336,7 @@ def testPutSignValidation(client):
     body['signers'][1] = "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request signature for ' \
+    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request signature for ' \
                  b'rotation field. Unverifiable signature."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
@@ -347,7 +347,7 @@ def testPutSignValidation(client):
     body['signers'][1] = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Could not validate the request signature for ' \
+    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request signature for ' \
                  b'signer field. Unverifiable signature."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
@@ -382,7 +382,7 @@ def testPutValidation(client):
     del body['signers'][2]
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Invalid Request", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"PUT endpoint is for rotation events. Must contain at least the original key, a current signing ' \
                  b'key, and a pre-rotated key."}'
 
@@ -393,7 +393,7 @@ def testPutValidation(client):
     body['signers'] = []
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Invalid Request", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"PUT endpoint is for rotation events. Must contain at least the original key, a current signing ' \
                  b'key, and a pre-rotated key."}'
 
@@ -416,7 +416,7 @@ def testPutValidation(client):
     body['signer'] = 4
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"signer\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"\\"signer\\" cannot reference the first or last key in the \\"signers\\" field on PUT requests."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -426,7 +426,7 @@ def testPutValidation(client):
     body['signer'] = 0
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"signer\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"\\"signer\\" cannot reference the first or last key in the \\"signers\\" field on PUT requests."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -436,8 +436,7 @@ def testPutValidation(client):
     body['signer'] = 3
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Malformed \\"signer\\" Field", "description": ' \
-                 b'"Missing pre rotated key in the signers field."}'
+    exp_result = b'{"title": "Validation Error", "description": "Missing pre rotated key in the signers field."}'
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -468,7 +467,7 @@ def testPutValidation(client):
                                                            h.signResource(body, sk))
     }
 
-    exp_result = b'{"title": "Invalid \\"changed\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"\\"changed\\" field not later than previous update."}'
 
     verifyRequest(client.simulate_put,
@@ -488,7 +487,7 @@ def testPutValidation(client):
                                                            h.signResource(body, sk))
     }
 
-    exp_result = b'{"title": "Malformed \\"signers\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field is missing keys."}'
 
     verifyRequest(client.simulate_put,
@@ -507,7 +506,7 @@ def testPutValidation(client):
                                                            h.signResource(body, sk))
     }
 
-    exp_result = b'{"title": "Malformed \\"signers\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field is missing keys."}'
 
     verifyRequest(client.simulate_put,
@@ -528,7 +527,7 @@ def testPutValidation(client):
                                                            h.signResource(body, sk))
     }
 
-    exp_result = b'{"title": "Malformed \\"signers\\" Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"signers field missing previously verified keys."}'
 
     verifyRequest(client.simulate_put,
