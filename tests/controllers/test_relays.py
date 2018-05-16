@@ -86,7 +86,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"host_address field cannot be empty."}'
 
     assert response.status == falcon.HTTP_400
@@ -102,7 +102,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"port field cannot be empty."}'
 
     assert response.status == falcon.HTTP_400
@@ -118,7 +118,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"name field cannot be empty."}'
 
     assert response.status == falcon.HTTP_400
@@ -134,7 +134,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"main field cannot be empty."}'
 
     assert response.status == falcon.HTTP_400
@@ -150,7 +150,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"changed field cannot be empty."}'
 
     assert response.status == falcon.HTTP_400
@@ -166,7 +166,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"main field must be a boolean value."}'
 
     assert response.status == falcon.HTTP_400
@@ -182,7 +182,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"port field must be a number."}'
 
     assert response.status == falcon.HTTP_400
@@ -197,7 +197,7 @@ def basicValidation(reqFunc, url):
            b'}'
     response = reqFunc(url, body=body)
 
-    exp_result = b'{"title": "Malformed Field", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"port field must be a number between 1 and 65535."}'
 
     assert response.status == falcon.HTTP_400
@@ -217,7 +217,7 @@ def testValidPost(client):
            b'"changed": "2000-01-01T00:00:00+00:00"' \
            b'}'
     response = client.simulate_post(RELAY_BASE_PATH, body=body)
-    assert response.status == falcon.HTTP_200
+    assert response.status == falcon.HTTP_201
     # TODO:
     # assert response.content == exp_result
 
@@ -237,7 +237,7 @@ def testPutValidation(client):
            b'}'
     response = client.simulate_put("{0}".format(RELAY_BASE_PATH), body=body)
 
-    exp_result = b'{"title": "Incomplete Request", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"uid required."}'
 
     assert response.status == falcon.HTTP_400
@@ -251,7 +251,8 @@ def testValidPut(client):
            b'"port": 7541, ' \
            b'"name": "alpha", ' \
            b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
+           b'"changed": "2000-01-01T00:00:00+00:00", ' \
+           b'"uid":1' \
            b'}'
     response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
     print(response.content)
@@ -263,7 +264,7 @@ def testValidPut(client):
 def testDeleteValidation(client):
     response = client.simulate_delete("{0}".format(RELAY_BASE_PATH))
 
-    exp_result = b'{"title": "Incomplete Request", "description": ' \
+    exp_result = b'{"title": "Validation Error", "description": ' \
                  b'"uid required."}'
 
     assert response.status == falcon.HTTP_400

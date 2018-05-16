@@ -7,6 +7,9 @@ except ImportError:
 from ..help import helping
 
 
+tempDB = []
+
+
 def basicValidation(req, resp, resource, params):
     """
     Validate incoming POST request and prepare
@@ -22,45 +25,58 @@ def basicValidation(req, resp, resource, params):
 
     if body['host_address'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'host_address field cannot be empty.')
 
     if body['port'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'port field cannot be empty.')
 
     if body['name'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'name field cannot be empty.')
 
     if body['changed'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'changed field cannot be empty.')
 
     if 'main' in body:
         if body['main'] == "":
             raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed Field',
+                                   'Validation Error',
                                    'main field cannot be empty.')
 
         if type(body['main']) != bool:
             raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Malformed Field',
+                                   'Validation Error',
                                    'main field must be a boolean value.')
 
+    if 'uid' in body:
+        if body['uid'] == "":
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'uid field cannot be empty.')
+
+        try:
+            body['uid'] = int(body['uid'])
+        except ValueError:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'uid field must be a number.')
+
     try:
-        int(body['port'])
+        body['port'] = int(body['port'])
     except ValueError:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'port field must be a number.')
 
-    if int(body['port']) < 1 or int(body['port']) > 65535:
+    if body['port'] < 1 or body['port'] > 65535:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Field',
+                               'Validation Error',
                                'port field must be a number between 1 and 65535.')
 
 
@@ -69,14 +85,29 @@ def validatePut(req, resp, resource, params):
 
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Incomplete Request',
+                               'Validation Error',
                                'uid required.')
+
+    if "uid" not in req.body:
+        req.body['uid'] = params['uid']
+
+    try:
+        params['uid'] = int(params['uid'])
+    except ValueError:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'uid in url must be a number.')
+
+    if params['uid'] != req.body['uid']:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'uid in url must match uid in body.')
 
 
 def validateDelete(req, resp, resource, params):
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Incomplete Request',
+                               'Validation Error',
                                'uid required.')
 
 
@@ -134,10 +165,13 @@ class Relay:
         """
         result_json = req.body
 
-        result_json["uid"] = "1"
+        result_json["uid"] = len(tempDB)
         result_json["status"] = "connected"
 
+        tempDB.append(result_json)
+
         resp.body = json.dumps(result_json, ensure_ascii=False)
+        resp.status = falcon.HTTP_201
 
     """
     For manual testing of the endpoint:
