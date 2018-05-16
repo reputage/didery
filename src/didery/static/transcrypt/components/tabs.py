@@ -23,7 +23,7 @@ class Errors(tabledtab.TabledTab):
     Name = "Errors"
     Icon = "i.exclamation.circle.icon"
     DataTab = "errors"
-    Active = True
+    Active = False
 
     def setup_table(self):
         """
@@ -66,6 +66,21 @@ class Blobs(tabledtab.TabledTab):
         self.table = tables.BlobsTable()
 
 # ================================================== #
+
+class History(tabledtab.TabledTab):
+    """
+   Class for public keys tab.
+    """
+    Name = "Public Keys"
+    Icon = "i.key.icon"
+    DataTab = "history"
+    Active = True
+
+    def setup_table(self):
+        """
+        Sets up history table.
+        """
+        self.table = tables.HistoryTable()
 
 # ================================================== #
 #                        EOF                         #

@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-05-12 00:14:26
+// Transcrypt'ed from Python, 2018-05-16 00:28:40
 function main () {
     var __symbols__ = ['__py3.6__', '__esv6__'];
     var __all__ = {};
@@ -2330,6 +2330,75 @@ function main () {
 	);
 	__nest__ (
 		__all__,
+		'components.searcher', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'components.searcher';
+					var Searcher = __class__ ('Searcher', [object], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							self.searchTerm = null;
+							self.caseSensitive = false;
+						});},
+						get setSearch () {return __get__ (this, function (self, term) {
+							self.searchTerm = term || '';
+							self.caseSensitive = self.searchTerm.startswith ('"') && self.searchTerm.endswith ('"');
+							if (self.caseSensitive) {
+								self.searchTerm = self.searchTerm.__getslice__ (1, -(1), 1);
+							}
+							else {
+								self.searchTerm = self.searchTerm.lower ();
+							}
+						});},
+						get _checkPrimitive () {return __get__ (this, function (self, item) {
+							if (isinstance (item, str)) {
+								if (!(self.caseSensitive)) {
+									var item = item.lower ();
+								}
+								return __in__ (self.searchTerm, item);
+							}
+							return false;
+						});},
+						get _checkAny () {return __get__ (this, function (self, value) {
+							if (isinstance (value, dict) || isinstance (value, Object)) {
+								return self.search (value);
+							}
+							else if (isinstance (value, list)) {
+								for (var item of value) {
+									if (self._checkAny (item)) {
+										return true;
+									}
+								}
+								return false;
+							}
+							else {
+								return self._checkPrimitive (value);
+							}
+						});},
+						get search () {return __get__ (this, function (self, obj) {
+							for (var key in obj) {
+								if (key.startswith ('_')) {
+									continue;
+								}
+								var value = obj [key];
+								if (self._checkAny (value)) {
+									return true;
+								}
+							}
+							return false;
+						});}
+					});
+					__pragma__ ('<all>')
+						__all__.Searcher = Searcher;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
+	__nest__ (
+		__all__,
 		'components.tab', {
 			__all__: {
 				__inited__: false,
@@ -2705,6 +2774,37 @@ function main () {
 							}
 						});}
 					});
+					var HistoryTable = __class__ ('HistoryTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.DIDField ('DID'), field.DateField ('Changed'), field.FillField ('Signer'), field.FillField ('Signers'), field.FillField ('Signatures')]);
+							__super__ (HistoryTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var history = server.manager.history;
+							return history.refreshHistory ().then ((function __lambda__ () {
+								return self._setData (history.history);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'did') {
+								return obj.history.id;
+							}
+							else if (field.py_name == 'changed') {
+								return obj.history.changed;
+							}
+							else if (field.py_name == 'signer') {
+								return obj.history.signer;
+							}
+							else if (field.py_name == 'signers') {
+								return obj.history.signers;
+							}
+							else if (field.py_name == 'signatures') {
+								return obj.signatures;
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
@@ -2712,6 +2812,7 @@ function main () {
 					__pragma__ ('<all>')
 						__all__.BlobsTable = BlobsTable;
 						__all__.ErrorsTable = ErrorsTable;
+						__all__.HistoryTable = HistoryTable;
 						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
 						__all__.__name__ = __name__;
@@ -2734,7 +2835,7 @@ function main () {
 						Name: 'Errors',
 						Icon: 'i.exclamation.circle.icon',
 						DataTab: 'errors',
-						Active: true,
+						Active: false,
 						get setup_table () {return __get__ (this, function (self) {
 							self.table = tables.ErrorsTable ();
 						});}
@@ -2759,6 +2860,16 @@ function main () {
 							self.table = tables.BlobsTable ();
 						});}
 					});
+					var History = __class__ ('History', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Public Keys',
+						Icon: 'i.key.icon',
+						DataTab: 'history',
+						Active: true,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.HistoryTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
@@ -2766,6 +2877,7 @@ function main () {
 					__pragma__ ('<all>')
 						__all__.Blobs = Blobs;
 						__all__.Errors = Errors;
+						__all__.History = History;
 						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
@@ -2781,10 +2893,13 @@ function main () {
 				__init__: function (__all__) {
 					var __name__ = 'dashboard';
 					var tabs =  __init__ (__world__.components.tabs);
+					var searcher =  __init__ (__world__.components.searcher);
 					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
+							self.tabs = list ([tabs.History (), tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
+							self._searchId = 'search-input';
+							self.searcher = searcher.Searcher ();
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -2819,6 +2934,14 @@ function main () {
 							}
 							return null;
 						});},
+						get searchAll () {return __get__ (this, function (self) {
+							var text = jQuery ('#' + self._searchId).val ();
+							self.searcher.setSearch (text);
+							print ('ALL: ' + text);
+							for (var tab of self.tabs) {
+								tab.table.setFilter (self.searcher.search);
+							}
+						});},
 						get view () {return __get__ (this, function (self) {
 							var menu_items = list ([]);
 							var tab_items = list ([]);
@@ -2826,10 +2949,11 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('form', dict ({'onsubmit': self.searchAll}), m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]', dict ({'id': self._searchId})), m ('button.ui.icon.button[type=submit]', m ('i.search.link.icon'))))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +
+						'components.searcher' +
 						'components.tabs' +
 					'</use>')
 					__pragma__ ('<all>')

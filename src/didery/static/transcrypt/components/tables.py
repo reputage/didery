@@ -427,5 +427,56 @@ class BlobsTable(Table):
             return obj.blob
 
 # ================================================== #
+
+class HistoryTable(Table):
+    """
+    Class for history table.
+    """
+    def __init__(self):
+        """
+        Initializes HistoryTable object. Sets up history table fields.
+        """
+        fields = [
+            field.DIDField("DID"),
+            field.DateField("Changed"),
+            field.FillField("Signer"),
+            field.FillField("Signers"),
+            field.FillField("Signatures")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        history = server.manager.history
+        return history.refreshHistory().then(lambda: self._setData(history.history))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+
+        if field.name == "did":
+            return obj.history.id
+        elif field.name == "changed":
+            return obj.history.changed
+        elif field.name == "signer":
+            return obj.history.signer
+        elif field.name == "signers":
+            return obj.history.signers
+        elif field.name == "signatures":
+            return obj.signatures
+
+# ================================================== #
 #                        EOF                         #
 # ================================================== #

@@ -10,6 +10,7 @@
 # ================================================== #
 
 import components.tabs as tabs
+import components.searcher as searcher
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -25,8 +26,9 @@ class Manager:
         Initialize Tabs object. Load in all tabs and setup
         document level functions.
         """
-        self.tabs = [tabs.Blobs(), tabs.Relays(), tabs.Errors()]
-
+        self.tabs = [tabs.History(), tabs.Blobs(), tabs.Relays(), tabs.Errors()]
+        self._searchId = "search-input"
+        self.searcher = searcher.Searcher()
         self._refreshing = False
         self._refreshPromise = None
 
@@ -71,6 +73,20 @@ class Manager:
 
     # ============================================== #
 
+    def searchAll(self):
+        """
+        Initiates searching across all tabs based on current search string.
+        """
+        text = jQuery("#" + self._searchId).val()
+        self.searcher.setSearch(text)
+
+        print("ALL: " + text)
+
+        for tab in self.tabs:
+            tab.table.setFilter(self.searcher.search)
+
+    # ============================================== #
+
     def view(self):
         """
         Returns markup for view.
@@ -87,16 +103,14 @@ class Manager:
                      m("span.menu-item-text", "Server Status"),
                      m("i.chart.bar.icon"),
                      m("div.ui.label.small.menu-item-number", "0/0")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon"),
-                     m("div.ui.label.small.menu-item-number", "0/0")),
                    menu_items,
                    m("div.right.menu",
                      m("div.item",
-                       m("div#search.ui.transparent.icon.input",
-                         m("input[type=text][placeholder=Search...]"),
-                         m("i.search.link.icon"))))
+                       m("form", {"onsubmit": self.searchAll},
+                         m("div#search.ui.transparent.icon.input",
+                           m("input[type=text][placeholder=Search...]", {"id": self._searchId}),
+                           m("button.ui.icon.button[type=submit]",
+                             m("i.search.link.icon"))))))
                    ),
                  tab_items,
 
