@@ -9,7 +9,7 @@
 					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
+							self.tabs = list ([tabs.History (), tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -51,7 +51,7 @@
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +

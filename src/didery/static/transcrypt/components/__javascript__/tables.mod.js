@@ -281,6 +281,37 @@
 							}
 						});}
 					});
+					var HistoryTable = __class__ ('HistoryTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.DIDField ('DID'), field.DateField ('Changed'), field.FillField ('Signer'), field.FillField ('Signers'), field.FillField ('Signatures')]);
+							__super__ (HistoryTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var history = server.manager.history;
+							return history.refreshHistory ().then ((function __lambda__ () {
+								return self._setData (history.history);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'did') {
+								return obj.history.id;
+							}
+							else if (field.py_name == 'changed') {
+								return obj.history.changed;
+							}
+							else if (field.py_name == 'signer') {
+								return obj.history.signer;
+							}
+							else if (field.py_name == 'signers') {
+								return obj.history.signers;
+							}
+							else if (field.py_name == 'signatures') {
+								return obj.signatures;
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
@@ -288,6 +319,7 @@
 					__pragma__ ('<all>')
 						__all__.BlobsTable = BlobsTable;
 						__all__.ErrorsTable = ErrorsTable;
+						__all__.HistoryTable = HistoryTable;
 						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
 						__all__.__name__ = __name__;

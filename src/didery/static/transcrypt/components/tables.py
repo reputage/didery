@@ -427,5 +427,96 @@ class BlobsTable(Table):
             return obj.blob
 
 # ================================================== #
+
+
+"""
+"data": [{
+    "history":
+    {
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "changed" : "2000-01-01T00:00:00+00:00",
+        "signer": 2,
+        "signers":
+        [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+        ]
+    },
+    "signatures":
+    [
+        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    ]
+}, {
+    "history":
+    {
+        "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+        "changed" : "2000-01-01T00:00:00+00:00",
+        "signer": 1,
+        "signers":
+        [
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+        ]
+    },
+    "signatures":
+    [
+        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
+        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    ]
+}]"""
+class HistoryTable(Table):
+    """
+    Class for history table.
+    """
+    def __init__(self):
+        """
+        Initializes HistoryTable object. Sets up history table fields.
+        """
+        fields = [
+            field.DIDField("DID"),
+            field.DateField("Changed"),
+            field.FillField("Signer"),
+            field.FillField("Signers"),
+            field.FillField("Signatures")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        history = server.manager.history
+        return history.refreshHistory().then(lambda: self._setData(history.history))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+
+        if field.name == "did":
+            return obj.history.id
+        elif field.name == "changed":
+            return obj.history.changed
+        elif field.name == "signer":
+            return obj.history.signer
+        elif field.name == "signers":
+            return obj.history.signers
+        elif field.name == "signatures":
+            return obj.signatures
+
+# ================================================== #
 #                        EOF                         #
 # ================================================== #

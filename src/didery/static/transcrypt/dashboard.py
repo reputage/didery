@@ -25,7 +25,7 @@ class Manager:
         Initialize Tabs object. Load in all tabs and setup
         document level functions.
         """
-        self.tabs = [tabs.Blobs(), tabs.Relays(), tabs.Errors()]
+        self.tabs = [tabs.History(), tabs.Blobs(), tabs.Relays(), tabs.Errors()]
 
         self._refreshing = False
         self._refreshPromise = None
@@ -86,10 +86,6 @@ class Manager:
                    m("a.item.tab",
                      m("span.menu-item-text", "Server Status"),
                      m("i.chart.bar.icon"),
-                     m("div.ui.label.small.menu-item-number", "0/0")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon"),
                      m("div.ui.label.small.menu-item-number", "0/0")),
                    menu_items,
                    m("div.right.menu",

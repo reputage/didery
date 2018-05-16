@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-05-12 00:14:26
+// Transcrypt'ed from Python, 2018-05-13 22:51:17
 function main () {
     var __symbols__ = ['__py3.6__', '__esv6__'];
     var __all__ = {};
@@ -2705,6 +2705,37 @@ function main () {
 							}
 						});}
 					});
+					var HistoryTable = __class__ ('HistoryTable', [Table], {
+						__module__: __name__,
+						get __init__ () {return __get__ (this, function (self) {
+							var fields = list ([field.DIDField ('DID'), field.DateField ('Changed'), field.FillField ('Signer'), field.FillField ('Signers'), field.FillField ('Signatures')]);
+							__super__ (HistoryTable, '__init__') (self, fields);
+						});},
+						get refresh () {return __get__ (this, function (self) {
+							self.py_clear ();
+							var history = server.manager.history;
+							return history.refreshHistory ().then ((function __lambda__ () {
+								return self._setData (history.history);
+							}));
+						});},
+						get _getField () {return __get__ (this, function (self, obj, field) {
+							if (field.py_name == 'did') {
+								return obj.history.id;
+							}
+							else if (field.py_name == 'changed') {
+								return obj.history.changed;
+							}
+							else if (field.py_name == 'signer') {
+								return obj.history.signer;
+							}
+							else if (field.py_name == 'signers') {
+								return obj.history.signers;
+							}
+							else if (field.py_name == 'signatures') {
+								return obj.signatures;
+							}
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.fields' +
 						'server' +
@@ -2712,6 +2743,7 @@ function main () {
 					__pragma__ ('<all>')
 						__all__.BlobsTable = BlobsTable;
 						__all__.ErrorsTable = ErrorsTable;
+						__all__.HistoryTable = HistoryTable;
 						__all__.RelaysTable = RelaysTable;
 						__all__.Table = Table;
 						__all__.__name__ = __name__;
@@ -2734,7 +2766,7 @@ function main () {
 						Name: 'Errors',
 						Icon: 'i.exclamation.circle.icon',
 						DataTab: 'errors',
-						Active: true,
+						Active: false,
 						get setup_table () {return __get__ (this, function (self) {
 							self.table = tables.ErrorsTable ();
 						});}
@@ -2759,6 +2791,16 @@ function main () {
 							self.table = tables.BlobsTable ();
 						});}
 					});
+					var History = __class__ ('History', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Public Keys',
+						Icon: 'i.key.icon',
+						DataTab: 'history',
+						Active: true,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.HistoryTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
@@ -2766,6 +2808,7 @@ function main () {
 					__pragma__ ('<all>')
 						__all__.Blobs = Blobs;
 						__all__.Errors = Errors;
+						__all__.History = History;
 						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
@@ -2784,7 +2827,7 @@ function main () {
 					var Manager = __class__ ('Manager', [object], {
 						__module__: __name__,
 						get __init__ () {return __get__ (this, function (self) {
-							self.tabs = list ([tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
+							self.tabs = list ([tabs.History (), tabs.Blobs (), tabs.Relays (), tabs.Errors ()]);
 							self._refreshing = false;
 							self._refreshPromise = null;
 							jQuery (document).ready ((function __lambda__ () {
@@ -2826,7 +2869,7 @@ function main () {
 								menu_items.append (tab.menu_item ());
 								tab_items.append (tab.tab_item ());
 							}
-							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), m ('a.item.tab', m ('span.menu-item-text', 'Public Keys'), m ('i.key.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
+							return m ('div', m ('div.ui.top.attached.tabular.menu', m ('a.item.tab', m ('span.menu-item-text', 'Server Status'), m ('i.chart.bar.icon'), m ('div.ui.label.small.menu-item-number', '0/0')), menu_items, m ('div.right.menu', m ('div.item', m ('div#search.ui.transparent.icon.input', m ('input[type=text][placeholder=Search...]'), m ('i.search.link.icon'))))), tab_items);
 						});}
 					});
 					__pragma__ ('<use>' +

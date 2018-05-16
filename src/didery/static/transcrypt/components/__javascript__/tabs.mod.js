@@ -12,7 +12,7 @@
 						Name: 'Errors',
 						Icon: 'i.exclamation.circle.icon',
 						DataTab: 'errors',
-						Active: true,
+						Active: false,
 						get setup_table () {return __get__ (this, function (self) {
 							self.table = tables.ErrorsTable ();
 						});}
@@ -37,6 +37,16 @@
 							self.table = tables.BlobsTable ();
 						});}
 					});
+					var History = __class__ ('History', [tabledtab.TabledTab], {
+						__module__: __name__,
+						Name: 'Public Keys',
+						Icon: 'i.key.icon',
+						DataTab: 'history',
+						Active: true,
+						get setup_table () {return __get__ (this, function (self) {
+							self.table = tables.HistoryTable ();
+						});}
+					});
 					__pragma__ ('<use>' +
 						'components.tabledtab' +
 						'components.tables' +
@@ -44,6 +54,7 @@
 					__pragma__ ('<all>')
 						__all__.Blobs = Blobs;
 						__all__.Errors = Errors;
+						__all__.History = History;
 						__all__.Relays = Relays;
 						__all__.__name__ = __name__;
 					__pragma__ ('</all>')
