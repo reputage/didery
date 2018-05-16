@@ -10,6 +10,7 @@
 # ================================================== #
 
 import components.tabs as tabs
+import components.searcher as searcher
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -26,7 +27,8 @@ class Manager:
         document level functions.
         """
         self.tabs = [tabs.History(), tabs.Blobs(), tabs.Relays(), tabs.Errors()]
-
+        self._searchId = "search-input"
+        self.searcher = searcher.Searcher()
         self._refreshing = False
         self._refreshPromise = None
 
@@ -71,6 +73,20 @@ class Manager:
 
     # ============================================== #
 
+    def searchAll(self):
+        """
+        Initiates searching across all tabs based on current search string.
+        """
+        text = jQuery("#" + self._searchId).val()
+        self.searcher.setSearch(text)
+
+        print("ALL: " + text)
+
+        for tab in self.tabs:
+            tab.table.setFilter(self.searcher.search)
+
+    # ============================================== #
+
     def view(self):
         """
         Returns markup for view.
@@ -90,9 +106,11 @@ class Manager:
                    menu_items,
                    m("div.right.menu",
                      m("div.item",
-                       m("div#search.ui.transparent.icon.input",
-                         m("input[type=text][placeholder=Search...]"),
-                         m("i.search.link.icon"))))
+                       m("form", {"onsubmit": self.searchAll},
+                         m("div#search.ui.transparent.icon.input",
+                           m("input[type=text][placeholder=Search...]", {"id": self._searchId}),
+                           m("button.ui.icon.button[type=submit]",
+                             m("i.search.link.icon"))))))
                    ),
                  tab_items,
 

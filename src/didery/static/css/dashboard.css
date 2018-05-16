@@ -15,11 +15,13 @@ body
     display: none;
 }
 
-.ui.tabular.menu .item {
+.ui.tabular.menu .item
+{
     color: #808080;
 }
 
-.ui.tabular.menu .active.item {
+.ui.tabular.menu .active.item
+{
     color: #000000;
 }
 
@@ -28,60 +30,67 @@ body
     margin-right: 4px;
 }
 
-.table-container {
+.table-container
+{
     height: 30%;
 }
-.table-container table {
+
+.table-container table
+{
     display: flex;
     flex-flow: column;
     height: 100%;
 }
-.table-container table thead {
-    /* head takes the height it requires,
-    and it's not scaled when table is resized */
+
+.table-container table thead
+{
     flex: 0 0 auto;
     width: calc(100% - 0.7em);
 }
-.table-container table tbody {
-    /* body takes all the remaining available space */
+
+.table-container table tbody
+{
     flex: 1 1 auto;
     display: block;
     overflow-y: scroll;
 }
-.table-container table tbody tr {
+
+.table-container table tbody tr
+{
     width: 100%;
 }
+
 .table-container table thead,
-.table-container table tbody tr {
+.table-container table tbody tr
+{
     display: table;
     table-layout: fixed;
 }
 
 
-div .ui.card>.content.small-header {
+div .ui.card>.content.small-header
+{
     flex-grow: 0;
 }
 
-pre.content.code-block {
+pre.content.code-block
+{
     overflow-x: auto;
 }
 
-td {
+td
+{
     overflow-x: hidden;
     text-overflow: ellipsis;
 }
 
-.spinning {
-    -webkit-animation:spin 1s linear infinite;
-    -moz-animation:spin 1s linear infinite;
-    animation:spin 1s linear infinite;
+th
+{
+    overflow-x: hidden;
+    text-overflow: ellipsis;
 }
 
-@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
-@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
-@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
-
-@media screen and (max-width : 1135px)
+@media screen and (max-width : 1167px)
 {
     .menu-item-text
     {
@@ -89,7 +98,7 @@ td {
     }
 }
 
-@media screen and (max-width : 783px)
+@media screen and (max-width : 815px)
 {
     #search
     {
@@ -97,7 +106,7 @@ td {
     }
 }
 
-@media screen and (max-width : 575px)
+@media screen and (max-width : 577px)
 {
     .menu-item-number
     {
