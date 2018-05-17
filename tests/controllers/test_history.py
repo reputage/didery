@@ -23,7 +23,7 @@ SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux
 VK = b"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
 DID = "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
 
-verifyRequest = h.verifyRequest
+verifyRequest = h.verifyPublicApiRequest
 SEED = b'PTi\x15\xd5\xd3`\xf1u\x15}^r\x9bfH\x02l\xc6\x1b\x1d\x1c\x0b9\xd7{\xc0_\xf2K\x93`'
 
 postData = {
@@ -56,7 +56,12 @@ def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigner
     vk, sk = libnacl.crypto_sign_seed_keypair(seed)
 
     did = h.makeDid(vk)
-    body = {"id": did, "changed": changed, "signer": signer, "signers": []}
+    body = {
+        "id": did,
+        "changed": changed,
+        "signer": signer,
+        "signers": []
+    }
 
     for i in range(0, numSigners):
         body['signers'].append(h.keyToKey64u(vk))
@@ -70,148 +75,169 @@ def basicValidation(reqFunc, url, data):
     # Test missing id field
     body = deepcopy(data)
     del body['id']
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain id field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain id field."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test missing changed field
     body = deepcopy(data)
     del body['changed']
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain changed field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain changed field."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test missing signer field
     body = deepcopy(data)
     del body['signer']
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain signer field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain signer field."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test missing signers field
     body = deepcopy(data)
     del body['signers']
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain signers field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain signers field."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test empty id field
     body = deepcopy(data)
     body['id'] = ""
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"id field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "id field cannot be empty."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test empty changed field
     body = deepcopy(data)
     body['changed'] = ""
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"changed field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "changed field cannot be empty."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test invalid signers value
     body = deepcopy(data)
     body['signers'] = ""
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field must be a list or array."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field must be a list or array."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signer field is an int
     body = deepcopy(data)
     body['signer'] = "a"
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signer field must be a number."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signer field must be a number."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that changed field is a valid ISO date
     body = deepcopy(data)
     body['changed'] = "01-01T00:00:00+00:00"
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"ISO datetime could not be parsed."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "ISO datetime could not be parsed."
+    }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
 
 def testValidPost(client):
-    body = json.dumps(postData, ensure_ascii=False).encode('utf-8')
+    body = postData
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
     # TODO:
-    # assert response.content == expected_response
+    # assert json.loads(response.content) == expected_response
 
 
 def testPostSignValidation(client):
     headers = {"Signature": ""}
 
     # Test missing Signature Header
-    body = json.dumps(postData, ensure_ascii=False).encode('utf-8')
+    body = deepcopy(postData)
+    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Authorization Error", "description": "Empty Signature header."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Empty Signature header."
+    }
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
     assert response.status == falcon.HTTP_401
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
-    exp_result = b'{"title": "Missing header value", "description": "The Signature ' \
-                 b'header is required."}'
+    exp_result = {
+        "title": "Missing header value",
+        "description": "The Signature header is required."
+    }
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body)
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     # Test missing signer tag in signature header
+    body = deepcopy(postData)
+
     headers = {
-        "Signature": 'test="' + h.signResource(body, SK) + '"'
+        "Signature": 'test="' + h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
-    exp_result = b'{"title": "Authorization Error", "description": "' \
-                 b'Signature header missing \\"signer\\" tag and signature."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Signature header missing \"signer\" tag and signature."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers, exp_result, falcon.HTTP_401)
 
     # Test invalid signature
     body = deepcopy(postData)
     body['signers'][0] = "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request body and signature. ' \
-                 b'Unverifiable signature."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
     # Test the public key in the id field did matches the first public key in rotation history
     body = deepcopy(postData)
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "The DIDs key must match the first key in the ' \
-                 b'signers field."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "The DIDs key must match the first key in the signers field."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -222,122 +248,138 @@ def testPostValidation(client):
     # Test valid did format in id field
     body = deepcopy(postData)
     body['id'] = "did:fake:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"Invalid did format. Invalid DID method"}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "Invalid did format. Invalid DID method"
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     body = deepcopy(postData)
     body['id'] = "did:fake"
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"Invalid did format. Invalid DID value"}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "Invalid did format. Invalid DID value"
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     body = deepcopy(postData)
     body['id'] = "fake:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"Invalid did format. Invalid DID identifier"}'
+    exp_result = {
+        "title": "Validation Error", "description": "Invalid did format. Invalid DID identifier"
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signers field has two keys
     body = deepcopy(postData)
     body['signers'] = ["Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="]
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field must contain at least the current public key and its first pre-rotation."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field must contain at least the current public key and its first pre-rotation."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signers field has two keys
     body = deepcopy(postData)
     body['signers'] = []
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field must contain at least the current public key and its first pre-rotation."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field must contain at least the current public key and its first pre-rotation."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signers field has two keys
     body = deepcopy(postData)
     body['signers'] = ["NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="]
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
     # Test that signer field is a valid index into signers field
     body = deepcopy(postData)
     body['signer'] = 4
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signer field must equal 0 on creation of new rotation history."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signer field must equal 0 on creation of new rotation history."
+    }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
 
 def testPutSignValidation(client):
-    url = HISTORY_BASE_PATH + '/{}'.format(DID)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
     headers = {"Signature": ""}
 
     # Test url did matches id did
     body = deepcopy(putData)
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Url did must match id field did."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "Url did must match id field did."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test missing Signature Header
-    body = json.dumps(putData, ensure_ascii=False).encode('utf-8')
+    body = deepcopy(putData)
 
-    exp_result = b'{"title": "Authorization Error", "description": "Empty Signature header."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Empty Signature header."
+    }
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
-    exp_result = b'{"title": "Missing header value", "description": "The Signature ' \
-                 b'header is required."}'
+    exp_result = {
+        "title": "Missing header value",
+        "description": "The Signature header is required."
+    }
 
-    response = client.simulate_put(url, body=body)
+    response = client.simulate_put(url, body=json.dumps(body, ensure_ascii=False).encode('utf-8'))
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     # Test partial signature header
     headers = {
-        "Signature": 'signer="' + h.signResource(body, SK) + '"'
+        "Signature": 'signer="' + h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
-    exp_result = b'{"title": "Authorization Error", "description": "' \
-                 b'Signature header missing signature for \\"rotation\\"."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Signature header missing signature for \"rotation\"."
+    }
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
     headers = {
-        "Signature": 'rotation="' + h.signResource(body, SK) + '"'
+        "Signature": 'rotation="' + h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
-    exp_result = b'{"title": "Authorization Error", "description": "' \
-                 b'Signature header missing signature for \\"signer\\"."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Signature header missing signature for \"signer\"."
+    }
 
     verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
 
     # Test invalid signer signature
     body = deepcopy(putData)
     body['signers'][1] = "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request signature for ' \
-                 b'rotation field. Unverifiable signature."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for rotation field. Unverifiable signature."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
@@ -345,22 +387,23 @@ def testPutSignValidation(client):
     body = deepcopy(putData)
     body['signers'][0] = "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body['signers'][1] = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Authorization Error", "description": "Could not validate the request signature for ' \
-                 b'signer field. Unverifiable signature."}'
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
 
 def testPutValidation(client):
-    url = '{0}/{1}'.format(HISTORY_BASE_PATH, DID)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
     vk, sk, did, body = genDidHistory(seed, signer=1)
 
-    exp_result = b'{"title": "404 Not Found"}'
+    exp_result = {"title": "404 Not Found"}
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
@@ -369,7 +412,7 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
-                  body,
+                  json.loads(body),
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_404)
@@ -380,22 +423,24 @@ def testPutValidation(client):
     body = deepcopy(putData)
     del body['signers'][3]
     del body['signers'][2]
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"PUT endpoint is for rotation events. Must contain at least the original key, a current signing ' \
-                 b'key, and a pre-rotated key."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "PUT endpoint is for rotation events. Must contain at least the original key, a current signing"
+                       " key, and a pre-rotated key."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signers field has three keys
     body = deepcopy(putData)
     body['signers'] = []
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"PUT endpoint is for rotation events. Must contain at least the original key, a current signing ' \
-                 b'key, and a pre-rotated key."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "PUT endpoint is for rotation events. Must contain at least the original key, a current signing"
+                       " key, and a pre-rotated key."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -407,44 +452,49 @@ def testPutValidation(client):
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
     ]
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
     # Test that signer field is a valid index into signers field
     body = deepcopy(putData)
     body['signer'] = 4
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"\\"signer\\" cannot reference the first or last key in the \\"signers\\" field on PUT requests."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "\"signer\" cannot reference the first or last key in the \"signers\" field on PUT requests."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signer is not 0
     body = deepcopy(putData)
     body['signer'] = 0
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"\\"signer\\" cannot reference the first or last key in the \\"signers\\" field on PUT requests."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "\"signer\" cannot reference the first or last key in the \"signers\" field on PUT requests."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that signers field has a pre-rotated key
     body = deepcopy(putData)
     body['signer'] = 3
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
-    exp_result = b'{"title": "Validation Error", "description": "Missing pre rotated key in the signers field."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "Missing pre rotated key in the signers field."
+    }
 
     verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that the url has a did in it
-    body = json.dumps(putData, ensure_ascii=False).encode('utf-8')
+    body = deepcopy(putData)
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"DID value missing from url."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "DID value missing from url."
+    }
 
     verifyRequest(client.simulate_put, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
@@ -460,15 +510,16 @@ def testPutValidation(client):
 
     body = json.loads(body)
     body['signer'] = 1
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
-                                                           h.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+                                                           h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"\\"changed\\" field not later than previous update."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "\"changed\" field not later than previous update."
+    }
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -478,17 +529,17 @@ def testPutValidation(client):
                   exp_status=falcon.HTTP_400)
 
     # Test that signers field length hasn't changed
-    body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:01+00:00"
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
-                                                           h.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+                                                           h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field is missing keys."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field is missing keys."
+    }
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -497,17 +548,17 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
-    body = json.loads(body)
     del body['signers'][3]
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
-                                                           h.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+                                                           h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field is missing keys."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field is missing keys."
+    }
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -517,18 +568,18 @@ def testPutValidation(client):
                   exp_status=falcon.HTTP_400)
 
     # Test that previously verified keys have not been changed
-    body = json.loads(body)
     body['signers'].append("Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=")
     body['signers'].append("Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=")
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
-                                                           h.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+                                                           h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"signers field missing previously verified keys."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers field missing previously verified keys."
+    }
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -555,28 +606,28 @@ def testValidPut(client):
     body['changed'] = "2000-01-01T00:00:01+00:00"
     body['signer'] = 1
     body['signers'].append(body['signers'][0])
-    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
-                                                           h.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+                                                           h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = b'{"history": {' \
-                 b'"id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", ' \
-                 b'"changed": "2000-01-01T00:00:01+00:00", ' \
-                 b'"signer": 1, ' \
-                 b'"signers": [' \
-                 b'"iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", ' \
-                 b'"iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", ' \
-                 b'"iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="' \
-                 b']' \
-                 b'}, ' \
-                 b'"signatures": {' \
-                 b'"signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==", ' \
-                 b'"rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="' \
-                 b'}' \
-                 b'}'
+    exp_result = {
+        "history": {
+            "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signer": 1,
+            "signers": [
+                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+            ]
+        },
+        "signatures": {
+            "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
+            "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
+        }
+    }
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -590,68 +641,132 @@ def testGetAllValidation(client):
     # Test that query params have values
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset&limit=10")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string missing value(s)."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=10&limit")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string missing value(s)."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     # Test that query params values are ints
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=a&limit=10")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string value must be a number."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=10&limit=d")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string value must be a number."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=10&limit=")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string value must be a number."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=&limit=10")
 
-    exp_result = b'{"title": "Malformed Query String", "description": ' \
-                 b'"url query string value must be a number."}'
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
 
     assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
 
 def testValidGetAll(client):
     response = client.simulate_get(HISTORY_BASE_PATH)
 
-    exp_result = b'{"data": [{"history": {"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "changed": "2000-01-01T00:00:01+00:00", "signer": 1, "signers": ["NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="]}, "signatures": {"signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==", "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="}}, {"history": {"id": "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=", "changed": "2000-01-01T00:00:00+00:00", "signer": 0, "signers": ["KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=", "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=", "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=", "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="]}, "signatures": {"signer": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw==", "rotation": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw=="}}, {"history": {"id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", "changed": "2000-01-01T00:00:01+00:00", "signer": 1, "signers": ["iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=", "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="]}, "signatures": {"signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==", "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="}}]}'
+    exp_result = {
+        "data": [
+            {
+                "history": {
+                    "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                    "changed": "2000-01-01T00:00:01+00:00",
+                    "signer": 1,
+                    "signers": [
+                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+                    ]
+                },
+                "signatures": {
+                    "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
+                    "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
+                }
+            },
+            {
+                "history": {
+                    "id": "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+                    "changed": "2000-01-01T00:00:00+00:00",
+                    "signer": 0,
+                    "signers": [
+                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="
+                    ]
+                },
+                "signatures": {
+                    "signer": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw==",
+                    "rotation": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw=="
+                }
+            },
+            {
+                "history": {
+                    "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                    "changed": "2000-01-01T00:00:01+00:00",
+                    "signer": 1,
+                    "signers": [
+                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+                    ]
+                },
+                "signatures": {
+                    "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
+                    "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
+                }
+            }
+        ]
+    }
 
     assert response.status == falcon.HTTP_200
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=100&limit=10")
 
-    exp_result = b'{}'
+    exp_result = {}
 
     assert response.status == falcon.HTTP_200
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
 
 def testGetOne(client):
@@ -660,24 +775,25 @@ def testGetOne(client):
     # Test basic valid Get One
     response = client.simulate_get(url)
 
-    exp_result = b'{"history": {' \
-                 b'"id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
-                 b'"changed": "2000-01-01T00:00:01+00:00", ' \
-                 b'"signer": 1, ' \
-                 b'"signers": [' \
-                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
-                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", ' \
-                 b'"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="' \
-                 b']' \
-                 b'}, ' \
-                 b'"signatures": {' \
-                 b'"signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==", ' \
-                 b'"rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="' \
-                 b'}' \
-                 b'}'
+    exp_result = {
+        "history": {
+            "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signer": 1,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        },
+        "signatures": {
+            "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
+            "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
+        }
+    }
 
     assert response.status == falcon.HTTP_200
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result
 
     # Test GET with non existent resource
     response = client.simulate_get("{0}/{1}".format(
@@ -685,7 +801,7 @@ def testGetOne(client):
         "did:dad:COf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
     )
 
-    exp_result = b'{"title": "404 Not Found"}'
+    exp_result = {"title": "404 Not Found"}
 
     assert response.status == falcon.HTTP_404
-    assert response.content == exp_result
+    assert json.loads(response.content) == exp_result

@@ -12,196 +12,187 @@ try:
 except ImportError:
     import json
 
+from copy import deepcopy
+
 from didery.routing import *
+from didery.help import helping as h
+
+
+verifyRequest = h.verifyManagementApiRequest
+
+data = {
+    "host_address": "127.0.0.1",
+    "port": 7541,
+    "name": "alpha",
+    "main": True,
+    "changed": "2000-01-01T00:00:00+00:00",
+    "uid": 1
+}
 
 
 def basicValidation(reqFunc, url):
     # Test missing host_address field
-    body = b'{' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    del body['host_address']
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain host_address field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain host_address field."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test missing port field
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    del body['port']
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain port field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain port field."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test missing name field
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    del body['name']
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain name field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain name field."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test missing changed field
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"name": "alpha", ' \
-           b'"port": 7541, ' \
-           b'"main": true' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    del body['changed']
 
-    exp_result = b'{"title": "Missing Required Field", "description": ' \
-                 b'"Request must contain changed field."}'
+    exp_result = {
+        "title": "Missing Required Field",
+        "description": "Request must contain changed field."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test empty host_address
-    body = b'{' \
-           b'"host_address": "", ' \
-           b'"port": "a", ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['host_address'] = ""
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"host_address field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "host_address field cannot be empty."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test empty port
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": "", ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['port'] = ""
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"port field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "port field cannot be empty."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test empty name
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['name'] = ""
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"name field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "name field cannot be empty."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test empty main
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": "", ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['main'] = ""
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"main field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "main field cannot be empty."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test empty changed
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": ""' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['changed'] = ""
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"changed field cannot be empty."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "changed field cannot be empty."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
+
+    # Test empty uid
+    body = deepcopy(data)
+    body['uid'] = ""
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid field cannot be empty."
+    }
+
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test invalid bool for main
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": "a", ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['main'] = "a"
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"main field must be a boolean value."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "main field must be a boolean value."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
     # Test invalid port values
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": "a", ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['port'] = "a"
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"port field must be a number."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "port field must be a number."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 70000, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = reqFunc(url, body=body)
+    body = deepcopy(data)
+    body['port'] = 70000
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"port field must be a number between 1 and 65535."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "port field must be a number between 1 and 65535."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
+
+    body = deepcopy(data)
+    body['port'] = 0
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "port field must be a number between 1 and 65535."
+    }
+
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
+
+    # Test invalid uid values
+    body = deepcopy(data)
+    body['uid'] = "a"
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid field must be a number."
+    }
+
+    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
 
 def testPostValidation(client):
@@ -209,17 +200,18 @@ def testPostValidation(client):
 
 
 def testValidPost(client):
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = client.simulate_post(RELAY_BASE_PATH, body=body)
-    assert response.status == falcon.HTTP_201
+    body = deepcopy(data)
+    del body['uid']
+
     # TODO:
     # assert response.content == exp_result
+    verifyRequest(client.simulate_post, RELAY_BASE_PATH, body, exp_status=falcon.HTTP_201)
+
+    # Test valid uid values
+    body = deepcopy(data)
+    body['uid'] = 1
+
+    verifyRequest(client.simulate_post, RELAY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
 
 def testPutValidation(client):
@@ -227,53 +219,68 @@ def testPutValidation(client):
 
     basicValidation(client.simulate_put, url)
 
-    # Test missing uid
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00"' \
-           b'}'
-    response = client.simulate_put("{0}".format(RELAY_BASE_PATH), body=body)
+    # Test missing uid in url
+    body = deepcopy(data)
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"uid required."}'
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid required in url."
+    }
 
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(client.simulate_put, RELAY_BASE_PATH, body, exp_result, falcon.HTTP_400)
+
+    # Test url uid is an int
+    body = deepcopy(data)
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid in url must be a number."
+    }
+
+    verifyRequest(client.simulate_put, "{}/a".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
+
+    # Test url uid matches the uid in the body
+    body = deepcopy(data)
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid in url must match uid in body."
+    }
+
+    verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
 
 
 def testValidPut(client):
-    uid = 1
-    body = b'{' \
-           b'"host_address": "127.0.0.1", ' \
-           b'"port": 7541, ' \
-           b'"name": "alpha", ' \
-           b'"main": true, ' \
-           b'"changed": "2000-01-01T00:00:00+00:00", ' \
-           b'"uid":1' \
-           b'}'
-    response = client.simulate_put("{0}/{1}".format(RELAY_BASE_PATH, uid), body=body)
-    print(response.content)
-    assert response.status == falcon.HTTP_200
+    url = "{0}/1".format(RELAY_BASE_PATH)
+
     # TODO:
     # assert response.content == exp_result
+    body = deepcopy(data)
+    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
+
+    # Test valid uid values
+    body = deepcopy(data)
+    body['uid'] = "1"
+
+    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
+
+    # Test request without uid in body
+    body = deepcopy(data)
+    del body['uid']
+
+    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
 
 def testDeleteValidation(client):
-    response = client.simulate_delete("{0}".format(RELAY_BASE_PATH))
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid required in url."
+    }
 
-    exp_result = b'{"title": "Validation Error", "description": ' \
-                 b'"uid required."}'
-
-    assert response.status == falcon.HTTP_400
-    assert response.content == exp_result
+    verifyRequest(client.simulate_delete, RELAY_BASE_PATH, exp_result=exp_result,  exp_status=falcon.HTTP_400)
 
 
 def testValidDelete(client):
-    response = client.simulate_delete("{0}/{1}".format(RELAY_BASE_PATH, 1))
-
-    assert response.status == falcon.HTTP_200
     # TODO:
     # assert response.content == exp_result
+    verifyRequest(client.simulate_delete, "{0}/1".format(RELAY_BASE_PATH), exp_status=falcon.HTTP_200)

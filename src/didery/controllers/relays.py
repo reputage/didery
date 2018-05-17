@@ -86,10 +86,7 @@ def validatePut(req, resp, resource, params):
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
-                               'uid required.')
-
-    if "uid" not in req.body:
-        req.body['uid'] = params['uid']
+                               'uid required in url.')
 
     try:
         params['uid'] = int(params['uid'])
@@ -97,6 +94,9 @@ def validatePut(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'uid in url must be a number.')
+
+    if "uid" not in req.body:
+        req.body['uid'] = params['uid']
 
     if params['uid'] != req.body['uid']:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -108,7 +108,7 @@ def validateDelete(req, resp, resource, params):
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
-                               'uid required.')
+                               'uid required in url.')
 
 
 class Relay:
