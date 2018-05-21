@@ -1,4 +1,5 @@
 import falcon
+import arrow
 try:
     import simplejson as json
 except ImportError:
@@ -6,6 +7,9 @@ except ImportError:
 
 from ..help import helping
 from .. import didering
+
+
+tempDB = {}
 
 
 def basicValidation(req, resp, resource, params):
@@ -22,6 +26,7 @@ def basicValidation(req, resp, resource, params):
 
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
+    req.signatures = sigs
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -120,6 +125,7 @@ class OtpBlob:
         http localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
         http localhost:8000/blob
     """
+    @falcon.before(helping.parseQString)
     def on_get(self, req, resp, did=None):
         """
         Handle and respond to incoming GET request.
@@ -128,25 +134,24 @@ class OtpBlob:
         :param did: string
             URL parameter specifying a rotation history
         """
+        offset = req.offset
+        limit = req.limit
+
+        if offset >= len(tempDB):
+            resp.body = json.dumps({}, ensure_ascii=False)
+            return
+
         if did is not None:
-            body = {
-                "id": did,
-                "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-                "changed": "2000-01-01T00:00:00+00:00"
-            }
+            if did not in tempDB:
+                raise falcon.HTTPError(falcon.HTTP_404)
+
+            body = tempDB[did]
         else:
+            values = list(tempDB.values())
             body = {
-                "data": [{
-                    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-                    "changed": "2000-01-01T00:00:00+00:00"
-                },
-                {
-                    "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-                    "changed": "2000-01-01T00:00:00+00:00"
-                }]
+                "data": values[offset:offset + limit]
             }
+            resp.append_header('X-Total-Count', len(tempDB))
 
         resp.body = json.dumps(body, ensure_ascii=False)
 
@@ -161,9 +166,25 @@ class OtpBlob:
         :param req: Request object
         :param resp: Response object
         """
-        # TODO make sure resource does NOT already exists
+        result_json = req.body
+        sigs = req.signatures
 
-        resp.body = json.dumps(req.body, ensure_ascii=False)
+        # TODO uncomment code below once lmdb is implemented.
+        # TODO (this blocks tests because they cant clear the database after each run until lmdb is implemented)
+        # if result_json['id'] in tempDB:
+        #     raise falcon.HTTPError(falcon.HTTP_400,
+        #                            'Resource Already Exists',
+        #                            'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
+
+        response_json = {
+            "otp_data": result_json,
+            "signature": sigs
+        }
+
+        tempDB[result_json['id']] = response_json
+
+        resp.body = json.dumps(response_json, ensure_ascii=False)
+        resp.status = falcon.HTTP_201
 
     """
         For manual testing of the endpoint:
@@ -177,7 +198,29 @@ class OtpBlob:
         :param resp: Response object
         :param did: did string
         """
-        # TODO make sure resource already exists
-        # TODO make sure time in changed field is greater than existing changed field
+        result_json = req.body
+        sigs = req.signatures
 
-        resp.body = json.dumps(req.body, ensure_ascii=False)
+        # TODO make sure resource already exists
+        if did not in tempDB:
+            raise falcon.HTTPError(falcon.HTTP_404)
+
+        resource = tempDB[did]
+
+        # TODO make sure time in changed field is greater than existing changed field
+        cdt = arrow.get(resource['otp_data']['changed'])
+        udt = arrow.get(result_json['changed'])
+
+        if cdt >= udt:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   '"changed" field not later than previous update.')
+
+        response_json = {
+            "otp_data": result_json,
+            "signature": sigs
+        }
+
+        tempDB[result_json['id']] = response_json
+
+        resp.body = json.dumps(response_json, ensure_ascii=False)

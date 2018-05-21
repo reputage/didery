@@ -234,6 +234,41 @@ def extractDidParts(did, method="dad"):
     return keystr
 
 
+def parseQString(req, resp, resource, params):
+    req.offset = 0
+    req.limit = 10
+
+    if req.query_string:
+        queries = req.query_string.split('&')
+        for query in queries:
+            key, val = qStringValidation(query)
+            if key == 'offset':
+                req.offset = val
+            if key == 'limit':
+                req.limit = val
+
+
+def qStringValidation(query):
+    keyval = query.split('=')
+
+    if len(keyval) != 2:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string missing value(s).')
+
+    key = keyval[0]
+    val = keyval[1]
+
+    try:
+        val = int(val)
+    except ValueError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string value must be a number.')
+
+    return key, val
+
+
 def verifyPublicApiRequest(reqFunc, url, body, headers=None, exp_result=None, exp_status=None):
     SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
 

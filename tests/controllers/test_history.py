@@ -66,8 +66,6 @@ def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigner
     for i in range(0, numSigners):
         body['signers'].append(h.keyToKey64u(vk))
 
-    body['id'] = did
-
     return vk, sk, did, json.dumps(body, ensure_ascii=False).encode('utf-8')
 
 
@@ -243,6 +241,7 @@ def testPostSignValidation(client):
 
 
 def testPostValidation(client):
+    # Run basic validation tests
     basicValidation(client.simulate_post, HISTORY_BASE_PATH, postData)
 
     # Test valid did format in id field
@@ -417,6 +416,7 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_404)
 
+    # Run basic validation tests
     basicValidation(client.simulate_put, url, putData)
 
     # Test that signers field has three keys

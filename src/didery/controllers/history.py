@@ -12,41 +12,6 @@ from .. import didering
 tempDB = {}
 
 
-def parseQString(req, resp, resource, params):
-    req.offset = None
-    req.limit = None
-
-    if req.query_string:
-        queries = req.query_string.split('&')
-        for query in queries:
-            key, val = qStringValidation(query)
-            if key == 'offset':
-                req.offset = val
-            if key == 'limit':
-                req.limit = val
-
-
-def qStringValidation(query):
-    keyval = query.split('=')
-
-    if len(keyval) != 2:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Query String',
-                               'url query string missing value(s).')
-
-    key = keyval[0]
-    val = keyval[1]
-
-    try:
-        val = int(val)
-    except ValueError as ex:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Malformed Query String',
-                               'url query string value must be a number.')
-
-    return key, val
-
-
 def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
     body = req.body
@@ -220,7 +185,7 @@ class History:
         http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
         http localhost:8000/history
     """
-    @falcon.before(parseQString)
+    @falcon.before(helping.parseQString)
     def on_get(self, req, resp, did=None):
         """
         Handle and respond to incoming GET request.
@@ -229,8 +194,8 @@ class History:
         :param did: string
             URL parameter specifying a rotation history
         """
-        offset = req.offset or 0
-        limit = req.limit or 10
+        offset = req.offset
+        limit = req.limit
 
         if offset >= len(tempDB):
             resp.body = json.dumps({}, ensure_ascii=False)

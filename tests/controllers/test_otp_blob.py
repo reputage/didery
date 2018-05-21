@@ -7,6 +7,7 @@
 '''
 
 import falcon
+import libnacl
 try:
     import simplejson as json
 except ImportError:
@@ -32,6 +33,21 @@ data = {
 }
 
 verifyRequest = h.verifyPublicApiRequest
+
+
+def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00"):
+    # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk = libnacl.crypto_sign_seed_keypair(seed)
+
+    did = h.makeDid(vk)
+    body = {
+        "id": did,
+        "changed": changed,
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0Q"
+                "D9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+    }
+
+    return vk, sk, did, json.dumps(body, ensure_ascii=False).encode('utf-8')
 
 
 def basicValidation(reqFunc, url):
@@ -137,7 +153,7 @@ def signatureValidation(reqFunc, url):
     headers = {"Signature": ""}
 
     # Test missing Signature Header
-    body = data
+    body = deepcopy(data)
 
     exp_result = {
         "title": "Authorization Error",
@@ -157,7 +173,7 @@ def signatureValidation(reqFunc, url):
     assert json.loads(response.content) == exp_result
 
     # Test missing signer tag in signature header
-    body = data
+    body = deepcopy(data)
 
     headers = {
         "Signature": 'test="' + h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
@@ -171,7 +187,7 @@ def signatureValidation(reqFunc, url):
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
 
     # Test invalid signature
-    body = data
+    body = deepcopy(data)
 
     exp_result = {
         "title": "Authorization Error",
@@ -192,11 +208,11 @@ def testPostValidation(client):
 
 
 def testValidPost(client):
-    body = data
+    body = deepcopy(data)
 
     # TODO:
     # assert response.content == exp_result
-    verifyRequest(client.simulate_post, BLOB_BASE_PATH, body, exp_status=falcon.HTTP_200)
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
 
 def testPutSignValidation(client):
@@ -215,8 +231,26 @@ def testPutSignValidation(client):
 
 
 def testPutValidation(client):
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+
+    # Test that did resource already exists
+    vk, sk, did, body = genDidHistory(seed)
+
+    exp_result = {"title": "404 Not Found"}
+
+    headers = {
+        "Signature": 'signer="{}"'.format(h.signResource(body, sk))
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  json.loads(body),
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_404)
+
     # Test url missing did
-    body = data
+    body = deepcopy(data)
 
     exp_result = {
         "title": "Validation Error",
@@ -228,10 +262,170 @@ def testPutValidation(client):
     # Run basic tests
     basicValidation(client.simulate_put, PUT_URL)
 
+    # Test that changed field is greater than previous date
+    vk, sk, did, body = genDidHistory(seed)
+
+    headers = {
+        "Signature": 'signer="{}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "\"changed\" field not later than previous update."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  json.loads(body),
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
 
 def testValidPut(client):
-    body = data
+    body = deepcopy(data)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
 
     # TODO:
     # assert response.content == exp_result
     verifyRequest(client.simulate_put, PUT_URL, body, exp_status=falcon.HTTP_200)
+
+
+def testGetOne(client):
+    # Test basic valid Get One
+    response = client.simulate_get("{0}/{1}".format(BLOB_BASE_PATH, DID))
+
+    exp_result = {
+        "otp_data": {
+            "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
+                    "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+            "changed": "2000-01-01T00:00:01+00:00"
+        },
+        "signature": {
+            "signer": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg==",
+            "rotation": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg=="
+        }
+    }
+
+    assert response.status == falcon.HTTP_200
+    assert json.loads(response.content) == exp_result
+
+    # Test GET with non existent resource
+    response = client.simulate_get("{0}/{1}".format(
+        BLOB_BASE_PATH,
+        "did:dad:COf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
+    )
+
+    exp_result = {"title": "404 Not Found"}
+
+    assert response.status == falcon.HTTP_404
+    assert json.loads(response.content) == exp_result
+
+
+def testGetAllValidation(client):
+    # Test that query params have values
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=10&limit")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    # Test that query params values are ints
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=a&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=10&limit=d")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=10&limit=")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+
+def testGetAll(client):
+    response = client.simulate_get(BLOB_BASE_PATH)
+    print(response.content)
+    exp_result = {
+        "data": [
+            {
+                "otp_data": {
+                    "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
+                            "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+                    "changed": "2000-01-01T00:00:01+00:00"
+                },
+                "signature": {
+                    "signer": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg==",
+                    "rotation": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg=="
+                }
+            },
+            {
+                "otp_data": {
+                    "id": "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+                    "changed": "2000-01-01T00:00:00+00:00",
+                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
+                            "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
+                },
+                "signature": {
+                    "signer": "o74wteUgF-BrPsn1mrjEChqgng08EB1E0WAApSKNkdsTfPvCZOUJtpsGhxBaB2LnnxlxWu_Y7Wfwrl1JAFNzDA=="
+                }
+            }
+        ]
+    }
+
+    assert response.status == falcon.HTTP_200
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=100&limit=10")
+
+    exp_result = {}
+
+    assert response.status == falcon.HTTP_200
+    assert json.loads(response.content) == exp_result
