@@ -394,4 +394,12 @@ def testDeleteValidation(client):
 def testValidDelete(client):
     uid = addTestData(client)
 
+    response = client.simulate_get(RELAY_BASE_PATH)
+
+    assert uid in json.loads(response.content)
+
     verifyRequest(client.simulate_delete, "{0}/{1}".format(RELAY_BASE_PATH, uid), exp_status=falcon.HTTP_200)
+
+    response = client.simulate_get(RELAY_BASE_PATH)
+
+    assert uid not in json.loads(response.content)
