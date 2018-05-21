@@ -1,4 +1,8 @@
 import falcon
+import uuid
+import itertools
+import arrow
+
 try:
     import simplejson as json
 except ImportError:
@@ -7,7 +11,7 @@ except ImportError:
 from ..help import helping
 
 
-tempDB = []
+tempDB = {}
 
 
 def basicValidation(req, resp, resource, params):
@@ -84,22 +88,8 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'uid required in url.')
 
-    try:
-        params['uid'] = int(params['uid'])
-    except ValueError:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Validation Error',
-                               'uid in url must be a number.')
-
     if "uid" not in req.body or req.body['uid'] == "":
         req.body['uid'] = params['uid']
-    else:
-        try:
-            req.body['uid'] = int(req.body['uid'])
-        except ValueError:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'uid field must be a number.')
 
     if params['uid'] != req.body['uid']:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -126,52 +116,46 @@ class Relay:
     For manual testing of the endpoint:
         http localhost:8000/relay
     """
+    @falcon.before(helping.parseQString)
     def on_get(self, req, resp):
         """
         Handle and respond to incoming GET request.
         :param req: Request object
         :param resp: Response object
         """
-        body = {
-            "1": {
-                "host address": "127.0.0.1",
-                "port": 7541,
-                "name": "alpha",
-                "main": True,
-                "uid": "1",
-                "status": "connected",
-                "changed" : "2000-01-01T00:00:00+00:00"
-            },
-            "2": {
-                "host address": "127.0.0.1",
-                "port": 7542,
-                "name": "beta",
-                "main": False,
-                "uid": "2",
-                "status": "connected",
-                "changed": "2000-01-01T00:00:00+00:00"
-            }
-        }
+        offset = req.offset
+        limit = req.limit
 
+        if offset >= len(tempDB):
+            resp.body = json.dumps({}, ensure_ascii=False)
+            return
+
+        body = dict(itertools.islice(tempDB.items(), offset, offset+limit))
+
+        resp.append_header('X-Total-Count', len(tempDB))
         resp.body = json.dumps(body, ensure_ascii=False)
 
     """
     For manual testing of the endpoint:
         http POST localhost:8000/relay host_address="127.0.0.1" port=7541 name="alpha" main=true
     """
-    @falcon.before(basicValidation)
+    @falcon.before(validatePost)
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
         :param req: Request object
         :param resp: Response object
         """
+        uid = uuid.uuid4().hex
         result_json = req.body
 
-        result_json["uid"] = len(tempDB)
+        if 'main' not in result_json:
+            result_json['main'] = False
+
+        result_json["uid"] = uid
         result_json["status"] = "connected"
 
-        tempDB.append(result_json)
+        tempDB[uid] = result_json
 
         resp.body = json.dumps(result_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -190,10 +174,30 @@ class Relay:
         """
         result_json = req.body
 
-        result_json["uid"] = uid
-        result_json["status"] = "connected"
+        if uid not in tempDB:
+            raise falcon.HTTPError(falcon.HTTP_404)
 
-        resp.body = json.dumps(result_json, ensure_ascii=False)
+        resource = tempDB[uid]
+
+        cdt = arrow.get(resource['changed'])
+        udt = arrow.get(result_json['changed'])
+
+        if cdt >= udt:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   '"changed" field not later than previous update.')
+
+        resource['host_address'] = result_json['host_address']
+        resource['port'] = result_json['port']
+        resource['name'] = result_json['name']
+        resource['changed'] = result_json['changed']
+
+        if 'main' in result_json:
+            resource['main'] = result_json['main']
+
+        tempDB[uid] = resource
+
+        resp.body = json.dumps(resource, ensure_ascii=False)
 
     """
     For manual testing of the endpoint:
@@ -207,14 +211,7 @@ class Relay:
         :param resp: Response object
         :param uid: servers unique id
         """
-        body = {
-            "host_address": "127.0.0.1",
-            "port": 7541,
-            "name": "alpha",
-            "main": True,
-            "uid": uid,
-            "status": "disconnected",
-            "changed": "2000-01-01T00:00:00+00:00"
-        }
+        if uid not in tempDB:
+            raise falcon.HTTPError(falcon.HTTP_404)
 
-        resp.body = json.dumps(body, ensure_ascii=False)
+        del tempDB[uid]

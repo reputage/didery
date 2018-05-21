@@ -391,7 +391,7 @@ def testGetAllValidation(client):
 
 def testGetAll(client):
     response = client.simulate_get(BLOB_BASE_PATH)
-    print(response.content)
+
     exp_result = {
         "data": [
             {

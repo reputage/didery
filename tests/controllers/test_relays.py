@@ -30,6 +30,15 @@ data = {
 }
 
 
+def addTestData(client):
+    body = deepcopy(data)
+    del body['uid']
+
+    response = client.simulate_post(RELAY_BASE_PATH, body=json.dumps(body, ensure_ascii=False))
+
+    return json.loads(response.content)['uid']
+
+
 def basicValidation(reqFunc, url):
     # Test missing host_address field
     body = deepcopy(data)
@@ -176,6 +185,16 @@ def basicValidation(reqFunc, url):
 def testPostValidation(client):
     basicValidation(client.simulate_post, RELAY_BASE_PATH)
 
+    # Test uid in post request
+    body = deepcopy(data)
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "If uid is known use PUT."
+    }
+
+    verifyRequest(client.simulate_post, RELAY_BASE_PATH, body, exp_result, falcon.HTTP_400)
+
 
 def testValidPost(client):
     body = deepcopy(data)
@@ -185,9 +204,9 @@ def testValidPost(client):
     # assert response.content == exp_result
     verifyRequest(client.simulate_post, RELAY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
-    # Test valid uid values
     body = deepcopy(data)
-    body['uid'] = 1
+    del body['uid']
+    del body['main']
 
     verifyRequest(client.simulate_post, RELAY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
@@ -207,16 +226,6 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, RELAY_BASE_PATH, body, exp_result, falcon.HTTP_400)
 
-    # Test url uid is an int
-    body = deepcopy(data)
-
-    exp_result = {
-        "title": "Validation Error",
-        "description": "uid in url must be a number."
-    }
-
-    verifyRequest(client.simulate_put, "{}/a".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
-
     # Test url uid matches the uid in the body
     body = deepcopy(data)
 
@@ -227,46 +236,143 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
 
-    # Test invalid uid values
+    # Test url uid matches the uid in the body
     body = deepcopy(data)
-    body['uid'] = "a"
+    body['uid'] = "2"
+
+    exp_result = {"title": "404 Not Found"}
+
+    verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_404)
+
+    # Test changed field has been updated
+    uid = addTestData(client)
+    body = deepcopy(data)
+    body['uid'] = uid
 
     exp_result = {
         "title": "Validation Error",
-        "description": "uid field must be a number."
+        "description": "\"changed\" field not later than previous update."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result, falcon.HTTP_400)
+    verifyRequest(client.simulate_put, "{0}/{1}".format(RELAY_BASE_PATH, uid), body, exp_result, falcon.HTTP_400)
 
 
 def testValidPut(client):
-    url = "{0}/1".format(RELAY_BASE_PATH)
+    uid = addTestData(client)
+    url = "{0}/{1}".format(RELAY_BASE_PATH, uid)
 
     # TODO:
     # assert response.content == exp_result
     body = deepcopy(data)
-    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
-
-    # Test valid uid values
-    body = deepcopy(data)
-    body['uid'] = "1"
+    body['uid'] = uid
+    body['changed'] = "2000-01-01T00:00:01+00:00"
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
     # Test request without uid in body
     body = deepcopy(data)
     del body['uid']
+    body['changed'] = "2000-01-01T00:00:02+00:00"
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
     # Test empty uid values
     body = deepcopy(data)
     body['uid'] = ""
+    body['changed'] = "2000-01-01T00:00:03+00:00"
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
 
+def testGetAllValidation(client):
+    # Test that query params have values
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=10&limit")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string missing value(s)."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    # Test that query params values are ints
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=a&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=10&limit=d")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=10&limit=")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+
+def testGetAll(client):
+    response = client.simulate_get(RELAY_BASE_PATH)
+
+    resp = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert len(resp) == 4
+
+    for val in resp.items():
+        assert val[0] == val[1]['uid']
+        assert val[1]['host_address'] == "127.0.0.1"
+        assert val[1]['port'] == 7541
+        assert val[1]['name'] == "alpha"
+        assert val[1]['status'] == "connected"
+
+    response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=100&limit=10")
+
+    exp_result = {}
+
+    assert response.status == falcon.HTTP_200
+    assert json.loads(response.content) == exp_result
+
+
 def testDeleteValidation(client):
+    # Test that uid is in url
     exp_result = {
         "title": "Validation Error",
         "description": "uid required in url."
@@ -274,8 +380,18 @@ def testDeleteValidation(client):
 
     verifyRequest(client.simulate_delete, RELAY_BASE_PATH, exp_result=exp_result,  exp_status=falcon.HTTP_400)
 
+    # Test resource exists
+    exp_result = {"title": "404 Not Found"}
+
+    verifyRequest(
+        client.simulate_delete,
+        "{0}/5".format(RELAY_BASE_PATH),
+        exp_result=exp_result,
+        exp_status=falcon.HTTP_404
+    )
+
 
 def testValidDelete(client):
-    # TODO:
-    # assert response.content == exp_result
-    verifyRequest(client.simulate_delete, "{0}/1".format(RELAY_BASE_PATH), exp_status=falcon.HTTP_200)
+    uid = addTestData(client)
+
+    verifyRequest(client.simulate_delete, "{0}/{1}".format(RELAY_BASE_PATH, uid), exp_status=falcon.HTTP_200)
