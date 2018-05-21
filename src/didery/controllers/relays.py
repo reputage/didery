@@ -107,7 +107,7 @@ def validatePut(req, resp, resource, params):
                                'uid in url must match uid in body.')
 
 
-def validateDelete(req, resp, resource, pgi arams):
+def validateDelete(req, resp, resource, params):
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
