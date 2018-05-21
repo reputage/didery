@@ -130,17 +130,6 @@ def basicValidation(reqFunc, url):
 
     verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
 
-    # Test empty uid
-    body = deepcopy(data)
-    body['uid'] = ""
-
-    exp_result = {
-        "title": "Validation Error",
-        "description": "uid field cannot be empty."
-    }
-
-    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
-
     # Test invalid bool for main
     body = deepcopy(data)
     body['main'] = "a"
@@ -179,17 +168,6 @@ def basicValidation(reqFunc, url):
     exp_result = {
         "title": "Validation Error",
         "description": "port field must be a number between 1 and 65535."
-    }
-
-    verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
-
-    # Test invalid uid values
-    body = deepcopy(data)
-    body['uid'] = "a"
-
-    exp_result = {
-        "title": "Validation Error",
-        "description": "uid field must be a number."
     }
 
     verifyRequest(reqFunc, url, body, exp_result, falcon.HTTP_400)
@@ -249,6 +227,17 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
 
+    # Test invalid uid values
+    body = deepcopy(data)
+    body['uid'] = "a"
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "uid field must be a number."
+    }
+
+    verifyRequest(client.simulate_put, url, body, exp_result, falcon.HTTP_400)
+
 
 def testValidPut(client):
     url = "{0}/1".format(RELAY_BASE_PATH)
@@ -267,6 +256,12 @@ def testValidPut(client):
     # Test request without uid in body
     body = deepcopy(data)
     del body['uid']
+
+    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
+
+    # Test empty uid values
+    body = deepcopy(data)
+    body['uid'] = ""
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 

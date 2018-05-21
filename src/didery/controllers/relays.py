@@ -54,19 +54,6 @@ def basicValidation(req, resp, resource, params):
                                    'Validation Error',
                                    'main field must be a boolean value.')
 
-    if 'uid' in body:
-        if body['uid'] == "":
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'uid field cannot be empty.')
-
-        try:
-            body['uid'] = int(body['uid'])
-        except ValueError:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'uid field must be a number.')
-
     try:
         body['port'] = int(body['port'])
     except ValueError:
@@ -78,6 +65,15 @@ def basicValidation(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'port field must be a number between 1 and 65535.')
+
+
+def validatePost(req, resp, resource, params):
+    basicValidation(req, resp, resource, params)
+
+    if 'uid' in req.body:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'If uid is known use PUT.')
 
 
 def validatePut(req, resp, resource, params):
@@ -95,8 +91,15 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'uid in url must be a number.')
 
-    if "uid" not in req.body:
+    if "uid" not in req.body or req.body['uid'] == "":
         req.body['uid'] = params['uid']
+    else:
+        try:
+            req.body['uid'] = int(req.body['uid'])
+        except ValueError:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'uid field must be a number.')
 
     if params['uid'] != req.body['uid']:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -104,7 +107,7 @@ def validatePut(req, resp, resource, params):
                                'uid in url must match uid in body.')
 
 
-def validateDelete(req, resp, resource, params):
+def validateDelete(req, resp, resource, pgi arams):
     if "uid" not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
