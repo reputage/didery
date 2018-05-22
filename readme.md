@@ -89,7 +89,7 @@ must be of the same kind.
 
 The two tag field values currently supported are *did* and *signer*.
 
-The bluepea python library has a helper function,
+The didery python library has a helper function,
 
 ```python
 parseSignatureHeader(signature)
@@ -98,7 +98,7 @@ parseSignatureHeader(signature)
 in the
 
 ```python
-bluepea.help.helping
+didery.help.helping
 ```
 
 that parses *Signature* header values and returns a python dictionary keyed by tags and whose values are the signatures provided in the header.
