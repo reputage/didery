@@ -80,8 +80,6 @@ class Manager:
         text = jQuery("#" + self._searchId).val()
         self.searcher.setSearch(text)
 
-        print("ALL: " + text)
-
         for tab in self.tabs:
             tab.table.setFilter(self.searcher.search)
 
