@@ -9,8 +9,8 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import components.tabs as tabs
-import components.searcher as searcher
+import didery.static.transcrypt.components.tabs as tabs
+import didery.static.transcrypt.components.searcher as searcher
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -99,7 +99,7 @@ class Manager:
 
         return m("div",
                  m("div.ui.top.attached.tabular.menu",
-                   m("a.item.tab",
+                   m("a.item.tab.hide",
                      m("span.menu-item-text", "Server Status"),
                      m("i.chart.bar.icon"),
                      m("div.ui.label.small.menu-item-number", "0/0")),
@@ -110,36 +110,8 @@ class Manager:
                          m("div#search.ui.transparent.icon.input",
                            m("input[type=text][placeholder=Search...]", {"id": self._searchId}),
                            m("button.ui.icon.button[type=submit]",
-                             m("i.search.link.icon"))))))
-                   ),
-                 tab_items,
-
-                 )
-
-        """m("div",
-                 m("div.ui.top.attached.tabular.menu",
-                   m("a.active.item.tab",
-                     m("span.menu-item-text", "Server Status"),
-                     m("i.chart.bar.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Encrypted Blobs"),
-                     m("i.unlock.alternate.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Relay Servers"),
-                     m("i.server.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Error Logs"),
-                     m("i.exclamation.circle.icon")),
-                   m("div.right.menu",
-                     m("div.item",
-                       m("div#search.ui.transparent.icon.input",
-                         m("input[type=text][placeholder=Search...]"),
-                           m("i.search.link.icon"))))),
-                 m("div.ui.bottom.attached.segment",
-                   m("p", "Content Will be visible here.")))"""
+                             m("i.search.link.icon"))))))),
+                 tab_items)
 
 # ================================================== #
 #                        EOF                         #

@@ -9,7 +9,7 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import components.tab as tab
+import didery.static.transcrypt.components.tab as tab
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #

@@ -621,6 +621,7 @@ Temporary Items
 
 src/didery/static/bin
 src/didery/static/dist
+src/didery/static/tests/__javascript__/
 src/didery/static/transcrypt/__javascript__/
 src/didery/static/transcrypt/components/__javascript__/
 */__javascript__/

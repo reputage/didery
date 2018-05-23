@@ -132,16 +132,16 @@ class Errors:
 
             Example:
             {
-            "data": [{
-                    "title": "Invalid Signature.",
-                    "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
-                    "time": "2000-01-01T00:00:00+00:00"
-                },
-                {
-                    "title": "Relay Unreachable.",
-                    "msg": "Could not establish a connection with relay servers.",
-                    "time": "2000-01-01T11:00:00+00:00"
-                }]
+                "data": [{
+                        "title": "Invalid Signature.",
+                        "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
+                        "time": "2000-01-01T00:00:00+00:00"
+                    },
+                    {
+                        "title": "Relay Unreachable.",
+                        "msg": "Could not establish a connection with relay servers.",
+                        "time": "2000-01-01T11:00:00+00:00"
+                    }]
             }
         """
 

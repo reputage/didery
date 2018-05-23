@@ -9,7 +9,7 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import dashboard
+import didery.static.transcrypt.dashboard as dashboard
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #

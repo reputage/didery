@@ -9,8 +9,8 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import components.tabledtab as tabledtab
-import components.tables as tables
+import didery.static.transcrypt.components.tabledtab as tabledtab
+import didery.static.transcrypt.components.tables as tables
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
