@@ -9,8 +9,8 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import server
-import components.fields as field
+import didery.static.transcrypt.server as server
+import didery.static.transcrypt.components.fields as field
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -250,9 +250,9 @@ class Table:
                 return lambda event: self.setSort(f)
             if field == self.sortField:
                 if self.reversed:
-                    icon = m("i.arrow.down.icon")
+                    icon = m("i.angle.down.icon")
                 else:
-                    icon = m("i.arrow.up.icon")
+                    icon = m("i.angle.up.icon")
                 header = m("th.ui.right.labeled.icon", {"onclick": makeScope(field)},
                            icon,
                            field.title)

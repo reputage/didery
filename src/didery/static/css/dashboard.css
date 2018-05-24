@@ -12,7 +12,7 @@ body
 
 .hide
 {
-    display: none;
+    display: none !important;
 }
 
 .ui.tabular.menu .item
