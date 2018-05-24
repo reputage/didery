@@ -14,6 +14,7 @@ Why does this file exist, and why not put this in __main__?
 
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
+import os
 import click
 import ioflo.app.run
 
@@ -38,6 +39,15 @@ from ioflo.aid.consoling import VERBIAGE_NAMES
     help='verbosity level'
 )
 def main(port, verbose):
+    projectDirpath = os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(
+                os.path.expanduser(__file__)
+            )
+        )
+    )
+    floScriptpath = os.path.join(projectDirpath, "didery/flo/main.flo")
+
     click.echo("MAIN")
     """ Main entry point for ioserve CLI"""
 
@@ -47,7 +57,7 @@ def main(port, verbose):
                         period=0.125,
                         real=True,
                         retro=True,
-                        filepath='src/didery/flo/main.flo',
+                        filepath=floScriptpath,
                         behaviors=['didery.core'],
                         mode='',
                         username='',
