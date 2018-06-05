@@ -372,7 +372,7 @@ class RelaysTable(Table):
             field - Field/Key
         """
         if field.name == "host":
-            return obj["host address"]
+            return obj["host_address"]
         elif field.name == "port":
             return obj["port"]
         elif field.name == "name":

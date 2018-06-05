@@ -278,6 +278,7 @@ class OTPBlobs:
                 }]
             }
         """
+
         for blob in data['data']:
             self.blobs.append(blob)
 
@@ -336,6 +337,7 @@ class Relays:
                 }
             }
         """
+
         for relay in dict(data).items():
             self.relays.append(relay[1])
 
