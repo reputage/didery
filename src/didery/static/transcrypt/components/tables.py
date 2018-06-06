@@ -473,9 +473,17 @@ class HistoryTable(Table):
         elif field.name == "signer":
             return obj.history.signer
         elif field.name == "signers":
-            return obj.history.signers
+            signers = ""
+            for signer in obj.history.signers:
+                signers += signer + ", "
+            signers = signers[:-2]
+            return signers
         elif field.name == "signatures":
-            return obj.signatures
+            signatures = ""
+            for key, value in dict(obj.signatures).items():
+                signatures += value + ", "
+            signatures = signatures[:-2]
+            return signatures
 
 # ================================================== #
 #                        EOF                         #
