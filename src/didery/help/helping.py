@@ -1,10 +1,14 @@
 from collections import OrderedDict as ODict
 import falcon
+import libnacl
+import base64
 
 try:
     import simplejson as json
 except ImportError:
     import json
+
+from .. import didering
 
 
 def parseSignatureHeader(signature):
@@ -64,7 +68,7 @@ def parseSignatureHeader(signature):
     return sigs
 
 
-def validateSignedResource(signature, resource, verkey, method="igo"):
+def validateSignedResource(signature, resource, verkey, method="dad"):
     """
     Returns dict of deserialized resource if signature verifies for resource given
     verification key verkey in base64 url safe unicode format
@@ -88,38 +92,29 @@ def validateSignedResource(signature, resource, verkey, method="igo"):
         try:
             rsrc = json.loads(resource, object_pairs_hook=ODict)
         except ValueError as ex:
-            raise reputing.ValidationError("Invalid JSON")  # invalid json
+            raise didering.ValidationError("Invalid JSON")  # invalid json
 
-        if not rsrc:  # resource must not be empty
-            raise reputing.ValidationError("Empty body")
-
-        if not isinstance(rsrc, dict):  # must be dict subclass
-            raise reputing.ValidationError("JSON not dict")
-
-        if "reputee" not in rsrc:  # did field required
-            raise reputing.ValidationError("Missing did field")
-
-        ddid = rsrc["reputee"]
+        ddid = rsrc["id"]
 
         try:  # correct did format  pre:method:keystr
             pre, meth, keystr = ddid.split(":")
         except ValueError as ex:
-            raise reputing.ValidationError("Invalid format did field")
+            raise didering.ValidationError("Invalid format did field")
 
         if pre != "did" or meth != method:
-            raise reputing.ValidationError("Invalid format did field") # did format bad
+            raise didering.ValidationError("Invalid format did field") # did format bad
 
         if len(verkey) != 44:
-            raise reputing.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
+            raise didering.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
 
         if not verify64u(signature, resource, verkey):
-            raise reputing.ValidationError("Unverifiable signature")  # signature fails
+            raise didering.ValidationError("Unverifiable signature")  # signature fails
 
-    except reputing.ValidationError:
+    except didering.ValidationError:
         raise
 
     except Exception as ex:  # unknown problem
-        raise reputing.ValidationError("Unexpected error")
+        raise didering.ValidationError("Unexpected error")
 
     return rsrc
 
@@ -132,7 +127,7 @@ def parseReqBody(req):
         raw_json = req.stream.read()
     except Exception as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
-                               'Error',
+                               'Request Error',
                                'Error reading request body.')
 
     try:
@@ -144,6 +139,7 @@ def parseReqBody(req):
                                'JSON was incorrect.')
 
     req.body = result_json
+    return raw_json
 
 
 def validateRequiredFields(required, resource):
@@ -157,3 +153,148 @@ def validateRequiredFields(required, resource):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Missing Required Field',
                                    'Request must contain {} field.'.format(req))
+
+
+def keyToKey64u(key):
+    """
+    Convert and return bytes key to unicode base64 url-file safe version
+    """
+    return base64.urlsafe_b64encode(key).decode("utf-8")
+
+
+def key64uToKey(key64u):
+    """
+    Convert and return unicode base64 url-file safe key64u to bytes key
+    """
+    return base64.urlsafe_b64decode(key64u.encode("utf-8"))
+
+
+def makeDid(vk, method="dad"):
+    """
+    Create and return Did from bytes vk.
+    vk is 32 byte verifier key from EdDSA (Ed25519) keypair
+    """
+    # convert verkey to jsonable unicode string of base64 url-file safe
+    vk64u = base64.urlsafe_b64encode(vk).decode("utf-8")
+    did = "did:{}:{}".format(method, vk64u)
+    return did
+
+
+def signResource(resource, sKey):
+    sig = libnacl.crypto_sign(resource, sKey)
+    sig = sig[:libnacl.crypto_sign_BYTES]
+
+    return keyToKey64u(sig)
+
+
+def verify(sig, msg, vk):
+    """
+    Returns True if signature sig of message msg is verified with
+    verification key vk Otherwise False
+    All of sig, msg, vk are bytes
+    """
+    try:
+        result = libnacl.crypto_sign_open(sig + msg, vk)
+    except Exception as ex:
+        return False
+    return True if result else False
+
+
+def verify64u(signature, message, verkey):
+    """
+    Returns True if signature is valid for message with respect to verification
+    key verkey
+
+    signature and verkey are encoded as unicode base64 url-file strings
+    and message is unicode string as would be the case for a json object
+
+    """
+    sig = key64uToKey(signature)
+    vk = key64uToKey(verkey)
+    # msg = message.encode("utf-8")
+    return verify(sig, message, vk)
+
+
+def extractDidParts(did, method="dad"):
+    """
+    Parses and returns keystr from did
+    raises ValueError if fails parsing
+    """
+    try:  # correct did format  pre:method:keystr
+        pre, meth, keystr = did.split(":")
+    except ValueError as ex:
+        raise ValueError("Invalid DID value")
+
+    if pre != "did":
+        raise ValueError("Invalid DID identifier")
+
+    if meth != method:
+        raise ValueError("Invalid DID method")
+
+    return keystr
+
+
+def parseQString(req, resp, resource, params):
+    req.offset = 0
+    req.limit = 10
+
+    if req.query_string:
+        queries = req.query_string.split('&')
+        for query in queries:
+            key, val = qStringValidation(query)
+            if key == 'offset':
+                req.offset = val
+            if key == 'limit':
+                req.limit = val
+
+
+def qStringValidation(query):
+    keyval = query.split('=')
+
+    if len(keyval) != 2:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string missing value(s).')
+
+    key = keyval[0]
+    val = keyval[1]
+
+    try:
+        val = int(val)
+    except ValueError as ex:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string value must be a number.')
+
+    return key, val
+
+
+def verifyPublicApiRequest(reqFunc, url, body, headers=None, exp_result=None, exp_status=None):
+    SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
+
+    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
+
+    if headers is None:
+        headers = {
+            "Signature": 'signer="{0}"; rotation="{1}"'.format(signResource(body, SK),
+                                                               signResource(body, SK))
+        }
+
+    response = reqFunc(url, body=body, headers=headers)
+
+    print("status: {0},  content: {1}".format(response.status, response.content))
+    if exp_result is not None:
+        assert json.loads(response.content) == exp_result
+    if exp_status is not None:
+        assert response.status == exp_status
+
+
+def verifyManagementApiRequest(reqFunc, url, body=None, exp_result=None, exp_status=None):
+
+    response = reqFunc(url, body=json.dumps(body, ensure_ascii=False))
+
+    print("status: {0},  content: {1}".format(response.status, response.content))
+    if exp_result is not None:
+        assert json.loads(response.content) == exp_result
+    if exp_status is not None:
+        assert response.status == exp_status

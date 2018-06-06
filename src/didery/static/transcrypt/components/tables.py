@@ -9,8 +9,8 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import server
-import components.fields as field
+import didery.static.transcrypt.server as server
+import didery.static.transcrypt.components.fields as field
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -250,9 +250,9 @@ class Table:
                 return lambda event: self.setSort(f)
             if field == self.sortField:
                 if self.reversed:
-                    icon = m("i.arrow.down.icon")
+                    icon = m("i.angle.down.icon")
                 else:
-                    icon = m("i.arrow.up.icon")
+                    icon = m("i.angle.up.icon")
                 header = m("th.ui.right.labeled.icon", {"onclick": makeScope(field)},
                            icon,
                            field.title)
@@ -330,6 +330,152 @@ class ErrorsTable(Table):
             return obj.msg
         elif field.name == "time":
             return obj.time
+
+# ================================================== #
+
+class RelaysTable(Table):
+    """
+    Class for relays table.
+    """
+    def __init__(self):
+        """
+        Initializes RelaysTable object. Sets up relays table fields.
+        """
+        fields = [
+            field.FillField("Host"),
+            field.FillField("Port"),
+            field.FillField("Name"),
+            field.FillField("Main"),
+            field.IDField("UID"),
+            field.FillField("Status")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        relays = server.manager.relays
+        return relays.refreshRelays().then(lambda: self._setData(relays.relays))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+        if field.name == "host":
+            return obj["host_address"]
+        elif field.name == "port":
+            return obj["port"]
+        elif field.name == "name":
+            return obj["name"]
+        elif field.name == "main":
+            return obj["main"]
+        elif field.name == "uid":
+            return obj["uid"]
+        elif field.name == "status":
+            return obj["status"]
+
+# ================================================== #
+
+class BlobsTable(Table):
+    """
+    Class for blobs table.
+    """
+    def __init__(self):
+        """
+        Initializes BlobsTable object. Sets up blobs table fields.
+        """
+        fields = [
+            field.DIDField("DID"),
+            field.FillField("Blob")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        blobs = server.manager.otpBlobs
+        return blobs.refreshBlobs().then(lambda: self._setData(blobs.blobs))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+
+        if field.name == "did":
+            return obj.id
+        elif field.name == "blob":
+            return obj.blob
+
+# ================================================== #
+
+class HistoryTable(Table):
+    """
+    Class for history table.
+    """
+    def __init__(self):
+        """
+        Initializes HistoryTable object. Sets up history table fields.
+        """
+        fields = [
+            field.DIDField("DID"),
+            field.DateField("Changed"),
+            field.FillField("Signer"),
+            field.FillField("Signers"),
+            field.FillField("Signatures")
+        ]
+        super().__init__(fields)
+
+    # ============================================== #
+
+    def refresh(self):
+        """
+        Refreshes table data.
+        """
+        self.clear()
+        history = server.manager.history
+        return history.refreshHistory().then(lambda: self._setData(history.history))
+
+    # ============================================== #
+
+    def _getField(self, obj, field):
+        """
+        Extracts data from json-like object.
+
+            Parameters:
+            obj - Data object
+            field - Field/Key
+        """
+
+        if field.name == "did":
+            return obj.history.id
+        elif field.name == "changed":
+            return obj.history.changed
+        elif field.name == "signer":
+            return obj.history.signer
+        elif field.name == "signers":
+            return obj.history.signers
+        elif field.name == "signatures":
+            return obj.signatures
 
 # ================================================== #
 #                        EOF                         #

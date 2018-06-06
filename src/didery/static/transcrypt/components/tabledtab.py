@@ -9,7 +9,7 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import components.tab as tab
+import didery.static.transcrypt.components.tab as tab
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -66,7 +66,7 @@ class TabledTab(tab.Tab):
         return m(self._menu, self._menu_attrs,
                  m("div.menu-item-text", self.Name),
                  m(self.Icon),
-                 m("div.ui.label.small", "{0}/{1}".format(self.table.shown, self.table.total))
+                 m("div.ui.label.small.menu-item-number", "{0}/{1}".format(self.table.shown, self.table.total))
                  )
 
     # ============================================== #

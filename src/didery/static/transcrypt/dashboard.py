@@ -9,7 +9,8 @@
 #                      IMPORTS                       #
 # ================================================== #
 
-import components.tabs as tabs
+import didery.static.transcrypt.components.tabs as tabs
+import didery.static.transcrypt.components.searcher as searcher
 
 # ================================================== #
 #                  CLASS DEFINITIONS                 #
@@ -25,8 +26,9 @@ class Manager:
         Initialize Tabs object. Load in all tabs and setup
         document level functions.
         """
-        self.tabs = [tabs.Errors()]
-
+        self.tabs = [tabs.History(), tabs.Blobs(), tabs.Relays(), tabs.Errors()]
+        self._searchId = "search-input"
+        self.searcher = searcher.Searcher()
         self._refreshing = False
         self._refreshPromise = None
 
@@ -71,6 +73,18 @@ class Manager:
 
     # ============================================== #
 
+    def searchAll(self):
+        """
+        Initiates searching across all tabs based on current search string.
+        """
+        text = jQuery("#" + self._searchId).val()
+        self.searcher.setSearch(text)
+
+        for tab in self.tabs:
+            tab.table.setFilter(self.searcher.search)
+
+    # ============================================== #
+
     def view(self):
         """
         Returns markup for view.
@@ -83,53 +97,19 @@ class Manager:
 
         return m("div",
                  m("div.ui.top.attached.tabular.menu",
-                   m("a.item.tab",
+                   m("a.item.tab.hide",
                      m("span.menu-item-text", "Server Status"),
-                     m("i.chart.bar.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Encrypted Blobs"),
-                     m("i.unlock.alternate.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Relay Servers"),
-                     m("i.server.icon")),
+                     m("i.chart.bar.icon"),
+                     m("div.ui.label.small.menu-item-number", "0/0")),
                    menu_items,
                    m("div.right.menu",
                      m("div.item",
-                       m("div#search.ui.transparent.icon.input",
-                         m("input[type=text][placeholder=Search...]"),
-                         m("i.search.link.icon"))))
-                   ),
-                 tab_items,
-
-                 )
-
-        """m("div",
-                 m("div.ui.top.attached.tabular.menu",
-                   m("a.active.item.tab",
-                     m("span.menu-item-text", "Server Status"),
-                     m("i.chart.bar.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Public Keys"),
-                     m("i.key.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Encrypted Blobs"),
-                     m("i.unlock.alternate.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Relay Servers"),
-                     m("i.server.icon")),
-                   m("a.item.tab",
-                     m("span.menu-item-text", "Error Logs"),
-                     m("i.exclamation.circle.icon")),
-                   m("div.right.menu",
-                     m("div.item",
-                       m("div#search.ui.transparent.icon.input",
-                         m("input[type=text][placeholder=Search...]"),
-                           m("i.search.link.icon"))))),
-                 m("div.ui.bottom.attached.segment",
-                   m("p", "Content Will be visible here.")))"""
+                       m("form", {"onsubmit": self.searchAll},
+                         m("div#search.ui.transparent.icon.input",
+                           m("input[type=text][placeholder=Search...]", {"id": self._searchId}),
+                           m("button.ui.icon.button[type=submit]",
+                             m("i.search.link.icon"))))))),
+                 tab_items)
 
 # ================================================== #
 #                        EOF                         #

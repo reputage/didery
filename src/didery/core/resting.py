@@ -22,7 +22,7 @@ frame server
 @doify('DideryServerOpen', ioinits=odict(
                                         valet="",
                                         test="",
-                                        port=odict(ival=8000),
+                                        port=odict(ival=8080),
                                         ))
 def dideryServerOpen(self):
     """
