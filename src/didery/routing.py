@@ -12,6 +12,15 @@ RELAY_BASE_PATH = "/relay"
 ERRORS_BASE_PATH = "/errors"
 
 
+class CORSMiddleware:
+    def process_request(self, req, resp):
+        resp.set_header('Access-Control-Max-Age:', '3600')
+        resp.set_header('Access-Control-Allow-Origin', '*')
+        resp.set_header('Access-Control-Allow-Methods',
+                                   'PUT, GET, POST, DELETE, HEAD, OPTIONS')
+        resp.set_header('Access-Control-Allow-Headers',
+                                   'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token, X-Auth-Token, Signature')
+
 def loadEndPoints(app, store):
     """
     Add Rest endpoints to a falcon.API object by mapping the API's routes.

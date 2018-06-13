@@ -39,7 +39,7 @@ def dideryServerOpen(self):
     """
     port = int(self.port.value)
 
-    app = falcon.API()
+    app = falcon.API(middleware=[routing.CORSMiddleware()])
     routing.loadEndPoints(app, store=self.store)
 
     self.valet.value = Valet(
