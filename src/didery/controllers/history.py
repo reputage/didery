@@ -162,14 +162,14 @@ def validatePut(req, resp, resource, params):
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
-                               'Could not validate the request signature for rotation field. {}.'.format(ex))
+                               'Could not validate the request signature for signer field. {}.'.format(ex))
 
     try:
         helping.validateSignedResource(rotation, raw, body['signers'][index-1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
-                               'Could not validate the request signature for signer field. {}.'.format(ex))
+                               'Could not validate the request signature for rotation field. {}.'.format(ex))
 
 
 class History:
