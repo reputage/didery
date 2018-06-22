@@ -87,4 +87,4 @@ Running these tests prior to hosting the server helps ensure that everything in 
 
 Documentation
 ===
-You can read the REST API documentation in the [wiki](https://github.com/reputage/didery/wiki) and the frontend documentation in the [docs](https://github.com/reputage/didery/tree/master/docs) folder
+You can read the REST API documentation in the [wiki](https://github.com/reputage/didery/wiki) and the frontend documentation in the [docs](https://github.com/reputage/didery/tree/master/docs) folder.
