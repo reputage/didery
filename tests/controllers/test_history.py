@@ -319,6 +319,7 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, path, body, exp_status=falcon.HTTP_404)
 
+
 def testPutSignValidation(client):
     url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
     headers = {"Signature": ""}
