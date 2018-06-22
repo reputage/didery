@@ -71,6 +71,10 @@ def validatePost(req, resp, resource, params):
     body of request for processing.
     :param req: Request object
     """
+    # server crashes without this if someone adds anything after /history
+    if params:
+        raise falcon.HTTPError(falcon.HTTP_404)
+
     raw, sigs = basicValidation(req, resp, resource, params)
     body = req.body
 

@@ -313,6 +313,11 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+    # Test that server doesn't crash if anything is added after /history
+    body = deepcopy(postData)
+    path = "{0}/{1}".format(HISTORY_BASE_PATH, "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
+
+    verifyRequest(client.simulate_post, path, body, exp_status=falcon.HTTP_404)
 
 def testPutSignValidation(client):
     url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
