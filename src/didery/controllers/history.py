@@ -162,14 +162,14 @@ def validatePut(req, resp, resource, params):
 
     index = body['signer']
     try:
-        helping.validateSignedResource(signer, raw, body['signers'][index])
+        helping.validateSignedResource(rotation, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
     try:
-        helping.validateSignedResource(rotation, raw, body['signers'][index-1])
+        helping.validateSignedResource(signer, raw, body['signers'][index-1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -272,10 +272,10 @@ class History:
         resource = tempDB[did]
 
         # TODO make sure time in changed field is greater than existing changed field
-        cdt = arrow.get(resource['history']['changed'])
-        udt = arrow.get(result_json['changed'])
+        last_changed = arrow.get(resource['history']['changed'])
+        new_change = arrow.get(result_json['changed'])
 
-        if cdt >= udt:
+        if last_changed >= new_change:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    '"changed" field not later than previous update.')
