@@ -6,6 +6,7 @@ from ioflo.aio.http import Valet
 from ioflo.base import doify
 
 from didery import routing
+from didery.db import dbing
 
 console = getConsole()
 
@@ -38,6 +39,7 @@ def dideryServerOpen(self):
         do didery server open at enter
     """
     port = int(self.port.value)
+    dbing.setupDbEnv()
 
     app = falcon.API(middleware=[routing.CORSMiddleware()])
     routing.loadEndPoints(app, store=self.store)

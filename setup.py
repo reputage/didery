@@ -123,6 +123,7 @@ setup(
     install_requires=[
         'click', 'falcon>=1.2', 'ioflo>=1.6.8', 'libnacl>=1.5.1',
         'simplejson>=3.11.1', 'pytest-falcon>=0.4.2', 'arrow>=0.10.0',
+        'lmdb',
     ],
     extras_require={
         # eg:

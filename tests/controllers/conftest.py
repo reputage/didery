@@ -6,7 +6,7 @@ controllers directory.
 
 """
 
-
+import shutil
 import pytest
 import falcon
 from falcon import testing
@@ -14,6 +14,8 @@ from falcon import testing
 from ioflo.base import storing
 
 from didery.routing import *
+from didery.db import dbing
+from didery.help import helping
 
 
 @pytest.fixture(scope="module")
@@ -26,6 +28,7 @@ def testApp():
 
     store = storing.Store(stamp=0.0)
     testApp = falcon.API()
+    dbing.setupDbEnv("/tmp/diderytestDB/")
     loadEndPoints(testApp, store=store)
 
     return testApp
@@ -48,20 +51,20 @@ def client(testApp):
     return testing.TestClient(testApp)
 
 
-# @pytest.fixture(autouse=True)
-# def setupTeardown():
-#     """
-#
-#     Pytest runs this function before every test when autouse=True
-#     Without autouse=True you would have to add a setupTeardown parameter
-#     to each test function
-#
-#     """
-#     # setup
-#     dbPath = helping.setupTmpBaseDir()
-#     dbing.setupDbEnv(dbPath)
-#
-#     yield dbPath  # this allows the test to run
-#
-#     # teardown
-#     helping.cleanupTmpBaseDir(dbPath)
+@pytest.fixture(autouse=True, scope="module")
+def setupTeardown():
+    """
+
+    Pytest runs this function before every test when autouse=True
+    Without autouse=True you would have to add a setupTeardown parameter
+    to each test function
+
+    """
+    # setup
+    dbPath = helping.setupTmpBaseDir()
+    dbing.setupDbEnv(dbPath)
+
+    yield dbPath  # this allows the test to run
+
+    # teardown
+    helping.cleanupTmpBaseDir(dbPath)

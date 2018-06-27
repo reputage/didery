@@ -7,6 +7,7 @@ except ImportError:
 
 from ..help import helping
 from .. import didering
+from ..db import dbing as db
 
 
 tempDB = {}
@@ -201,21 +202,20 @@ class History:
         offset = req.offset
         limit = req.limit
 
-        if offset >= len(tempDB):
+        count = db.historyCount()
+
+        if offset >= count:
             resp.body = json.dumps({}, ensure_ascii=False)
             return
 
         if did is not None:
-            if did not in tempDB:
+            body = db.getHistory(did)
+            if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
-
-            body = tempDB[did]
         else:
-            values = list(tempDB.values())
-            body = {
-                "data": values[offset:offset+limit]
-            }
-            resp.append_header('X-Total-Count', len(tempDB))
+            body = db.getAllHistories(offset, limit)
+
+            resp.append_header('X-Total-Count', count)
 
         resp.body = json.dumps(body, ensure_ascii=False)
 
@@ -233,12 +233,12 @@ class History:
         """
         result_json = req.body
         sigs = req.signatures
+        did = result_json['id']
 
-        # TODO uncomment code below once lmdb is implemented
-        # if result_json['id'] in tempDB:
-        #     raise falcon.HTTPError(falcon.HTTP_400,
-        #                            'Resource Already Exists',
-        #                            'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
+        if db.getHistory(did) is not None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Resource Already Exists',
+                                   'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
 
         response_json = {
             "history": result_json,
@@ -246,7 +246,7 @@ class History:
         }
 
         # TODO: review signature validation for any holes
-        tempDB[result_json['id']] = response_json
+        db.saveHistory(did, response_json)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -266,12 +266,12 @@ class History:
         result_json = req.body
         sigs = req.signatures
 
-        if did not in tempDB:
+        resource = db.getHistory(did)
+
+        if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
 
-        resource = tempDB[did]
-
-        # TODO make sure time in changed field is greater than existing changed field
+        # make sure time in changed field is greater than existing changed field
         last_changed = arrow.get(resource['history']['changed'])
         new_change = arrow.get(result_json['changed'])
 
@@ -280,7 +280,7 @@ class History:
                                    'Validation Error',
                                    '"changed" field not later than previous update.')
 
-        # TODO validate that previously rotated keys are not changed with this request
+        # validate that previously rotated keys are not changed with this request
         current = resource['history']['signers']
         update = result_json['signers']
 
@@ -301,6 +301,6 @@ class History:
         }
 
         # TODO: review signature validation for any holes
-        tempDB[result_json['id']] = response_json
+        db.saveHistory(did, response_json)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)

@@ -2,6 +2,9 @@ from collections import OrderedDict as ODict
 import falcon
 import libnacl
 import base64
+import tempfile
+import os
+import shutil
 
 try:
     import simplejson as json
@@ -298,3 +301,19 @@ def verifyManagementApiRequest(reqFunc, url, body=None, exp_result=None, exp_sta
         assert json.loads(response.content) == exp_result
     if exp_status is not None:
         assert response.status == exp_status
+
+
+def setupTmpBaseDir():
+    """
+    Create temporary directory
+    """
+    return tempfile.mkdtemp(prefix="didery",  suffix="test", dir="/tmp")
+
+
+def cleanupTmpBaseDir(baseDirPath):
+    """
+    Remove temporary root of baseDirPath
+    Ascend tree to find temporary root directory
+    """
+    if os.path.exists(baseDirPath):
+        shutil.rmtree(baseDirPath)
