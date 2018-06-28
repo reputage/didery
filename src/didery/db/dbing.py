@@ -57,17 +57,20 @@ def setupDbEnv(baseDirPath=None):
 
 
 def historyCount():
+    """
+        Gets a count of the number of entries in the table
+
+        :return: int count
+    """
     subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
 
-    with dideryDB.begin(db=subDb, write=True) as txn:
+    with dideryDB.begin(db=subDb, write=False) as txn:
         return txn.stat(subDb)['entries']
 
 
 def saveHistory(did, data):
     """
-        Takes a raw reputee dict and places it into the raw table as well
-        as place an entry in the unprocessed table to signal the processor
-        to calculate the reputee's reputation
+        Store a rotation history and signatures
 
         :param did: string
             W3C did string
@@ -87,6 +90,7 @@ def saveHistory(did, data):
 def getHistory(did):
     """
         Find and return a key rotation history matching the supplied did.
+
         :param did: string
             W3C did identifier for history object
         :return: dict
@@ -103,6 +107,13 @@ def getHistory(did):
 
 
 def getAllHistories(offset=0, limit=10):
+    """
+        Get all rotation histories in a range between the offset and offset+limit
+
+        :param offset: int starting point of the range
+        :param limit: int maximum number of entries to return
+        :return: dict
+    """
     subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
     values = {"data": []}
 
@@ -123,18 +134,80 @@ def getAllHistories(offset=0, limit=10):
 
 
 def otpBlobCount():
+    """
+        Gets a count of the number of entries in the table
+
+        :return: int count
+    """
     subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
 
-    with dideryDB.begin(db=subDb, write=True) as txn:
+    with dideryDB.begin(db=subDb, write=False) as txn:
         return txn.stat(subDb)['entries']
 
 
 def saveOtpBlob(did, data):
-    pass
+    """
+        Store a otp encrypted key and signatures
+
+        :param did: string
+            W3C did string
+        :param data: dict
+            A dict containing the otp encrypted key and signatures
+
+    """
+    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+
+    with dideryDB.begin(db=subDb, write=True) as txn:
+        txn.put(
+            did.encode(),
+            json.dumps(data).encode()
+        )
 
 
 def getOtpBlob(did):
-    pass
+    """
+        Find and return an otp encrypted key matching the supplied did.
+
+        :param did: string
+            W3C did identifier for history object
+        :return: dict
+    """
+    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+
+    with dideryDB.begin(db=subDb, write=False) as txn:
+        raw_data = txn.get(did.encode())
+
+        if raw_data is None:
+            return None
+
+        return json.loads(raw_data)
+
+
+def getAllOtpBlobs(offset=0, limit=10):
+    """
+            Get all otp encrypted keys in a range between the offset and offset+limit
+
+            :param offset: int starting point of the range
+            :param limit: int maximum number of entries to return
+            :return: dict
+        """
+    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+    values = {"data": []}
+
+    with dideryDB.begin(db=subDb, write=False) as txn:
+        cursor = txn.cursor()
+
+        count = 0
+        for key, value in cursor:
+            if count >= limit + offset:
+                break
+
+            if offset < count + 1:
+                values["data"].append(json.loads(value))
+
+            count += 1
+
+    return values
 
 
 def loadTestData(name, data):

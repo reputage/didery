@@ -7,6 +7,7 @@ except ImportError:
 
 from ..help import helping
 from .. import didering
+from ..db import dbing as db
 
 
 tempDB = {}
@@ -132,28 +133,28 @@ class OtpBlob:
         :param req: Request object
         :param resp: Response object
         :param did: string
-            URL parameter specifying a rotation history
+            URL parameter specifying a otp encrypted key
         """
         offset = req.offset
         limit = req.limit
 
-        if offset >= len(tempDB):
-            resp.body = json.dumps({}, ensure_ascii=False)
-            return
+        count = db.otpBlobCount()
 
         if did is not None:
-            if did not in tempDB:
+            body = db.getOtpBlob(did)
+            if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
-
-            body = tempDB[did]
         else:
-            values = list(tempDB.values())
-            body = {
-                "data": values[offset:offset + limit]
-            }
-            resp.append_header('X-Total-Count', len(tempDB))
+            if offset >= count:
+                resp.body = json.dumps({}, ensure_ascii=False)
+                return
+
+            body = db.getAllOtpBlobs(offset, limit)
+
+            resp.append_header('X-Total-Count', count)
 
         resp.body = json.dumps(body, ensure_ascii=False)
+
 
     """
         For manual testing of the endpoint:
@@ -168,20 +169,20 @@ class OtpBlob:
         """
         result_json = req.body
         sigs = req.signatures
+        did = result_json['id']
 
-        # TODO uncomment code below once lmdb is implemented.
-        # TODO (this blocks tests because they cant clear the database after each run until lmdb is implemented)
-        # if result_json['id'] in tempDB:
-        #     raise falcon.HTTPError(falcon.HTTP_400,
-        #                            'Resource Already Exists',
-        #                            'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
+        if db.getOtpBlob(did) is not None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Resource Already Exists',
+                                   'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
 
         response_json = {
             "otp_data": result_json,
             "signature": sigs
         }
 
-        tempDB[result_json['id']] = response_json
+        # TODO: review signature validation for any holes
+        db.saveOtpBlob(did, response_json)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -201,17 +202,16 @@ class OtpBlob:
         result_json = req.body
         sigs = req.signatures
 
-        # TODO make sure resource already exists
-        if did not in tempDB:
+        resource = db.getOtpBlob(did)
+
+        if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
 
-        resource = tempDB[did]
-
         # TODO make sure time in changed field is greater than existing changed field
-        cdt = arrow.get(resource['otp_data']['changed'])
-        udt = arrow.get(result_json['changed'])
+        current = arrow.get(resource['otp_data']['changed'])
+        update = arrow.get(result_json['changed'])
 
-        if cdt >= udt:
+        if current >= update:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    '"changed" field not later than previous update.')
@@ -221,6 +221,7 @@ class OtpBlob:
             "signature": sigs
         }
 
-        tempDB[result_json['id']] = response_json
+        # TODO: review signature validation for any holes
+        db.saveOtpBlob(did, response_json)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)

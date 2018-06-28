@@ -258,11 +258,11 @@ class History:
     @falcon.before(validatePut)
     def on_put(self, req, resp, did):
         """
-                Handle and respond to incoming PUT request.
-                :param req: Request object
-                :param resp: Response object
-                :param did: decentralized identifier
-                """
+            Handle and respond to incoming PUT request.
+            :param req: Request object
+            :param resp: Response object
+            :param did: decentralized identifier
+        """
         result_json = req.body
         sigs = req.signatures
 

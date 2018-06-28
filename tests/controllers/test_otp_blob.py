@@ -8,11 +8,13 @@
 
 import falcon
 import libnacl
+
 try:
     import simplejson as json
 except ImportError:
     import json
 
+from collections import OrderedDict as ODict
 from copy import deepcopy
 
 from didery.routing import *
@@ -35,8 +37,9 @@ data = {
 verifyRequest = h.verifyPublicApiRequest
 
 
-def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00"):
-    # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+def genOtpBlob(seed=None, changed="2000-01-01T00:00:00+00:00"):
+    if seed is None:
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk = libnacl.crypto_sign_seed_keypair(seed)
 
     did = h.makeDid(vk)
@@ -234,7 +237,7 @@ def testPutValidation(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
-    vk, sk, did, body = genDidHistory(seed)
+    vk, sk, did, body = genOtpBlob(seed)
 
     exp_result = {"title": "404 Not Found"}
 
@@ -263,7 +266,7 @@ def testPutValidation(client):
     basicValidation(client.simulate_put, PUT_URL)
 
     # Test that changed field is greater than previous date
-    vk, sk, did, body = genDidHistory(seed)
+    vk, sk, did, body = genOtpBlob(seed)
 
     headers = {
         "Signature": 'signer="{}"'.format(h.signResource(body, sk))
@@ -286,6 +289,9 @@ def testPutValidation(client):
 
 def testValidPut(client):
     body = deepcopy(data)
+
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, body, exp_status=falcon.HTTP_201)
+
     body['changed'] = "2000-01-01T00:00:01+00:00"
 
     # TODO:
@@ -294,7 +300,21 @@ def testValidPut(client):
 
 
 def testGetOne(client):
+    # Test Get One with empty DB
+    response = client.simulate_get("{0}/{1}".format(BLOB_BASE_PATH, DID))
+
+    assert response.status == falcon.HTTP_404
+
     # Test basic valid Get One
+    body = deepcopy(data)
+    signature = h.signResource(json.dumps(body).encode(), SK)
+
+    headers = {
+        "Signature": 'signer="{}"'.format(signature)
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=json.dumps(body).encode(), headers=headers)
+
     response = client.simulate_get("{0}/{1}".format(BLOB_BASE_PATH, DID))
 
     exp_result = {
@@ -302,11 +322,10 @@ def testGetOne(client):
             "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
             "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
                     "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-            "changed": "2000-01-01T00:00:01+00:00"
+            "changed": "2000-01-01T00:00:00+00:00"
         },
         "signature": {
-            "signer": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg==",
-            "rotation": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg=="
+            "signer": signature
         }
     }
 
@@ -390,39 +409,49 @@ def testGetAllValidation(client):
 
 
 def testGetAll(client):
-    response = client.simulate_get(BLOB_BASE_PATH)
+    # setup
+    vk1, sk1, did1, body1 = genOtpBlob()
 
-    exp_result = {
-        "data": [
-            {
-                "otp_data": {
-                    "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
-                            "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
-                    "changed": "2000-01-01T00:00:01+00:00"
-                },
-                "signature": {
-                    "signer": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg==",
-                    "rotation": "ISobTfqB8wzRK9fP7wWQotobPFQ5KjPvdpUFKj_yvoBKVC7s3z8CbltQYtecy_px1XHE9YxrZEUigh5wEDZ8Bg=="
-                }
-            },
-            {
-                "otp_data": {
-                    "id": "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
-                    "changed": "2000-01-01T00:00:00+00:00",
-                    "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
-                            "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-                },
-                "signature": {
-                    "signer": "o74wteUgF-BrPsn1mrjEChqgng08EB1E0WAApSKNkdsTfPvCZOUJtpsGhxBaB2LnnxlxWu_Y7Wfwrl1JAFNzDA=="
-                }
-            }
-        ]
+    signature1 = h.signResource(body1, sk1)
+
+    headers = {
+        "Signature": 'signer="{}"'.format(signature1)
     }
 
-    assert response.status == falcon.HTTP_200
-    assert json.loads(response.content) == exp_result
+    client.simulate_post(BLOB_BASE_PATH, body=body1, headers=headers)  # Add did to database
 
+    vk2, sk2, did2, body2 = genOtpBlob()
+
+    signature2 = h.signResource(body2, sk2)
+
+    headers = {
+        "Signature": 'signer="{}"'.format(signature2)
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body2, headers=headers)  # Add did to database
+
+    # Test get all
+    response = client.simulate_get(BLOB_BASE_PATH)
+
+    resp_data = json.loads(response.content)
+    body1 = json.loads(body1)
+    body2 = json.loads(body2)
+
+    assert response.status == falcon.HTTP_200
+    assert "data" in resp_data
+    assert len(resp_data["data"]) == 2
+
+    resp_blob1 = resp_data["data"][0]
+    resp_blob2 = resp_data["data"][1]
+
+    assert resp_blob1["otp_data"]["id"] == body1["id"] or resp_blob2["otp_data"]["id"] == body1["id"]
+    assert resp_blob1["otp_data"]["id"] == body2["id"] or resp_blob2["otp_data"]["id"] == body2["id"]
+    assert resp_blob1["otp_data"]["id"] == body2["id"] or resp_blob2["otp_data"]["id"] == body2["id"]
+
+    assert resp_blob1["signature"]["signer"] == signature1 or resp_blob2["signature"]["signer"] == signature1
+    assert resp_blob1["signature"]["signer"] == signature2 or resp_blob2["signature"]["signer"] == signature2
+
+    # Test offset and limit
     response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=100&limit=10")
 
     exp_result = {}
