@@ -489,6 +489,14 @@ def testPutValidation(client):
 
     # Test that signers field has three keys
     body = deepcopy(putData)
+    body['signer'] = 0
+    body['signers'] = [
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+    ]
+    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
+
+    body = deepcopy(putData)
     body['changed'] = "2000-01-01T00:00:01+00:00"
     body['signers'] = [
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
@@ -815,23 +823,38 @@ def testValidGetAll(client):
 def testGetOne(client):
     url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
 
+    # Test that 404 is returned when db is empty
+    response = client.simulate_get(url)
+
+    assert response.status == falcon.HTTP_404
+
     # Test basic valid Get One
+    body = deepcopy(putData)
+    body['signer'] = 0
+    body['signers'] = [
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+    ]
+    headers = {
+        "Signature": 'signer="{0}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
+    }
+    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
+
     response = client.simulate_get(url)
 
     exp_result = {
         "history": {
             "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-            "changed": "2000-01-01T00:00:01+00:00",
-            "signer": 1,
+            "changed": "2000-01-01T00:00:00+00:00",
+            "signer": 0,
             "signers": [
-                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
                 "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
                 "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
             ]
         },
         "signatures": {
-            "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
-            "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
+            "signer": "xYbxaQtHsrispyZnd_3qf9xqBCXwgBq9pDnFP_5M2v-d-tNarUJeIY1wMeUcDTm808jG0kTwiXu9WApdao8FAA=="
         }
     }
 

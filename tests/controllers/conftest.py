@@ -28,7 +28,6 @@ def testApp():
 
     store = storing.Store(stamp=0.0)
     testApp = falcon.API()
-    dbing.setupDbEnv("/tmp/diderytestDB/")
     loadEndPoints(testApp, store=store)
 
     return testApp
@@ -51,7 +50,7 @@ def client(testApp):
     return testing.TestClient(testApp)
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(autouse=True)
 def setupTeardown():
     """
 

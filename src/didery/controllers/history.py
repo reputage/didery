@@ -204,15 +204,15 @@ class History:
 
         count = db.historyCount()
 
-        if offset >= count:
-            resp.body = json.dumps({}, ensure_ascii=False)
-            return
-
         if did is not None:
             body = db.getHistory(did)
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
         else:
+            if offset >= count:
+                resp.body = json.dumps({}, ensure_ascii=False)
+                return
+
             body = db.getAllHistories(offset, limit)
 
             resp.append_header('X-Total-Count', count)
