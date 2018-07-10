@@ -6,13 +6,10 @@ try:
 except ImportError:
     import json
 
+from collections import OrderedDict
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
-
-
-tempDB = {}
-
 
 def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
@@ -317,30 +314,34 @@ class HistoryStream:
 
     def historyGenerator(self, did=None):
         if did is None:
-            values = list(tempDB.values())
-            if self.history == values:
+            count = db.historyCount()
+            if self.history == count:
                 time.sleep(2)
             else:
-                self.history = values
-                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\n\n", "ascii")
+                self.history = count
+                history = db.getAllHistories(limit=self.history)
+                temp = []
+                for entry in history['data']:
+                    temp.append(json.loads(entry.decode('utf-8')))
+
+                history = {"data": temp}
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(history) + "\n\n", "ascii")
                 self.id += 1
                 time.sleep(2)
 
         else:
-            print(did)
-            if did not in tempDB:
+            value = db.getHistory(did)
+            if value is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
 
-            value = tempDB[did]
             if self.history == value:
-                print("Test")
-                time.sleep(1)
+                time.sleep(2)
             else:
-                print("Test 2")
                 self.history = value
-                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\r\n", "ascii")
+                print(self.history)
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\n\n", "ascii")
                 self.id += 1
-                time.sleep(1)
+                time.sleep(2)
 
     def on_get(self, req, resp, did=None):
         resp.status = falcon.HTTP_200

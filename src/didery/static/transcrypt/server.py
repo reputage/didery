@@ -228,7 +228,7 @@ class History:
         """
 
         for history in data['data']:
-            self.history.append(history)
+            self.history.append(JSON.parse(history))
 
 # ================================================== #
 
@@ -280,7 +280,7 @@ class OTPBlobs:
         """
 
         for blob in data['data']:
-            self.blobs.append(blob)
+            self.blobs.append(JSON.parse(blob))
 
 # ================================================== #
 
