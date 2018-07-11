@@ -8,8 +8,8 @@ except ImportError:
 
 MAX_DB_COUNT = 8
 
-DATABASE_DIR_PATH = "/var/reputation/db"
-ALT_DATABASE_DIR_PATH = os.path.join('~', '.xaltry/reputation/db')
+DATABASE_DIR_PATH = "/var/didery/db"
+ALT_DATABASE_DIR_PATH = os.path.join('~', '.consensys/didery/db')
 
 DB_KEY_HISTORY_NAME = b'key_history'
 DB_OTP_BLOB_NAME = b'otp_blob'

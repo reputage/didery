@@ -6,6 +6,7 @@ from didery.controllers import static
 
 STATIC_BASE_PATH = "/static"
 DEFAULT_STATIC_BASE_PATH = "/"
+STREAM_BASE_PATH = "/stream"
 HISTORY_BASE_PATH = "/history"
 BLOB_BASE_PATH = "/blob"
 RELAY_BASE_PATH = "/relay"
@@ -35,6 +36,10 @@ def loadEndPoints(app, store):
     history = histories.History(store)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
+
+    historyStream = histories.HistoryStream(store)
+    app.add_route('{}{}/{{did}}'.format(STREAM_BASE_PATH, HISTORY_BASE_PATH), historyStream)
+    app.add_route('{}{}'.format(STREAM_BASE_PATH, HISTORY_BASE_PATH), historyStream)
 
     blob = blobs.OtpBlob(store)
     app.add_route('{}/{{did}}'.format(BLOB_BASE_PATH), blob)

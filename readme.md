@@ -47,14 +47,14 @@ Starting The Server
 To start up the server simply run the command below
 
 ```
-$ didery
+$ dideryd
 ```
 After running the command a WSGI compatible [Valet](https://github.com/ioflo/ioflo/blob/master/ioflo/aio/http/serving.py) server will have been spun up to listen for web requests.  The default port that didery will listen on is 8080.
 
 The cli interface for didery has a couple options that you can see below.
 
 ```
-Usage: didery [OPTIONS]
+Usage: dideryd [OPTIONS]
 
 Options:
   -p, --port INTEGER RANGE        port number the server should listen on

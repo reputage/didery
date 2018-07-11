@@ -1,5 +1,6 @@
 import falcon
 import arrow
+import time
 try:
     import simplejson as json
 except ImportError:
@@ -176,7 +177,6 @@ def validatePut(req, resp, resource, params):
                                'Authorization Error',
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
-
 class History:
     def __init__(self, store=None):
         """
@@ -304,3 +304,45 @@ class History:
         db.saveHistory(did, response_json)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
+
+class HistoryStream:
+    def __init__(self, store=None):
+        """
+        :param store: Store
+            store is reference to ioflo data store
+        """
+        self.store = store
+        self.id = 0
+        self.history = None
+
+    def historyGenerator(self, did=None):
+        if did is None:
+            values = list(tempDB.values())
+            if self.history == values:
+                time.sleep(2)
+            else:
+                self.history = values
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\n\n", "ascii")
+                self.id += 1
+                time.sleep(2)
+
+        else:
+            print(did)
+            if did not in tempDB:
+                raise falcon.HTTPError(falcon.HTTP_404)
+
+            value = tempDB[did]
+            if self.history == value:
+                print("Test")
+                time.sleep(1)
+            else:
+                print("Test 2")
+                self.history = value
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\r\n", "ascii")
+                self.id += 1
+                time.sleep(1)
+
+    def on_get(self, req, resp, did=None):
+        resp.status = falcon.HTTP_200
+        resp.content_type = "text/event-stream"
+        resp.stream = self.historyGenerator(did)
