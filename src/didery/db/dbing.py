@@ -18,10 +18,12 @@ gDbDirPath = None   # database directory location has not been set up yet
 dideryDB = None    # database environment has not been set up yet
 
 
-def setupDbEnv(baseDirPath=None):
+def setupDbEnv(baseDirPath=None, port=8080):
     """
     Setup the module globals gDbDirPath, and dideryDB using baseDirPath
     if provided otherwise use DATABASE_DIR_PATH
+    :param port: int
+        used to differentiate dbs for multiple didery servers running on the same computer
     :param baseDirPath: string
         directory where the database is located
     """
@@ -29,20 +31,20 @@ def setupDbEnv(baseDirPath=None):
     global dideryDB
 
     if not baseDirPath:
-        baseDirPath = DATABASE_DIR_PATH
+        baseDirPath = "{}{}".format(DATABASE_DIR_PATH, port)
 
     baseDirPath = os.path.abspath(os.path.expanduser(baseDirPath))
     if not os.path.exists(baseDirPath):
         try:
             os.makedirs(baseDirPath)
         except OSError as ex:
-            baseDirPath = ALT_DATABASE_DIR_PATH
+            baseDirPath = "{}{}".format(ALT_DATABASE_DIR_PATH, port)
             baseDirPath = os.path.abspath(os.path.expanduser(baseDirPath))
             if not os.path.exists(baseDirPath):
                 os.makedirs(baseDirPath)
     else:
         if not os.access(baseDirPath, os.R_OK | os.W_OK):
-            baseDirPath = ALT_DATABASE_DIR_PATH
+            baseDirPath = "{}{}".format(ALT_DATABASE_DIR_PATH, port)
             baseDirPath = os.path.abspath(os.path.expanduser(baseDirPath))
             if not os.path.exists(baseDirPath):
                 os.makedirs(baseDirPath)

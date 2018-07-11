@@ -38,7 +38,11 @@ from ioflo.aid.consoling import VERBIAGE_NAMES
     default=VERBIAGE_NAMES[2],
     help='verbosity level'
 )
-def main(port, verbose):
+@click.argument(
+    'db_path',
+    type=click.Path(file_okay=False, resolve_path=True, writable=True)
+)
+def main(port, verbose, db_path):
     projectDirpath = os.path.dirname(
         os.path.dirname(
             os.path.abspath(
@@ -53,16 +57,19 @@ def main(port, verbose):
 
     verbose = VERBIAGE_NAMES.index(verbose)
 
-    ioflo.app.run.run(  name="skedder",
-                        period=0.125,
-                        real=True,
-                        retro=True,
-                        filepath=floScriptpath,
-                        behaviors=['didery.core'],
-                        mode='',
-                        username='',
-                        password='',
-                        verbose=verbose,
-                        consolepath='',
-                        statistics=False,
-                        preloads=[('.main.server.port', odict(value=port))])
+    ioflo.app.run.run(name="skedder",
+                      period=0.125,
+                      real=True,
+                      retro=True,
+                      filepath=floScriptpath,
+                      behaviors=['didery.core'],
+                      mode='',
+                      username='',
+                      password='',
+                      verbose=verbose,
+                      consolepath='',
+                      statistics=False,
+                      preloads=[
+                          ('.main.server.port', odict(value=port)),
+                          ('.main.server.db', odict(value=db_path))
+                      ])
