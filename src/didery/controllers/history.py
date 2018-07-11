@@ -204,7 +204,13 @@ def validateDelete(req, resp, resource, params):
                                'Url did must match id field did.')
 
 
-    vk = helping.extractDidParts(params['did'])
+    history = db.getHistory(params['did'])
+    req.history = history
+    if history is None:
+        raise falcon.HTTPError(falcon.HTTP_404)
+
+    index = history['history']['signer']
+    vk = history['history']['signers'][index]
 
     try:
         helping.validateSignedResource(signer, raw, vk)
@@ -352,10 +358,7 @@ class History:
         result_json = req.body
         sigs = req.signatures
 
-        resource = db.getHistory(did)
-
-        if resource is None:
-            raise falcon.HTTPError(falcon.HTTP_404)
+        resource = req.history
 
         if did != result_json['id']:
             raise falcon.HTTPError(falcon.HTTP_400,
