@@ -147,7 +147,7 @@ def otpBlobCount():
         return txn.stat(subDb)['entries']
 
 
-def saveOtpBlob(did, data):
+def saveOtpBlob(did, data, sigs):
     """
         Store a otp encrypted key and signatures
 
@@ -157,13 +157,19 @@ def saveOtpBlob(did, data):
             A dict containing the otp encrypted key and signatures
 
     """
+    certifiable_data = {
+        "otp_data": data,
+        "signatures": sigs
+    }
     subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
 
     with dideryDB.begin(db=subDb, write=True) as txn:
         txn.put(
             did.encode(),
-            json.dumps(data).encode()
+            json.dumps(certifiable_data).encode()
         )
+
+    return certifiable_data
 
 
 def getOtpBlob(did):

@@ -176,13 +176,8 @@ class OtpBlob:
                                    'Resource Already Exists',
                                    'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
 
-        response_json = {
-            "otp_data": result_json,
-            "signature": sigs
-        }
-
         # TODO: review signature validation for any holes
-        db.saveOtpBlob(did, response_json)
+        response_json = db.saveOtpBlob(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -207,21 +202,14 @@ class OtpBlob:
         if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
 
-        # TODO make sure time in changed field is greater than existing changed field
         current = arrow.get(resource['otp_data']['changed'])
         update = arrow.get(result_json['changed'])
-
         if current >= update:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    '"changed" field not later than previous update.')
 
-        response_json = {
-            "otp_data": result_json,
-            "signature": sigs
-        }
-
         # TODO: review signature validation for any holes
-        db.saveOtpBlob(did, response_json)
+        response_json = db.saveOtpBlob(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)

@@ -324,7 +324,7 @@ def testGetOne(client):
                     "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
             "changed": "2000-01-01T00:00:00+00:00"
         },
-        "signature": {
+        "signatures": {
             "signer": signature
         }
     }
@@ -448,8 +448,8 @@ def testGetAll(client):
     assert resp_blob1["otp_data"]["id"] == body2["id"] or resp_blob2["otp_data"]["id"] == body2["id"]
     assert resp_blob1["otp_data"]["id"] == body2["id"] or resp_blob2["otp_data"]["id"] == body2["id"]
 
-    assert resp_blob1["signature"]["signer"] == signature1 or resp_blob2["signature"]["signer"] == signature1
-    assert resp_blob1["signature"]["signer"] == signature2 or resp_blob2["signature"]["signer"] == signature2
+    assert resp_blob1["signatures"]["signer"] == signature1 or resp_blob2["signatures"]["signer"] == signature1
+    assert resp_blob1["signatures"]["signer"] == signature2 or resp_blob2["signatures"]["signer"] == signature2
 
     # Test offset and limit
     response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=100&limit=10")
