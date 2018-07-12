@@ -134,6 +134,22 @@ def getAllHistories(offset=0, limit=10):
 
     return values
 
+def deleteHistory(did):
+    """
+        Find and delete a key rotation history matching the supplied did.
+
+    :param did: string
+        W3C did identifier for history object
+    :return: boolean
+    """
+    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
+
+    with dideryDB.begin(db=subDb, write=True) as txn:
+        status = txn.delete(did.encode())
+
+        return status
+
+
 
 def otpBlobCount():
     """

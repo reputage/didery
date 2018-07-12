@@ -6,13 +6,10 @@ try:
 except ImportError:
     import json
 
+from collections import OrderedDict
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
-
-
-tempDB = {}
-
 
 def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
@@ -177,6 +174,51 @@ def validatePut(req, resp, resource, params):
                                'Authorization Error',
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
+def validateDelete(req, resp, resource, params):
+    if 'did' not in params:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'DID value missing from url.')
+
+    raw = helping.parseReqBody(req)
+    signature = req.get_header("Signature", required=True)
+    sigs = helping.parseSignatureHeader(signature)
+    req.signatures = sigs
+    body = req.body
+
+    if len(sigs) == 0:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Empty Signature header.')
+
+    signer = sigs.get('signer')  # str not bytes
+    if not signer:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Signature header missing signature for "signer".')
+
+    # Prevent did data from being clobbered
+    if params['did'] != body['id']:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'Url did must match id field did.')
+
+
+    history = db.getHistory(params['did'])
+    req.history = history
+    if history is None:
+        raise falcon.HTTPError(falcon.HTTP_404)
+
+    index = history['history']['signer']
+    vk = history['history']['signers'][index]
+
+    try:
+        helping.validateSignedResource(signer, raw, vk)
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Could not validate the request signature for signer field. {}.'.format(ex))
+
 class History:
     def __init__(self, store=None):
         """
@@ -305,6 +347,33 @@ class History:
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
+    @falcon.before(validateDelete)
+    def on_delete(self, req, resp, did):
+        """
+            Handle and respond to incoming PUT request.
+            :param req: Request object
+            :param resp: Response object
+            :param did: decentralized identifier
+        """
+        result_json = req.body
+        sigs = req.signatures
+
+        resource = req.history
+
+        if did != result_json['id']:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   '"id" field does not match did.')
+
+        response_json = {
+            "deleted": resource,
+            "signatures": sigs
+        }
+
+        db.deleteHistory(did)
+
+        resp.body = json.dumps(response_json, ensure_ascii=False)
+
 class HistoryStream:
     def __init__(self, store=None):
         """
@@ -317,30 +386,34 @@ class HistoryStream:
 
     def historyGenerator(self, did=None):
         if did is None:
-            values = list(tempDB.values())
-            if self.history == values:
+            count = db.historyCount()
+            if self.history == count:
                 time.sleep(2)
             else:
-                self.history = values
-                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\n\n", "ascii")
+                self.history = count
+                history = db.getAllHistories(limit=self.history)
+                temp = []
+                for entry in history['data']:
+                    temp.append(json.loads(entry.decode('utf-8')))
+
+                history = {"data": temp}
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(history) + "\n\n", "ascii")
                 self.id += 1
                 time.sleep(2)
 
         else:
-            print(did)
-            if did not in tempDB:
+            value = db.getHistory(did)
+            if value is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
 
-            value = tempDB[did]
             if self.history == value:
-                print("Test")
-                time.sleep(1)
+                time.sleep(2)
             else:
-                print("Test 2")
                 self.history = value
-                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\r\n", "ascii")
+                print(self.history)
+                yield bytes("\nid:" + str(self.id) + "\nevent:message\ndata:" + str(self.history) + "\n\n", "ascii")
                 self.id += 1
-                time.sleep(1)
+                time.sleep(2)
 
     def on_get(self, req, resp, did=None):
         resp.status = falcon.HTTP_200
