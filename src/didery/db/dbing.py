@@ -70,7 +70,7 @@ def historyCount():
         return txn.stat(subDb)['entries']
 
 
-def saveHistory(did, data):
+def saveHistory(did, data, sigs):
     """
         Store a rotation history and signatures
 
@@ -80,13 +80,19 @@ def saveHistory(did, data):
             A dict containing the rotation history and signatures
 
     """
+    certifiable_data = {
+        "history": data,
+        "signatures": sigs
+    }
     subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
 
     with dideryDB.begin(db=subDb, write=True) as txn:
         txn.put(
             did.encode(),
-            json.dumps(data).encode()
+            json.dumps(certifiable_data).encode()
         )
+
+    return certifiable_data
 
 
 def getHistory(did):
@@ -133,6 +139,7 @@ def getAllHistories(offset=0, limit=10):
             count += 1
 
     return values
+
 
 def deleteHistory(did):
     """
@@ -232,6 +239,22 @@ def getAllOtpBlobs(offset=0, limit=10):
             count += 1
 
     return values
+
+
+def deleteOtpBlob(did):
+    """
+        Find and delete a otp encrypted blob matching the supplied did.
+
+    :param did: string
+        W3C did identifier for history object
+    :return: boolean
+    """
+    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+
+    with dideryDB.begin(db=subDb, write=True) as txn:
+        status = txn.delete(did.encode())
+
+        return status
 
 
 def loadTestData(name, data):

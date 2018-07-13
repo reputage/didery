@@ -871,3 +871,154 @@ def testGetOne(client):
 
     assert response.status == falcon.HTTP_404
     assert json.loads(response.content) == exp_result
+
+
+def testDeleteValidation(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+
+    # Test missing url did
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+
+    response = client.simulate_delete(HISTORY_BASE_PATH, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Validation Error"
+    assert resp_content["description"] == "DID value missing from url."
+
+    # Test no Signature header
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+
+    response = client.simulate_delete(url, body=data)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Missing header value"
+    assert resp_content["description"] == "The Signature header is required."
+
+    # Test empty Signature header
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": ""}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_401
+    assert resp_content["title"] == "Authorization Error"
+    assert resp_content["description"] == "Empty Signature header."
+
+    # Test bad Signature header tag
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'rotation="{0}"'.format(h.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_401
+    assert resp_content["title"] == "Authorization Error"
+    assert resp_content["description"] == 'Signature header missing signature for "signer".'
+
+    # Test mismatched dids
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Validation Error"
+    assert resp_content["description"] == "Url did must match id field did."
+
+    # Test delete non existent resource
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+
+    client.simulate_delete(url, body=data, headers=headers)
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    assert response.status == falcon.HTTP_404
+
+    # Test invalid signature
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, SK))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+    print(resp_content)
+
+    assert response.status == falcon.HTTP_401
+    assert resp_content["title"] == "Authorization Error"
+    assert resp_content["description"] == "Could not validate the request signature for signer field. Unverifiable signature."
+
+
+def testValidDelete(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
+    signature = h.signResource(body, sk)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert resp_content["deleted"]["history"] == json.loads(body)
+    assert resp_content["deleted"]["signatures"]["signer"] == signature

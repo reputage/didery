@@ -113,6 +113,50 @@ def validatePut(req, resp, resource, params):
                                'Could not validate the request body and signature. {}.'.format(ex))
 
 
+def validateDelete(req, resp, resource, params):
+    if 'did' not in params:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'DID value missing from url.')
+
+    raw = helping.parseReqBody(req)
+    signature = req.get_header("Signature", required=True)
+    sigs = helping.parseSignatureHeader(signature)
+    req.signatures = sigs
+    body = req.body
+
+    if len(sigs) == 0:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Empty Signature header.')
+
+    signer = sigs.get('signer')  # str not bytes
+    if not signer:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Signature header missing signature for "signer".')
+
+    # Prevent did data from being clobbered
+    if params['did'] != body['id']:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Validation Error',
+                               'Url did must match id field did.')
+
+    otp = db.getOtpBlob(params['did'])
+    req.otp = otp
+    if otp is None:
+        raise falcon.HTTPError(falcon.HTTP_404)
+
+    vk = helping.extractDidParts(otp["otp_data"]['id'])
+
+    try:
+        helping.validateSignedResource(signer, raw, vk)
+    except didering.ValidationError as ex:
+        raise falcon.HTTPError(falcon.HTTP_401,
+                               'Authorization Error',
+                               'Could not validate the request signature for signer field. {}.'.format(ex))
+
+
 class OtpBlob:
     def __init__(self, store=None):
         """
@@ -213,3 +257,22 @@ class OtpBlob:
         response_json = db.saveOtpBlob(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
+
+    @falcon.before(validateDelete)
+    def on_delete(self, req, resp, did):
+        """
+            Handle and respond to incoming PUT request.
+            :param req: Request object
+            :param resp: Response object
+            :param did: decentralized identifier
+        """
+        resource = req.otp
+
+        success = db.deleteOtpBlob(did)
+
+        if not success:
+            raise falcon.HTTPError(falcon.HTTP_500,
+                                   'Deletion Error',
+                                   'Error while attempting to delete the resource.')
+
+        resp.body = json.dumps({"deleted": resource}, ensure_ascii=False)

@@ -174,6 +174,7 @@ def validatePut(req, resp, resource, params):
                                'Authorization Error',
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
+
 def validateDelete(req, resp, resource, params):
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -203,7 +204,6 @@ def validateDelete(req, resp, resource, params):
                                'Validation Error',
                                'Url did must match id field did.')
 
-
     history = db.getHistory(params['did'])
     req.history = history
     if history is None:
@@ -218,6 +218,7 @@ def validateDelete(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Could not validate the request signature for signer field. {}.'.format(ex))
+
 
 class History:
     def __init__(self, store=None):
@@ -282,13 +283,8 @@ class History:
                                    'Resource Already Exists',
                                    'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
 
-        response_json = {
-            "history": result_json,
-            "signatures": sigs
-        }
-
         # TODO: review signature validation for any holes
-        db.saveHistory(did, response_json)
+        response_json = db.saveHistory(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -337,13 +333,8 @@ class History:
                                        'Validation Error',
                                        'signers field missing previously verified keys.')
 
-        response_json = {
-            "history": result_json,
-            "signatures": sigs
-        }
-
         # TODO: review signature validation for any holes
-        db.saveHistory(did, response_json)
+        response_json = db.saveHistory(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
@@ -355,24 +346,17 @@ class History:
             :param resp: Response object
             :param did: decentralized identifier
         """
-        result_json = req.body
-        sigs = req.signatures
-
         resource = req.history
 
-        if did != result_json['id']:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   '"id" field does not match did.')
+        success = db.deleteHistory(did)
 
-        response_json = {
-            "deleted": resource,
-            "signatures": sigs
-        }
+        if not success:
+            raise falcon.HTTPError(falcon.HTTP_500,
+                                   'Deletion Error',
+                                   'Error while attempting to delete the resource.')
 
-        db.deleteHistory(did)
+        resp.body = json.dumps({"deleted": resource}, ensure_ascii=False)
 
-        resp.body = json.dumps(response_json, ensure_ascii=False)
 
 class HistoryStream:
     def __init__(self, store=None):
