@@ -11,6 +11,7 @@ from ..help import helping
 from .. import didering
 from ..db import dbing as db
 
+
 def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
     body = req.body
@@ -148,7 +149,7 @@ def validatePut(req, resp, resource, params):
                                '"signer" cannot reference the first or last key in the "signers" '
                                'field on PUT requests.')
 
-    if body['signer'] + 1 == len(body['signers']):
+    if body['signer'] + 1 == len(body['signers']) and body['signers'][body["signer"]] is not None:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'Missing pre rotated key in the signers field.')
@@ -159,7 +160,11 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'Url did must match id field did.')
 
-    index = body['signer']
+    if body["signers"][body["signer"]] is None:
+        index = body['signer'] - 1
+    else:
+        index = body['signer']
+
     try:
         helping.validateSignedResource(rotation, raw, body['signers'][index])
     except didering.ValidationError as ex:
@@ -332,6 +337,13 @@ class History:
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Validation Error',
                                        'signers field missing previously verified keys.')
+
+        # validate that the signer field was updated from the last request
+        if resource['history']['signer'] + 1 != result_json['signer']:
+            if result_json['signers'][result_json['signer']] is not None:
+                raise falcon.HTTPError(falcon.HTTP_400,
+                                       'Validation Error',
+                                       'signer field must be one greater than previous.')
 
         # TODO: review signature validation for any holes
         response_json = db.saveHistory(did, result_json, sigs)

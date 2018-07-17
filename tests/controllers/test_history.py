@@ -53,6 +53,108 @@ putData = {
        }
 
 
+def testKeyRevocation(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+
+    # Test Valid rotation event
+    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.keyToKey64u(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
+                                                           h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    # revoke key
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 2
+    body['signers'].append(None)
+
+    signature = h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            signature,
+            signature)
+    }
+
+    exp_result = {
+        "history": {
+            "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signer": 2,
+            "signers": [
+                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                None
+            ]
+        },
+        "signatures": {
+            "signer": signature,
+            "rotation": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_200)
+
+    # try to rotate away from the null key
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 3
+    body['signers'].append(vk)
+    body['signers'].append(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for signer field. Unexpected error."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
+    # try to rotate away from the null key
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 4
+    body['signers'].append(vk)
+    body['signers'].append(vk)
+    body['signers'].append(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signer field must be one greater than previous."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
+
 def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
     # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk = libnacl.crypto_sign_seed_keypair(seed)
@@ -638,6 +740,61 @@ def testPutValidation(client):
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
+
+    # test that signer field is updated from previous requests
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.keyToKey64u(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
+                                                           h.signResource(body, sk))
+    }
+
+    # send inception event
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    # rotate once
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_status=falcon.HTTP_200)
+
+    # send updated history with new public key but unchanged signer field
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 1
+    body['signers'].append(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signer field must be one greater than previous."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
 
 
 def testValidPut(client):
