@@ -338,7 +338,7 @@ class History:
                                        'Validation Error',
                                        'signers field missing previously verified keys.')
 
-        # validate that the signer field was updated from the last request
+        # without these checks a hacker can skip past the validated signatures and insert their own keys
         if resource['history']['signer'] + 1 != result_json['signer']:
             if result_json['signers'][result_json['signer']] is not None:
                 raise falcon.HTTPError(falcon.HTTP_400,

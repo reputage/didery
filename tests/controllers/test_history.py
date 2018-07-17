@@ -154,6 +154,42 @@ def testKeyRevocation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
+    # try to rotate into the null key prematurely
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
+                                                           h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 4
+    body['signers'].append(None)
+    body['signers'].append(None)
+    body['signers'].append(None)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for rotation field. Unexpected error."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
 
 def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
     # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
