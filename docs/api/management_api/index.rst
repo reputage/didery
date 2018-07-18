@@ -6,6 +6,7 @@ This api is used to manage the didery servers and connects to the didery fronten
 
 .. toctree::
    :maxdepth: 2
+   :glob:
    :titlesonly:
    
    authentication
