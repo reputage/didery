@@ -7,5 +7,5 @@ API
    :glob:
    :titlesonly:
 
-    management_api
-    public_api
+   management_api/index
+   public_api/index
