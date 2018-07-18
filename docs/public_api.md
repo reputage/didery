@@ -133,11 +133,13 @@ The API consists of several ReST endpoints grouped according to the type of data
 /history/{did} PUT [api](#rotation-event)           
 /history/{did} GET [api](#get-rotation-history)        
 /history GET [api](#get-all-rotation-histories)    
+/history/{uid} DELETE [api](#delete-rotation-history)  
 
 /blob POST [api](#add-otp-encrypted-key)
 /blob/{did} PUT [api](#update-otp-encrypted-key)       
 /blob/{did} GET [api](#get-encrypted-key)   
 /blob GET [api](#get-all-encrypted-keys)
+/blob/{uid} DELETE [api](#delete-otp-encrypted-key)  
 
 /relay POST [api](#add-relay-server)    
 /relay/{uid} PUT [api](#update-relay-server)    
@@ -377,6 +379,60 @@ Server: Ioflo WSGI Server
 }
 ```
 
+#### Delete Rotation History
+To comply with GDPR a delete history option is provided.  In order to prevent bad actors from deleting the database a signature using the current signing key pair is required to delete the history. Each request must include the histories did in the body.
+
+__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*
+
+##### Request   
+```
+DELETE /history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 246
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+    
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+}
+```
+
+##### Response   
+```
+HTTP/1.1 200 OK
+Content-Length: 246
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:27:27 GMT
+Server: Ioflo WSGI Server
+    
+{
+    "deleted": {
+        "history":
+        {
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "changed": "2000-01-01T00:00:00+00:00",
+            "signer": 2,
+            "signers": 
+            [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            ]
+        },
+        "signatures":
+        [
+            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+        ]
+    }
+}
+
+```
+
 ## OTP Encrypted Private Key Store  
 This endpoint stores one time pad(otp) encrypted private keys for later recovery if a key is lost. The resources are identified by their [(DID)](https://w3c-ccg.github.io/did-spec/).  The endpoint requires a signature in the header of POST and PUT requests for verification purposes.  The signature should be created by the private key that corresponds to the did in the request.  The endpoint will use the public key stored in the did to verify the signature.
 
@@ -537,4 +593,48 @@ Server: Ioflo WSGI Server
         }
     ]
 }
+```
+
+#### Delete OTP Encrypted Key
+To comply with GDPR a delete otp blob option is provided.  In order to prevent bad actors from deleting the database a signature using the current signing key pair is required to delete the otp blob. Each request must include the blob's did in the body.
+
+__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*
+
+##### Request   
+```
+DELETE /blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 246
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+    
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+}
+```
+
+##### Response   
+```
+HTTP/1.1 200 OK
+Content-Length: 246
+Content-Type: application/json; charset=UTF-8
+Date: Mon, 30 Apr 2018 23:27:27 GMT
+Server: Ioflo WSGI Server
+    
+{
+    "deleted": {
+        "otp_data": {
+            "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+            "changed": "2000-01-01T00:00:00+00:00",
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+        },
+        "signature": [
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==" 
+        ]
+    }
+}
+
 ```
