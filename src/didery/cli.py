@@ -38,11 +38,13 @@ from ioflo.aid.consoling import VERBIAGE_NAMES
     default=VERBIAGE_NAMES[2],
     help='verbosity level'
 )
-@click.argument(
-    'db_path',
-    type=click.Path(file_okay=False, resolve_path=True, writable=True)
+@click.option(
+    '--path',
+    multiple=False,
+    type=click.Path(file_okay=False, resolve_path=True, writable=True),
+    help='path to the database folder'
 )
-def main(port, verbose, db_path):
+def main(port, verbose, path):
     projectDirpath = os.path.dirname(
         os.path.dirname(
             os.path.abspath(
@@ -71,5 +73,5 @@ def main(port, verbose, db_path):
                       statistics=False,
                       preloads=[
                           ('.main.server.port', odict(value=port)),
-                          ('.main.server.db', odict(value=db_path))
+                          ('.main.server.db', odict(value=path))
                       ])
