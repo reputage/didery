@@ -1,4 +1,7 @@
-# Errors
+###########
+Error Types
+###########
+
 The API returns standard HTTP success or error status codes. If an error occurs, extra information about what went wrong will be encoded in the response as JSON. The various HTTP status codes we might return are listed below.
 
 ### HTTP Status codes

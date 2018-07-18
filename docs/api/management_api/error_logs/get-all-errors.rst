@@ -1,4 +1,6 @@
-# Get All Errors
+##############
+Get All Errors
+##############
 
 ### Request    
 http localhost:8000/errors
