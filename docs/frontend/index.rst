@@ -6,5 +6,5 @@ Frontend
    :maxdepth: 2
    :titlesonly:
 
-    frontend_design
+    frontend-design
     MithrilTranscriptInstall
