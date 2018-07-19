@@ -1,3 +1,5 @@
+# Public API
+
 ## Signature Header
 
 didery service requests or responses may require a custom *Signature* header that provides one or more signatures of the request/response body text.
