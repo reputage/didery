@@ -8,3 +8,6 @@ This endpoint is just for managing the back end.  This allows you to tell the se
    :titlesonly:
    
    add_relay_server
+   delete_relay_server
+   get_all_relay_servers
+   update_relay_server
