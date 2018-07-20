@@ -44,7 +44,7 @@ Edited package.json to be
 1" }, "keywords": [], "author": "", "license": "Apache2" }
 
 creates a file called package.json
-==================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Then, to install Mithril, run:
 
@@ -274,27 +274,24 @@ Live reload is a feature where code changes automatically trigger the
 page to reload. Budo is one tool that enables live reloading.
 
 1) install
-==========
+^^^^^^^^^^
 
 npm install mithril --save npm install budo -g
 
 2) add this line into the scripts section in package.json
-=========================================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-"scripts": {
-============
+::
 
-"start": "budo --live --open index.js"
-======================================
-
-}
-=
+    "scripts": {
+        "start": "budo --live --open index.js"
+    }
 
 3) create an ``index.js`` file
-==============================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 4) run budo
-===========
+^^^^^^^^^^^
 
 npm start The source file index.js will be compiled (bundled) and a
 browser window opens showing the result. Any changes in the source files

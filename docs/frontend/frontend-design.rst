@@ -4,13 +4,13 @@ Frontend Design
 2018/05/22
 
 1. Overview
-===========
+-----------
 
 The didery frontend provides an administrator interface for didery
 backend services.
 
 1.1. File Structure
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -93,7 +93,7 @@ that can be compiled into javascript unit tests. The clean\_tests.py
 file is used to remove extra generated files.
 
 1.2. Development Language and Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The main.html is written in HTML5. Styling uses CSS3. Dependencies are
 imported and managed using Node.js. Scripts are also defined and run
@@ -103,16 +103,16 @@ files. Mithril.js is used to create generated the rendered markup.
 Testing uses the ospec framework.
 
 2. Components
-=============
+-------------
 
 2.1. Router
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 The router object simply sets up the url path for the user interface and
 then renders said interface.
 
 2.2. Server
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 The server object makes needed HTTP calls for the frontend. For each
 call there is a class with a list to contain request data as well as
@@ -123,7 +123,7 @@ classes into one convenient class for ease of use. Helper functions are
 included for the server classes to clear data and handle promises.
 
 2.3. Dashboard
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 The dashboard is stored in a manager class in the dashboard.py file.
 Upon instantiation, the manager initializes all of the different tabs,
@@ -136,7 +136,7 @@ each of the tab pages. Finally the view function returns the Mithril.js
 generated HTML markup for the dashboard.
 
 2.4. TabledTabs
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 Tabled tabs are basically content containers for a given tab. They setup
 the table for a tab, as well as the details and copied boxes.
@@ -152,7 +152,7 @@ details and copied boxes allow for the comparison of table rows.
 Specific tabled tabs are defined in the tabs.py file.
 
 2.5. Tabs
-~~~~~~~~~
+^^^^^^^^^
 
 Tabs are basically the menu navigation for the dashboard. They appear
 along the top of the dashboard and can be clicked to display their
@@ -162,7 +162,7 @@ the tab is currently active. All of the tabs member functions return
 Mithril.js generated HTML markup.
 
 2.6. Tables
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Tables are the real powerhouses of the interface. They display data
 retrieved from the server and allow for the limited manipulation of that
@@ -178,7 +178,7 @@ in a data set stored in the table. Specific tables are defined in the
 tables.py file together with the base table class.
 
 2.7. Fields
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Fields set up the columns in a table. Field member functions format
 field titles, shorten field titles if necessary, and return the
@@ -186,7 +186,7 @@ Mithril.js generated HTML markup for that field. Specific fields are
 defined in the fields.py file together with the base field class.
 
 2.8. Searcher
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
 The searcher class provides functionality for the interfaces search bar.
 The searcher can be set to be case sensitive or not. Member functions
@@ -195,7 +195,7 @@ check data structures (such as dictionaries), and returns the result of
 a search.
 
 3. Testing
-==========
+----------
 
 Testing uses the ospec framework. Unit tests are written in Python. They
 are compiled into Javascript using Transcrypt. Excess generated files
