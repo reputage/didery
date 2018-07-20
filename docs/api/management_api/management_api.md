@@ -32,7 +32,7 @@ All errors are returned in the form of JSON with a title and optional descriptio
 # Relay Servers
 This endpoint is just for managing the back end.  This allows you to tell the server to broadcast updates to other trusted servers.
 
-# Add Relay Server   
+# Add Relay Server (POST)  
 The POST endpoint allows you to add new servers to the broadcast list.  The server uses [RAET](https://github.com/RaetProtocol/raet) to communicate.  The following fields can be used:
 
 __host_address__ - [string] ip address of server. *Required*   
@@ -81,7 +81,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-# Update Relay Server
+# Update Relay Server (PUT)
 The PUT endpoint allows you to update existing servers in the broadcast list using the servers uid.  The server uses [RAET](https://github.com/RaetProtocol/raet) to communicate.  The following fields can be used:
 
 __host_address__ - [string] ip address of server. *Required*   
@@ -132,7 +132,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-# Get All Relay Servers
+# Get All Relay Servers (GET)
 
 ### Request   
 http localhost:8000/relay
@@ -175,7 +175,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-# Delete Relay Server    
+# Delete Relay Server (DELETE)   
 A relay server can be deleted by sending and HTTP DELETE request with the uid of the relay server.
 /relay/{uid} DELETE
 
@@ -213,7 +213,7 @@ Server: Ioflo WSGI Server
 # Error Logs
 This endpoint provides a snapshot of errors encountered on the server.
 
-# Get All Errors
+# Get All Errors (GET)
 
 ### Request
 http localhost:8000/errors
