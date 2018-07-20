@@ -1,8 +1,5 @@
-Public API
-==========
-
 Signature Header
-----------------
+================
 
 didery service requests or responses may require a custom *Signature*
 header that provides one or more signatures of the request/response body
@@ -76,7 +73,7 @@ Example valid *Signature* headers are shown below:
     Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
 
 Key Revocation
---------------
+==============
 
 For simplicity didery handles key revocation by rotating to the null
 key. This is done by sending a rotation request to the didery server and
@@ -118,7 +115,7 @@ Rotation Event Data
     }
 
 Replay Attack Prevention
-------------------------
+========================
 
 Although all resource write requests are signed by the client and
 therefore can not be created by anyone other than the Keeper of the
@@ -135,7 +132,7 @@ not later than the the *changed* field value of the pre-existing
 resource to be updated.
 
 Errors
-------
+======
 
 The API returns standard HTTP success or error status codes. If an error
 occurs, extra information about what went wrong will be encoded in the
@@ -188,42 +185,13 @@ description.
 | Exists                |                                                    |
 +-----------------------+----------------------------------------------------+
 
-API
-===
-
-Endpoint URL Summary
---------------------
-
-The API consists of several ReST endpoints grouped according to the type
-of data resource that is being manipulated by the API. Each resource has
-HTTP verbs that do the manipulation.
-
-| /history POST `api <#add-rotation-history>`__
-| /history/{did} PUT `api <#rotation-event>`__
-| /history/{did} GET `api <#get-rotation-history>`__
-| /history GET `api <#get-all-rotation-histories>`__
-| /history/{uid} DELETE `api <#delete-rotation-history>`__
-
-| /blob POST `api <#add-otp-encrypted-key>`__ /blob/{did} PUT
-  `api <#update-otp-encrypted-key>`__
-| /blob/{did} GET `api <#get-encrypted-key>`__
-| /blob GET `api <#get-all-encrypted-keys>`__ /blob/{uid} DELETE
-  `api <#delete-otp-encrypted-key>`__
-
-| /relay POST `api <#add-relay-server>`__
-| /relay/{uid} PUT `api <#update-relay-server>`__
-| /relay GET `api <#get-all-relay-servers>`__
-| /relay/{uid} DELETE `api <#delete-relay-server>`__
-
-/errors GET `api <#get-all-errors>`__
-
 Key Rotation History
---------------------
+====================
 
 | This endpoint is meant for storing the rotation history of public keys
   for a particular did. It stores the entire rotation history and a
   signature from both the current private key and the pre rotated
-  private key. #### Add Rotation History
+  private key. # Add Rotation History (POST)
 | The POST endpoint can be used for adding new rotation histories. There
   can be only one inception event per did. All updates must be sent
   through the PUT endpoint. Each request should have a Signature field
@@ -299,8 +267,8 @@ Response
         ]
     }
 
-Rotation Event
-^^^^^^^^^^^^^^
+Rotation Event (PUT)
+====================
 
 The PUT endpoint is used for validating and storing rotation events. The
 resource must already exist or a 404 error will be returned. Previously
@@ -385,8 +353,8 @@ Response
         ]
     }
 
-Get Rotation History
-^^^^^^^^^^^^^^^^^^^^
+Get Rotation History (GET)
+==========================
 
 Request
 '''''''
@@ -436,8 +404,8 @@ Response
         ]
     }
 
-Get All Rotation Histories
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Get All Rotation Histories (GET)
+================================
 
 Request
 '''''''
@@ -506,8 +474,8 @@ Response
         }]
     }
 
-Delete Rotation History
-^^^^^^^^^^^^^^^^^^^^^^^
+Delete Rotation History (DELETE)
+================================
 
 To comply with GDPR a delete history option is provided. In order to
 prevent bad actors from deleting the database a signature using the
@@ -570,7 +538,7 @@ Response
     }
 
 OTP Encrypted Private Key Store
--------------------------------
+===============================
 
 This endpoint stores one time pad(otp) encrypted private keys for later
 recovery if a key is lost. The resources are identified by their
@@ -580,8 +548,8 @@ purposes. The signature should be created by the private key that
 corresponds to the did in the request. The endpoint will use the public
 key stored in the did to verify the signature.
 
-Add OTP Encrypted Key
-^^^^^^^^^^^^^^^^^^^^^
+Add OTP Encrypted Key (POST)
+============================
 
 The POST endpoint can be used for storing new otp encrypted blobs. Each
 request should include the following fields:
@@ -634,8 +602,8 @@ Response
         "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     }
 
-Update OTP Encrypted Key
-^^^^^^^^^^^^^^^^^^^^^^^^
+Update OTP Encrypted Key (PUT)
+==============================
 
 The PUT endpoint can be used for updating otp encrypted blobs. Each
 request should include the following fields:
@@ -689,8 +657,8 @@ Response
         "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     }
 
-Get Encrypted Key
-^^^^^^^^^^^^^^^^^
+Get Encrypted Key (GET)
+=======================
 
 Request
 '''''''
@@ -724,8 +692,8 @@ Response
         "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     }
 
-Get All Encrypted Keys
-^^^^^^^^^^^^^^^^^^^^^^
+Get All Encrypted Keys (GET)
+============================
 
 Request
 '''''''
@@ -777,8 +745,8 @@ Response
         ]
     }
 
-Delete OTP Encrypted Key
-^^^^^^^^^^^^^^^^^^^^^^^^
+Delete OTP Encrypted Key (DELETE)
+=================================
 
 To comply with GDPR a delete otp blob option is provided. In order to
 prevent bad actors from deleting the database a signature using the

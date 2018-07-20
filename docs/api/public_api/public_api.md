@@ -1,6 +1,4 @@
-# Public API
-
-## Signature Header
+# Signature Header
 
 didery service requests or responses may require a custom *Signature* header that provides one or more signatures of the request/response body text.
 
@@ -65,7 +63,7 @@ Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2P
 
 ```
 
-## Key Revocation
+# Key Revocation
 For simplicity didery handles key revocation by rotating to the null key.  This is done by sending a rotation request to the didery server and setting the pre rotated key to null and the signer field to point to the null key as shown below.  You will also need to provide signatures from the two previous keys.
 
 ##### Existing Data
@@ -97,10 +95,10 @@ For simplicity didery handles key revocation by rotating to the null key.  This 
 ```
 
 
-## Replay Attack Prevention 
+# Replay Attack Prevention 
 Although all resource write requests are signed by the client and therefore can not be created by anyone other than the Keeper of the associated private key, a malicious network device could record and resend prior requests in a different order (replay attack) and thereby change the state of the database. To prevent replay attacks on requests that change data resources a client needs to authenticate in a time sensitive manner with the server.  A simple way to do this is for the client to update the *changed* date time stamp field in the resource in a monotonically increasing manner. This way any replayed but stale write requests can be detected and refused by the Server. In other words the server will deny write requests whose *changed* field date time stamp is not later than the the *changed* field value of the pre-existing resource to be updated.
 
-## Errors
+# Errors
 The API returns standard HTTP success or error status codes. If an error occurs, extra information about what went wrong will be encoded in the response as JSON. The various HTTP status codes we might return are listed below.
 
 ### HTTP Status codes
@@ -125,34 +123,9 @@ All errors are returned in the form of JSON with a title and optional descriptio
 | Authorization Error     | Error validating request signatures.                        |   
 | Resource Already Exists | Resource cannot be created twice.                           |   
 
-API
-===
-
-## Endpoint URL Summary 
-The API consists of several ReST endpoints grouped according to the type of data resource that is being manipulated by the API. Each resource has HTTP verbs that do the manipulation.
-
-/history  POST   [api](#add-rotation-history)    
-/history/{did} PUT [api](#rotation-event)           
-/history/{did} GET [api](#get-rotation-history)        
-/history GET [api](#get-all-rotation-histories)    
-/history/{uid} DELETE [api](#delete-rotation-history)  
-
-/blob POST [api](#add-otp-encrypted-key)
-/blob/{did} PUT [api](#update-otp-encrypted-key)       
-/blob/{did} GET [api](#get-encrypted-key)   
-/blob GET [api](#get-all-encrypted-keys)
-/blob/{uid} DELETE [api](#delete-otp-encrypted-key)  
-
-/relay POST [api](#add-relay-server)    
-/relay/{uid} PUT [api](#update-relay-server)    
-/relay GET [api](#get-all-relay-servers)    
-/relay/{uid} DELETE [api](#delete-relay-server) 
-
-/errors GET [api](#get-all-errors)  
-
-## Key Rotation History 
+# Key Rotation History 
 This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.
-#### Add Rotation History   
+# Add Rotation History (POST)   
 The POST endpoint can be used for adding new rotation histories.  There can be only one inception event per did.  All updates must be sent through the PUT endpoint.  Each request should have a Signature field in its header with the following format: signer=["signature"]. The signer tag contains the signature from the private key corresponding to the public key at position 0 in the signers field. Each request should also include the following fields:
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  *Required*  
@@ -210,7 +183,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-#### Rotation Event 
+# Rotation Event (PUT)
 The PUT endpoint is used for validating and storing rotation events.  The resource must already exist or a 404 error will be returned. Previously used public keys in the rotation history cannot be changed only new pre-rotated keys can be added through this endpoint. Each request should have a Signature field in its header with the following format: signer=["signature"]; rotation=["signature"].  The signer tag should contain the signature of the old public/private key pair and the rotation tag should contain the signature of the new public/private key pair. Each request should also include the following fields:
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/)  *Required*  
@@ -272,7 +245,7 @@ Server: Ioflo WSGI Server
 }
 ```
 	
-#### Get Rotation History
+# Get Rotation History (GET)
 
 ##### Request   
 http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
@@ -317,7 +290,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-#### Get All Rotation Histories
+# Get All Rotation Histories (GET)
 
 ##### Request   
 http localhost:8000/history
@@ -381,7 +354,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-#### Delete Rotation History
+# Delete Rotation History (DELETE)
 To comply with GDPR a delete history option is provided.  In order to prevent bad actors from deleting the database a signature using the current signing key pair is required to delete the history. Each request must include the histories did in the body.
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*
@@ -435,10 +408,10 @@ Server: Ioflo WSGI Server
 
 ```
 
-## OTP Encrypted Private Key Store  
+# OTP Encrypted Private Key Store  
 This endpoint stores one time pad(otp) encrypted private keys for later recovery if a key is lost. The resources are identified by their [(DID)](https://w3c-ccg.github.io/did-spec/).  The endpoint requires a signature in the header of POST and PUT requests for verification purposes.  The signature should be created by the private key that corresponds to the did in the request.  The endpoint will use the public key stored in the did to verify the signature.
 
-#### Add OTP Encrypted Key  
+# Add OTP Encrypted Key (POST)
 The POST endpoint can be used for storing new otp encrypted blobs. Each request should include the following fields:
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*    
@@ -480,7 +453,7 @@ Server: Ioflo WSGI Server
 
 ```
 
-#### Update OTP Encrypted Key  
+# Update OTP Encrypted Key (PUT)
 The PUT endpoint can be used for updating otp encrypted blobs. Each request should include the following fields:
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*    
@@ -522,7 +495,7 @@ Server: Ioflo WSGI Server
 
 ```
 
-#### Get Encrypted Key
+# Get Encrypted Key (GET)
 
 ##### Request    
 http localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
@@ -550,7 +523,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-#### Get All Encrypted Keys
+# Get All Encrypted Keys (GET)
 
 ##### Request   
 http localhost:8000/blob
@@ -597,7 +570,7 @@ Server: Ioflo WSGI Server
 }
 ```
 
-#### Delete OTP Encrypted Key
+# Delete OTP Encrypted Key (DELETE)
 To comply with GDPR a delete otp blob option is provided.  In order to prevent bad actors from deleting the database a signature using the current signing key pair is required to delete the otp blob. Each request must include the blob's did in the body.
 
 __id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*
