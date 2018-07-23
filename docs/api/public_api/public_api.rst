@@ -77,12 +77,15 @@ Key Revocation
 
 For simplicity didery handles key revocation by rotating to the null
 key. This is done by sending a rotation request to the didery server and
-setting the pre rotated key to null and the signer field to point to the
-null key as shown below. You will also need to provide signatures from
-the two previous keys.
+setting the new pre rotated key to null. The "signer" index needs to
+point to the null key. As shown below the index jumps from 0 to 2 so
+that anyone who comes along later and verifies your keys with didery
+will see that you don't have a current valid key.
 
 Existing Data
 '''''''''''''
+
+Suppose the didery servers already have this data.
 
 ::
 
@@ -100,6 +103,9 @@ Existing Data
 Rotation Event Data
 '''''''''''''''''''
 
+In order to revoke a key a PUT request would be sent with data that
+looked something like this:
+
 ::
 
     {
@@ -113,6 +119,17 @@ Rotation Event Data
             null
         ]
     }
+
+Signatures
+~~~~~~~~~~
+
+Accompanying the PUT request should be a normal signature header as if
+you were rotating to the pre-rotated key
+"Xq5YqaL6L48pf0fu7IUhL0JRaU2\_RxFP0AL43wYn148=".
+
+.. code:: http
+
+    Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
 
 Replay Attack Prevention
 ========================
