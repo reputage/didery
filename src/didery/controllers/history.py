@@ -217,12 +217,13 @@ def validateDelete(req, resp, resource, params):
     index = history['history']['signer']
     vk = history['history']['signers'][index]
 
-    try:
-        helping.validateSignedResource(signer, raw, vk)
-    except didering.ValidationError as ex:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Authorization Error',
-                               'Could not validate the request signature for signer field. {}.'.format(ex))
+    if vk is not None:
+        try:
+            helping.validateSignedResource(signer, raw, vk)
+        except didering.ValidationError as ex:
+            raise falcon.HTTPError(falcon.HTTP_401,
+                                   'Authorization Error',
+                                   'Could not validate the request signature for signer field. {}.'.format(ex))
 
 
 class History:
