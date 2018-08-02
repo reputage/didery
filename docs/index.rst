@@ -14,3 +14,4 @@ The project is built on the open source `ioflo <https://github.com/ioflo>`_ fram
 
    api/index
    frontend/index
+   decentralized_autonomic_data
