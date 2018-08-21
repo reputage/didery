@@ -44,7 +44,7 @@ frontend is built with
    :glob:
    :titlesonly:
 
-   getting_started
+   getting_started/index
    api/index
    frontend/index
    decentralized_autonomic_data

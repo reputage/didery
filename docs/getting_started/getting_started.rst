@@ -1,8 +1,5 @@
-Getting Started
-===============
-
 Installation
-------------
+============
 
 This project depends on `python
 3.6 <https://www.python.org/downloads/>`__. You will need to install it
@@ -60,7 +57,7 @@ Linux
     $ sudo make install  
 
 Starting The Server
--------------------
+===================
 
 To start up the server simply run the command below
 
@@ -93,7 +90,7 @@ You can manage the backend from your browser by going to:
     http://localhost:8080
 
 Testing
--------
+=======
 
 You will first need to clone the GitHub repo if you installed using the
 Pypi wheel. There are two sets of unit tests included in the project.
