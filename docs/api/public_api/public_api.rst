@@ -208,7 +208,8 @@ Key Rotation History
 | This endpoint is meant for storing the rotation history of public keys
   for a particular did. It stores the entire rotation history and a
   signature from both the current private key and the pre rotated
-  private key. # Add Rotation History (POST)
+  private key.
+| # Add Rotation History (POST)
 | The POST endpoint can be used for adding new rotation histories. There
   can be only one inception event per did. All updates must be sent
   through the PUT endpoint. Each request should have a Signature field

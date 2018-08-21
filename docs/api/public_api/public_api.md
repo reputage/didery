@@ -131,7 +131,7 @@ All errors are returned in the form of JSON with a title and optional descriptio
 | Resource Already Exists | Resource cannot be created twice.                           |   
 
 # Key Rotation History 
-This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.
+This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.  
 # Add Rotation History (POST)   
 The POST endpoint can be used for adding new rotation histories.  There can be only one inception event per did.  All updates must be sent through the PUT endpoint.  Each request should have a Signature field in its header with the following format: signer=["signature"]. The signer tag contains the signature from the private key corresponding to the public key at position 0 in the signers field. Each request should also include the following fields:
 
