@@ -4,9 +4,9 @@
 
 Background
 ==========
-This project is based on the key management ideas from this rebooting the web of trust white paper: [DAD Spec](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/DecentralizedAutonomicData.md). The project follows the spec detailed in the white paper and provides a secure store for key rotation histories and one time pad(otp) encrypted private keys. The project also utilizes Decentralized Identifiers(DID) as specified in the [W3C Spec](https://w3c-ccg.github.io/did-spec/) and incorporates the new decentralized autonomic data(dad) method.  
+Cryptographic key management is a challenging problem for the blockchain community. To address this problem, we have developed a decentralized key management toolkit called Didery which is designed to manage decentralized identifiers [(DIDs)](https://w3c-ccg.github.io/did-spec/). [DIDs](https://w3c-ccg.github.io/did-spec/), as a [W3C specification](https://w3c-ccg.github.io/did-spec/), have the potential to eventually supplant URLs as the main identifier in Web 3.0 applications. Didery implements ideas found in the paper titled [“Decentralized Autonomic Data (DAD) and the three R's of Key Management”](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/DecentralizedAutonomicData.md) presented at the Rebooting the Web of Trust spring 2018 conference. Didery will improve the management, security, and user experience of anyone handling the cryptographic keys associated with [DIDs](https://w3c-ccg.github.io/did-spec/). The initial release of Didery provides two main services, a key pre-rotation service and a one-time pad encrypted storage service. Pre-rotation enables creation/rotation/revocation of key rotation histories for the key pairs associated with a root [DID](https://w3c-ccg.github.io/did-spec/). The service may be run as a rotation history service or as a set of redundant public servers. It also provides support for one-time pad encrypted private keys for recovery that works with the associated [SeedQuest](https://github.com/reputage/seedQuest) 3D key recovery mnemonic. The Didery toolkit is open-source with [JavaScript](https://github.com/reputage/didery.js) and [Python](https://github.com/reputage/didery.py) client SDKs for interacting with Didery servers. Didery helps simplify key management. 
 
-The project is built on the open source [ioflo](https://github.com/ioflo) framework.  The command line interface for the server in this project is handled by ioflo and more information about command line options can be found in [ioflo's documentation](https://github.com/ioflo/ioflo_manuals).  The API is built using the falcon api framework and lmdb.  The frontend is built with Transcrypt and mithril.js.
+The project is built on the open source [ioflo](https://github.com/ioflo) framework and also utilizes [click](http://click.pocoo.org/5/), and [lmdb](https://lmdb.readthedocs.io/en/release/) on the back end.  The frontend is built with [Transcrypt](https://www.transcrypt.org/documentation) and [mithril.js](https://mithril.js.org/).
 
 
 
@@ -15,10 +15,15 @@ Installation
 
 This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
-Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install it:
+Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install from source with:
 ```
 $ pip3 install -e /path/to/didery
 ```
+Or intall through Pypi with:
+```
+$ pip3 install didery
+```
+
 Install node and npm on your system.  You can find instructions [here](https://nodejs.org/en/download/). Or if you use Ubuntu run this command:
 ```
 $ sudo apt install npm
@@ -75,8 +80,7 @@ http://localhost:8080
 
 Testing
 =======
-
-There are two sets of unit tests included in the project. The first of which tests the didery backend and can be run using the command:
+You will first need to clone the GitHub repo if you installed using the Pypi wheel. There are two sets of unit tests included in the project. The first of which tests the didery backend and can be run using the command:
 ```
 $ pytest --ignore=src/didery/static/
 ```
