@@ -1,5 +1,7 @@
-Installation
-============
+# Getting Started
+
+## Installation
+
 
 This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
@@ -39,8 +41,8 @@ $ make && make check
 $ sudo make install  
 ```
 
-Starting The Server
-==================
+## Starting The Server
+
 To start up the server simply run the command below
 
 ```
@@ -66,8 +68,8 @@ You can manage the backend from your browser by going to:
 http://localhost:8080
 ```
 
-Testing
-=======
+## Testing
+
 You will first need to clone the GitHub repo if you installed using the Pypi wheel. There are two sets of unit tests included in the project. The first of which tests the didery backend and can be run using the command:
 ```
 $ pytest --ignore=src/didery/static/
