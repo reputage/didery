@@ -15,10 +15,15 @@ Installation
 
 This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
-Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install it:
+Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install from source with:
 ```
 $ pip3 install -e /path/to/didery
 ```
+Or intall through Pypi with:
+```
+$ pip3 install didery
+```
+
 Install node and npm on your system.  You can find instructions [here](https://nodejs.org/en/download/). Or if you use Ubuntu run this command:
 ```
 $ sudo apt install npm
@@ -75,8 +80,7 @@ http://localhost:8080
 
 Testing
 =======
-
-There are two sets of unit tests included in the project. The first of which tests the didery backend and can be run using the command:
+You will first need to clone the GitHub repo if you installed using the Pypi wheel. There are two sets of unit tests included in the project. The first of which tests the didery backend and can be run using the command:
 ```
 $ pytest --ignore=src/didery/static/
 ```
