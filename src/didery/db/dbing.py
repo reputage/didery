@@ -27,8 +27,7 @@ def setupDbEnv(baseDirPath=None, port=8080):
     :param baseDirPath: string
         directory where the database is located
     """
-    global gDbDirPath
-    global dideryDB
+    global gDbDirPath, dideryDB
 
     if not baseDirPath:
         baseDirPath = "{}{}".format(DATABASE_DIR_PATH, port)
@@ -155,7 +154,6 @@ def deleteHistory(did):
         status = txn.delete(did.encode())
 
         return status
-
 
 
 def otpBlobCount():

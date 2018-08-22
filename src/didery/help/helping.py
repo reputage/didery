@@ -237,6 +237,24 @@ def extractDidParts(did, method="dad"):
     return keystr
 
 
+def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+    # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk = libnacl.crypto_sign_seed_keypair(seed)
+
+    did = makeDid(vk)
+    body = {
+        "id": did,
+        "changed": changed,
+        "signer": signer,
+        "signers": []
+    }
+
+    for i in range(0, numSigners):
+        body['signers'].append(keyToKey64u(vk))
+
+    return vk, sk, did, json.dumps(body, ensure_ascii=False).encode()
+
+
 def parseQString(req, resp, resource, params):
     req.offset = 0
     req.limit = 10

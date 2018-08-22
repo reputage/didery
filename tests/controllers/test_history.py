@@ -57,7 +57,7 @@ def testKeyRevocation(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     # Test Valid rotation event
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
 
     headers = {
@@ -156,7 +156,7 @@ def testKeyRevocation(client):
 
     # try to rotate into the null key prematurely
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
@@ -189,24 +189,6 @@ def testKeyRevocation(client):
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_401)
-
-
-def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
-    # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk = libnacl.crypto_sign_seed_keypair(seed)
-
-    did = h.makeDid(vk)
-    body = {
-        "id": did,
-        "changed": changed,
-        "signer": signer,
-        "signers": []
-    }
-
-    for i in range(0, numSigners):
-        body['signers'].append(h.keyToKey64u(vk))
-
-    return vk, sk, did, json.dumps(body, ensure_ascii=False).encode('utf-8')
 
 
 def basicValidation(reqFunc, url, data):
@@ -581,7 +563,7 @@ def testPutValidation(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
-    vk, sk, did, body = genDidHistory(seed, signer=1)
+    vk, sk, did, body = h.genDidHistory(seed, signer=1)
 
     exp_result = {"title": "404 Not Found"}
 
@@ -688,7 +670,7 @@ def testPutValidation(client):
     verifyRequest(client.simulate_put, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
     # Test that changed field is greater than previous date
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=4)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
@@ -779,7 +761,7 @@ def testPutValidation(client):
 
     # test that signer field is updated from previous requests
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
 
     headers = {
@@ -832,12 +814,11 @@ def testPutValidation(client):
                   exp_status=falcon.HTTP_400)
 
 
-
 def testValidPut(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     # Test Valid rotation event
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(h.signResource(body, sk),
@@ -1068,7 +1049,7 @@ def testGetOne(client):
 
 def testDeleteValidation(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
 
     # Test missing url did
     headers = {
@@ -1196,7 +1177,7 @@ def testDeleteValidation(client):
 
 def testValidDelete(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     signature = h.signResource(body, sk)
