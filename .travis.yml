@@ -1,0 +1,18 @@
+language: python
+python:
+  - "3.5"
+  - "3.6"
+  - "3.7"
+
+# Make sure libsodium dependency is present
+before_install:
+  - wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.13.tar.gz
+  - tar -zxvf libsodium-1.0.13.tar.gz
+  - cd libsodium-1.0.13
+  - ./configure
+  - make && make check
+  - sudo make install
+
+# Run Tests
+script:
+  - pytest
