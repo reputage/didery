@@ -92,7 +92,7 @@ class optional_build_ext(build_ext):
 
 setup(
     name='didery',
-    version='0.0.1',
+    version='0.0.2',
     license='Apache2',
     description='DIDery Key Management Server',
     long_description="Redundant persistent backup of key rotation events and otp encrypted private keys.",
