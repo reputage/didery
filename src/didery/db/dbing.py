@@ -11,6 +11,7 @@ MAX_DB_COUNT = 8
 DATABASE_DIR_PATH = "/var/didery/db"
 ALT_DATABASE_DIR_PATH = os.path.join('~', '.consensys/didery/db')
 
+DB_EVENT_HISTORY_NAME = b'event_history'
 DB_KEY_HISTORY_NAME = b'key_history'
 DB_OTP_BLOB_NAME = b'otp_blob'
 
@@ -52,11 +53,116 @@ def setupDbEnv(baseDirPath=None, port=8080):
     gDbDirPath = baseDirPath  # set global
 
     dideryDB = lmdb.open(gDbDirPath, max_dbs=MAX_DB_COUNT)
+    dideryDB.open_db(DB_EVENT_HISTORY_NAME)
     dideryDB.open_db(DB_KEY_HISTORY_NAME)
     dideryDB.open_db(DB_OTP_BLOB_NAME)
 
     return dideryDB
 
+def eventCount():
+    """
+        Gets a count of the number of entries in the table
+
+        :return: int count
+    """
+    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
+
+    with dideryDB.begin(db=subDb, write=False) as txn:
+        return txn.stat(subDb)['entries']
+
+def getEvent(did):
+    """
+        Find and return an event history matching the supplied did.
+
+        :param did: string
+            W3C did identifier for history object
+        :return: dict
+    """
+    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
+
+    with dideryDB.begin(db=subDb, write=False) as txn:
+        raw_data = txn.get(did.encode())
+
+        if raw_data is None:
+            return None
+
+        return json.loads(raw_data)
+
+
+def saveEvent(did, data, sigs):
+    """
+        Store an event and signatures
+
+        :param did: string
+            W3C did string
+        :param data: dict
+            A dict containing the rotation history and signatures
+
+    """
+    db_entry = []
+    certifiable_data = {
+        "event": data,
+        "signatures": sigs
+    }
+    db_entry.append(certifiable_data)
+
+    old_data = getEvent(did)
+    if old_data is not None:
+        print(old_data)
+        for entry in old_data:
+            db_entry.append(entry)
+
+    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
+
+    with dideryDB.begin(db=subDb, write=True) as txn:
+        txn.put(
+            did.encode(),
+            json.dumps(db_entry).encode()
+        )
+
+    return certifiable_data
+
+def getAllEvents(offset=0, limit=10):
+    """
+        Get all events in a range between the offset and offset+limit
+
+        :param offset: int starting point of the range
+        :param limit: int maximum number of entries to return
+        :return: dict
+    """
+    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
+    values = {"data": []}
+
+    with dideryDB.begin(db=subDb, write=False) as txn:
+        cursor = txn.cursor()
+
+        count = 0
+        for key, value in cursor:
+            if count >= limit+offset:
+                break
+
+            if offset < count+1:
+                values["data"].append(value)
+
+            count += 1
+
+    return values
+
+
+def deleteEvent(did):
+    """
+        Find and delete a key rotation history matching the supplied did.
+
+    :param did: string
+        W3C did identifier for history object
+    :return: boolean
+    """
+    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
+
+    with dideryDB.begin(db=subDb, write=True) as txn:
+        status = txn.delete(did.encode())
+
+        return status
 
 def historyCount():
     """
