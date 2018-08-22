@@ -15,5 +15,4 @@ before_install:
 
 # Run Tests
 script:
-  - ls
   - pytest tests/
