@@ -1,27 +1,18 @@
 arrow==0.12.1
-attrs==17.4.0
-certifi==2018.8.13
-chardet==3.0.4
+atomicwrites==1.1.5
+attrs==18.1.0
 click==6.7
-coverage==4.5.1
--e git+https://github.com/reputage/didery.git@67fd62b7e5ee65043cc70ac51ac666dce93de23e#egg=didery
+-e git+https://github.com/reputage/didery.git@3211c0b1e83e5acf8b7d122e20e0970b0c5a966c#egg=didery
 falcon==1.4.1
-idna==2.7
 ioflo==1.7.4
 libnacl==1.6.1
 lmdb==0.94
-more-itertools==4.1.0
-pkg-resources==0.0.0
-pkginfo==1.4.2
-pluggy==0.6.0
-py==1.5.3
-pytest==3.5.1
-pytest-cov==2.5.1
+more-itertools==4.3.0
+pluggy==0.7.1
+py==1.5.4
+pytest==3.7.2
 pytest-falcon==0.4.2
-python-dateutil==2.7.2
+python-dateutil==2.7.3
 python-mimeparse==1.6.0
-simplejson==3.14.0
+simplejson==3.16.0
 six==1.11.0
-tqdm==4.25.0
-twine==1.11.0
-urllib3==1.23
