@@ -12,6 +12,9 @@ before_install:
   - make && make check
   - sudo make install
 
+install:
+  - pip install -e ../didery
+
 # Run Tests
 script:
-  - pytest
+  - pytest tests/
