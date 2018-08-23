@@ -1,6 +1,8 @@
 ![didery logo](https://github.com/reputage/didery.js/blob/dev/logo/didery.png)
 
 [![Documentation Status](https://readthedocs.org/projects/didery/badge/?version=latest)](https://didery.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/reputage/didery.svg?branch=master)](https://travis-ci.org/reputage/didery)
+[![Build Status](https://travis-ci.org/reputage/didery.svg?branch=dev)](https://travis-ci.org/reputage/didery)
 
 Background
 ==========
