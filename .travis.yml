@@ -14,4 +14,4 @@ before_install:
 
 # Run Tests
 script:
-  - pytest tests/
+  - pytest tests/ -vv

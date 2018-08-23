@@ -2,7 +2,6 @@ arrow==0.12.1
 atomicwrites==1.1.5
 attrs==18.1.0
 click==6.7
--e git+https://github.com/reputage/didery.git@3211c0b1e83e5acf8b7d122e20e0970b0c5a966c#egg=didery
 falcon==1.4.1
 ioflo==1.7.4
 libnacl==1.6.1
