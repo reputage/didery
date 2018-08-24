@@ -22,6 +22,7 @@ class CORSMiddleware:
         resp.set_header('Access-Control-Allow-Headers',
                                    'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token, X-Auth-Token, Signature')
 
+
 def loadEndPoints(app, store):
     """
     Add Rest endpoints to a falcon.API object by mapping the API's routes.
