@@ -133,7 +133,7 @@ def getAllHistories(offset=0, limit=10):
                 break
 
             if offset < count+1:
-                values["data"].append(value)
+                values["data"].append(json.loads(value))
 
             count += 1
 
