@@ -119,8 +119,8 @@ def testKeyRevocation(client):
     }
 
     exp_result = {
-        "title": "Authorization Error",
-        "description": "Could not validate the request signature for signer field. Unexpected error."
+        "title": "Validation Error",
+        "description": "signers keys cannot be null unless revoking a key."
     }
 
     verifyRequest(client.simulate_put,
@@ -128,7 +128,7 @@ def testKeyRevocation(client):
                   body,
                   headers,
                   exp_result=exp_result,
-                  exp_status=falcon.HTTP_401)
+                  exp_status=falcon.HTTP_400)
 
     # try to rotate away from the null key
     body['changed'] = "2000-01-01T00:00:02+00:00"
@@ -145,7 +145,7 @@ def testKeyRevocation(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "signer field must be one greater than previous."
+        "description": "signers keys cannot be null unless revoking a key."
     }
 
     verifyRequest(client.simulate_put,
@@ -180,8 +180,8 @@ def testKeyRevocation(client):
     }
 
     exp_result = {
-        "title": "Authorization Error",
-        "description": "Could not validate the request signature for rotation field. Unexpected error."
+        "title": "Validation Error",
+        "description": "signers keys cannot be null unless revoking a key."
     }
 
     verifyRequest(client.simulate_put,
@@ -189,7 +189,75 @@ def testKeyRevocation(client):
                   body,
                   headers,
                   exp_result=exp_result,
-                  exp_status=falcon.HTTP_401)
+                  exp_status=falcon.HTTP_400)
+
+
+def testPutPreRotationIsNull(client):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 1
+    body['signers'].append(None)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers keys cannot be null unless revoking a key."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
+
+def testPutPreRotationIsEmpty(client):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:02+00:00"
+    body['signer'] = 1
+    body['signers'].append("")
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            h.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers keys cannot be empty."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
 
 
 def basicValidation(reqFunc, url, data):
@@ -299,6 +367,52 @@ def testValidPost(client):
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
     # TODO:
     # assert json.loads(response.content) == expected_response
+
+
+def testPostPreRotationIsNull(client):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+
+    body = json.loads(body)
+    body['signers'][1] = None
+    body = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers keys cannot be null on inception."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+
+def testPostPreRotationIsEmpty(client):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+
+    body = json.loads(body)
+    body['signers'][1] = ""
+    body = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+    }
+
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "signers keys cannot be empty."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
 
 
 def testPostSignValidation(client):

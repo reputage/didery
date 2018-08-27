@@ -62,6 +62,12 @@ def basicValidation(req, resp, resource, params):
                                'Validation Error',
                                'ISO datetime could not be parsed.')
 
+    for value in body['signers']:
+        if value == "":
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers keys cannot be empty.')
+
     return raw, sigs
 
 
@@ -95,6 +101,13 @@ def validatePost(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'signers field must contain at least the current public key and its first pre-rotation.')
+
+    # If it is decided that revocation on inception is allowed we can remove this check
+    for value in body['signers']:
+        if value is None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers keys cannot be null on inception.')
 
     if body['signer'] != 0:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -159,6 +172,12 @@ def validatePut(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'Url did must match id field did.')
+
+    for key, value in enumerate(body['signers']):
+        if value is None and body['signer'] != key:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers keys cannot be null unless revoking a key.')
 
     if body["signers"][body["signer"]] is None:
         index = body['signer'] - 1
