@@ -49,9 +49,9 @@ Linux
 
 ::
 
-    $ wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.13.tar.gz  
-    $ tar -zxvf libsodium-1.0.13.tar.gz  
-    $ cd libsodium-1.0.13  
+    $ wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.16.tar.gz  
+    $ tar -zxvf libsodium-1.0.16.tar.gz  
+    $ cd libsodium-1.0.16  
     $ ./configure  
     $ make && make check  
     $ sudo make install  
