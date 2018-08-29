@@ -1,0 +1,17 @@
+arrow==0.12.1
+atomicwrites==1.1.5
+attrs==18.1.0
+click==6.7
+falcon==1.4.1
+ioflo==1.7.4
+libnacl==1.6.1
+lmdb==0.94
+more-itertools==4.3.0
+pluggy==0.7.1
+py==1.5.4
+pytest==3.7.2
+pytest-falcon==0.4.2
+python-dateutil==2.7.3
+python-mimeparse==1.6.0
+simplejson==3.16.0
+six==1.11.0

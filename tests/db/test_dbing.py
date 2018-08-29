@@ -134,8 +134,8 @@ def testGetAllHistories():
 
     exp_data = {
         'data': [
-            json.dumps(history1, ensure_ascii=False).encode(),
-            json.dumps(history2, ensure_ascii=False).encode()
+            history1,
+            history2
         ]
     }
 

@@ -19,6 +19,7 @@ from copy import deepcopy
 
 from didery.routing import *
 from didery.help import helping as h
+from didery.db import dbing as db
 
 
 SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
@@ -927,64 +928,79 @@ def testGetAllValidation(client):
 
 
 def testValidGetAll(client):
+    history1 = {
+        "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "changed": "2000-01-01T00:00:01+00:00",
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    history1_sigs = {
+        "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
+        "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
+    }
+    db.saveHistory(DID, history1, history1_sigs)
+
+    history2_did = "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="
+    history2 = {
+        "id": history2_did,
+        "changed": "2000-01-01T00:00:00+00:00",
+        "signer": 0,
+        "signers": [
+            "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+            "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+            "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
+            "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="
+        ]
+    }
+    history2_sigs = {
+        "signer": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw==",
+        "rotation": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw=="
+    }
+    db.saveHistory(history2_did, history2, history2_sigs)
+
+    history3_did = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+    history3 = {
+        "id": history3_did,
+        "changed": "2000-01-01T00:00:01+00:00",
+        "signer": 1,
+        "signers": [
+            "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+            "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+            "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+        ]
+    }
+    history3_sigs = {
+        "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
+        "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
+    }
+    db.saveHistory(history3_did, history3, history3_sigs)
+
     response = client.simulate_get(HISTORY_BASE_PATH)
+    result = json.loads(response.content)
 
     exp_result = {
         "data": [
             {
-                "history": {
-                    "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-                    "changed": "2000-01-01T00:00:01+00:00",
-                    "signer": 1,
-                    "signers": [
-                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-                        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
-                    ]
-                },
-                "signatures": {
-                    "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
-                    "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
-                }
+                "history": history2,
+                "signatures": history2_sigs
             },
             {
-                "history": {
-                    "id": "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
-                    "changed": "2000-01-01T00:00:00+00:00",
-                    "signer": 0,
-                    "signers": [
-                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
-                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
-                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII=",
-                        "KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="
-                    ]
-                },
-                "signatures": {
-                    "signer": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw==",
-                    "rotation": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw=="
-                }
+                "history": history1,
+                "signatures": history1_sigs
             },
             {
-                "history": {
-                    "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                    "changed": "2000-01-01T00:00:01+00:00",
-                    "signer": 1,
-                    "signers": [
-                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                        "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
-                    ]
-                },
-                "signatures": {
-                    "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
-                    "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
-                }
+                "history": history3,
+                "signatures": history3_sigs
             }
         ]
     }
 
     assert response.status == falcon.HTTP_200
-    # assert json.loads(response.content) == exp_result
+    assert result == exp_result
 
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=100&limit=10")
 

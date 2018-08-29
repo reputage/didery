@@ -8,19 +8,19 @@ from didery.help import helping
 
 
 # Test data
-# tempDB = []
-tempDB = [
-    '''{
-        "title": "Invalid Signature.",
-        "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
-        "time": "2000-01-01T00:00:00+00:00"
-    },
-    {
-        "title": "Relay Unreachable.",
-        "msg": "Could not establish a connection with relay servers.",
-        "time": "2000-01-01T11:00:00+00:00"
-    }'''
-]
+tempDB = []
+# tempDB = [
+#     {
+#         "title": "Invalid Signature.",
+#         "msg": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= had an invalid rotation signature.",
+#         "time": "2000-01-01T00:00:00+00:00"
+#     },
+#     {
+#         "title": "Relay Unreachable.",
+#         "msg": "Could not establish a connection with relay servers.",
+#         "time": "2000-01-01T11:00:00+00:00"
+#     }
+# ]
 
 
 class Error:
@@ -46,7 +46,7 @@ class Error:
         limit = req.limit
 
         if offset >= len(tempDB):
-            resp.body = json.dumps({}, ensure_ascii=False)
+            resp.body = json.dumps({"data": []}, ensure_ascii=False)
             return
 
         body = {
