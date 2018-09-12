@@ -39,10 +39,6 @@ are 64 byte EdDSA (Ed25519) signatures that have been encoded into
 BASE64 url-file safe format. The encoded signatures are 88 characters in
 length and include two trailing pad characters ``=``.
 
-An optional *tag* name = *kind* with values *EdDSA* or *Ed25519* may be
-present. The *kind* tag field value specifies the type of signature. All
-signatures within the header must be of the same kind.
-
 The two tag field values currently supported are *signer* and
 *rotation*.
 
@@ -71,6 +67,31 @@ Example valid *Signature* headers are shown below:
 .. code:: http
 
     Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
+
+Signature Schemes
+=================
+
+An optional *tag* name = *scheme*. The *scheme* tag field value
+specifies the type of signature. All signatures within the header must
+be of the same scheme. Currently the only supported signature type is
+*EdDSA(Ed25519)*. In the future we plan to also support
+*ECDSA(secp256k1)*.
+
+Scheme Values
+^^^^^^^^^^^^^
+
+::
+
+    EdDSA
+    Ed25519
+
+.. code:: http
+
+    Signature: name="EdDSA"; signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
+
+.. code:: http
+
+    Signature: name="Ed25519"; signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
 
 Key Revocation
 ==============
