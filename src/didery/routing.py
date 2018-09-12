@@ -3,6 +3,7 @@ from didery.controllers import otp_blob as blobs
 from didery.controllers import relays
 from didery.controllers import errors
 from didery.controllers import static
+from didery.controllers import events
 
 STATIC_BASE_PATH = "/static"
 DEFAULT_STATIC_BASE_PATH = "/"
@@ -11,6 +12,7 @@ HISTORY_BASE_PATH = "/history"
 BLOB_BASE_PATH = "/blob"
 RELAY_BASE_PATH = "/relay"
 ERRORS_BASE_PATH = "/errors"
+EVENTS_BASE_PATH = "/event"
 
 
 class CORSMiddleware:
@@ -52,3 +54,7 @@ def loadEndPoints(app, store):
 
     error = errors.Error(store)
     app.add_route('{}'.format(ERRORS_BASE_PATH), error)
+
+    event = events.Event(store)
+    app.add_route('{}/{{did}}'.format(EVENTS_BASE_PATH), event)
+    app.add_route('{}'.format(EVENTS_BASE_PATH), event)

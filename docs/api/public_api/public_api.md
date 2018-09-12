@@ -31,10 +31,6 @@ If the same tag appears multiple times then only the last occurrence is used.
 Each signature value is a doubly quoted string ```""``` that contains the actual signature
 in Base64 url safe format. By default the signatures are 64 byte EdDSA (Ed25519) signatures that have been encoded into BASE64 url-file safe format. The encoded signatures are 88 characters in length and include two trailing pad characters ```=```.
 
-An optional *tag* name = *kind* with values *EdDSA* or *Ed25519* may be present.
-The *kind* tag field value specifies the type of signature. All signatures within the header
-must be of the same kind.
-
 The two tag field values currently supported are *signer* and *rotation*.
 
 The didery python library has a helper function,
@@ -61,6 +57,24 @@ Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2P
 ```http
 Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
 
+```
+
+# Signature Schemes
+An optional *tag* name = *scheme*. The *scheme* tag field value specifies the type of signature. All signatures within the header
+must be of the same scheme. Currently the only supported signature type is *EdDSA(Ed25519)*. In the future we plan to also support *ECDSA(secp256k1)*. 
+
+#### Scheme Values
+```
+EdDSA
+Ed25519
+```
+
+```http
+Signature: name="EdDSA"; signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
+```
+
+```http
+Signature: name="Ed25519"; signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="; rotation="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2PvxWso09cEkEHIeet5pjFhLUDg=="
 ```
 
 # Key Revocation

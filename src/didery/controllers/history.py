@@ -318,6 +318,7 @@ class History:
 
         # TODO: review signature validation for any holes
         response_json = db.saveHistory(did, result_json, sigs)
+        db.saveEvent(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -375,6 +376,7 @@ class History:
 
         # TODO: review signature validation for any holes
         response_json = db.saveHistory(did, result_json, sigs)
+        db.saveEvent(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
@@ -389,6 +391,7 @@ class History:
         resource = req.history
 
         success = db.deleteHistory(did)
+        db.deleteEvent(did)
 
         if not success:
             raise falcon.HTTPError(falcon.HTTP_500,
