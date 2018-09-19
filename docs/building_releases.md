@@ -1,5 +1,13 @@
+# Versions
+Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.
+
 # Building Wheels
-Make sure you have installed wheel with apt then run the commands below
+Make sure you have installed wheel with pip
+```bash
+pip install wheel
+```
+
+Then run these commands
 ```bash
 cd path/to/didery/
 python3 setup.py sdist bdist_wheel
@@ -8,6 +16,11 @@ python3 setup.py sdist bdist_wheel
 # Uploading to Pypi
 ```bash
 twine upload dist/*
+```
+I've run into issues with twine either giving an error about not expecting a bytes like object.  This happens if you've installed twine via apt because it's an older version. You need twine >= 1.11.0. Uninstall it with apt and use this:
+```bash
+pip install twine
+python -m twine upload dist/*
 ```
 
 # Github
