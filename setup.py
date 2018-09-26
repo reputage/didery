@@ -92,7 +92,7 @@ class optional_build_ext(build_ext):
 
 setup(
     name='didery',
-    version='0.0.2',
+    version='0.0.3',
     license='Apache2',
     description='DIDery Key Management Server',
     long_description="Redundant persistent backup of key rotation events and otp encrypted private keys.",
@@ -102,6 +102,21 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    package_data={
+        'didery': ['static/main.html',
+                   'static/css/*.css',
+                   'static/fonts/Raleway/*.ttf',
+                   'static/node_modules/mithril/mithril.min.js',
+                   'static/node_modules/jquery/dist/jquery.min.js',
+                   'static/node_modules/semantic-ui/dist/semantic.min.css',
+                   'static/node_modules/semantic-ui/dist/semantic.min.js',
+                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff2',
+                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff',
+                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.ttf',
+                   'static/transcrypt/__javascript__/main.js',
+                   'flo/*.flo'
+                   ]
+    },
     include_package_data=True,
     zip_safe=False,
     classifiers=[
@@ -122,7 +137,7 @@ setup(
     install_requires=[
         'click', 'falcon>=1.2', 'ioflo>=1.6.8', 'libnacl>=1.5.1',
         'simplejson>=3.11.1', 'pytest-falcon>=0.4.2', 'arrow>=0.10.0',
-        'lmdb',
+        'transcrypt<=3.6.101', 'lmdb',
     ],
     extras_require={
         # eg:

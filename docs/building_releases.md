@@ -2,9 +2,10 @@
 Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.
 
 # Building Wheels
-Make sure you have installed wheel with pip
+Make sure you have installed the packaging dependencies with pip
 ```bash
 pip install wheel
+pip install twine
 ```
 
 Then run these commands
@@ -14,6 +15,14 @@ python3 setup.py sdist bdist_wheel
 ```
 
 # Uploading to Pypi
+
+## Test
+```bash
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple didery
+```
+
+## Live
 ```bash
 twine upload dist/*
 ```
