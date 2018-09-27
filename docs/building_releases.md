@@ -2,14 +2,19 @@
 Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.
 
 # Building Wheels
-Make sure you have installed the packaging dependencies with pip
+Make sure you have installed the packaging dependencies
 ```bash
 pip install wheel
 pip install twine
+sudo apt install npm
 ```
 
 Then run these commands
 ```bash
+cd /path/to/didery/src/didery/static/
+npm install
+npm run-script transcrypt
+
 cd path/to/didery/
 python3 setup.py sdist bdist_wheel
 ```

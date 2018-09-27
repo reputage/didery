@@ -1,3 +1,10 @@
+System Requirements
+===================
+python 3.6
+libsodium 1.0.16
+Linux or macOS
+
+
 Installation
 ============
 
@@ -23,7 +30,7 @@ $ npm install
 $ npm run-script transcrypt
 ```
 
-A common issue with running the software is that your system doesn't have libsodium 13 or greater installed. Run these commands and try again:
+A common issue with running the software is that your system doesn't have libsodium 16 or greater installed. Run these commands and try again:
 
 Mac
 ```

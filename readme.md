@@ -10,7 +10,17 @@ Cryptographic key management is a challenging problem for the blockchain communi
 
 The project is built on the open source [ioflo](https://github.com/ioflo) framework and also utilizes [click](http://click.pocoo.org/5/), and [lmdb](https://lmdb.readthedocs.io/en/release/) on the back end.  The frontend is built with [Transcrypt](https://www.transcrypt.org/documentation) and [mithril.js](https://mithril.js.org/).
 
+System Requirements
+===================
+python 3.6
+libsodium 1.0.16
+Linux or macOS
 
+Development Dependencies
+========================
+git
+npm
+wheel
 
 Installation
 ============
@@ -37,7 +47,7 @@ $ npm install
 $ npm run-script transcrypt
 ```
 
-A common issue with running the software is that your system doesn't have libsodium 13 or greater installed. Run these commands and try again:
+A common issue with running the software is that your system doesn't have libsodium 16 or greater installed. Run these commands and try again:
 
 Mac
 ```
