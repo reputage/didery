@@ -1,24 +1,40 @@
+import os
 import ioflo.app.run
+
+from ioflo.aid import odict
+from ioflo.aid.consoling import VERBIAGE_NAMES
 
 
 def main():
-    print("MAIN")
-    """ Main entry point for ioserve CLI"""
-    # from didery import __version__
-    args = ioflo.app.run.parseArgs(version="0.0.1")  # inject  version here
+    projectDirpath = os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(
+                os.path.expanduser(__file__)
+            )
+        )
+    )
+    floScriptpath = os.path.join(projectDirpath, "didery/flo/main.flo")
+    print(floScriptpath)
 
-    ioflo.app.run.run(  name=args.name,
-                        period=float(args.period),
-                        real=args.realtime,
-                        retro=args.retrograde,
-                        filepath=args.filename,
-                        behaviors=args.behaviors,
-                        mode=args.parsemode,
-                        username=args.username,
-                        password=args.password,
-                        verbose=args.verbose,
-                        consolepath=args.console,
-                        statistics=args.statistics)
+    verbose = VERBIAGE_NAMES.index("terse")
+
+    ioflo.app.run.run(name="skedder",
+                      period=0.125,
+                      real=True,
+                      retro=True,
+                      filepath=floScriptpath,
+                      behaviors=['didery.core'],
+                      mode='',
+                      username='',
+                      password='',
+                      verbose=verbose,
+                      consolepath='',
+                      statistics=False,
+                      preloads=[
+                          ('.main.server.port', odict(value=7000)),
+                          ('.main.server.db', odict(value=None))
+                      ])
+
 
 if __name__ == '__main__':
     main()
