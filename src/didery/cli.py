@@ -21,6 +21,8 @@ import ioflo.app.run
 from ioflo.aid import odict
 from ioflo.aid.consoling import VERBIAGE_NAMES
 
+from didery.db.dbing import DATABASE_DIR_PATH
+
 
 @click.command()
 @click.option(
@@ -29,20 +31,20 @@ from ioflo.aid.consoling import VERBIAGE_NAMES
     multiple=False,
     default=8080,
     type=click.IntRange(1, 65535),
-    help='port number the server should listen on'
+    help='Port number the server should listen on. Default is 8080.'
 )
 @click.option(
     '--verbose',
     '-v',
     type=click.Choice(VERBIAGE_NAMES),
     default=VERBIAGE_NAMES[2],
-    help='verbosity level'
+    help='Verbosity level.'
 )
 @click.option(
     '--path',
     multiple=False,
     type=click.Path(file_okay=False, resolve_path=True, writable=True),
-    help='path to the database folder'
+    help='Path to the database folder. Defaults to {}.'.format(DATABASE_DIR_PATH)
 )
 def main(port, verbose, path):
     projectDirpath = os.path.dirname(
