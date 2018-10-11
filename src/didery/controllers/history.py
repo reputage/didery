@@ -236,7 +236,7 @@ def validateDelete(req, resp, resource, params):
     index = history['history']['signer']
     vk = history['history']['signers'][index]
 
-    if vk is not None:
+    if vk is not None:  # key has not been revoked
         try:
             helping.validateSignedResource(signer, raw, vk)
         except didering.ValidationError as ex:
@@ -244,7 +244,7 @@ def validateDelete(req, resp, resource, params):
                                    'Authorization Error',
                                    'Could not validate the request signature for signer field. {}.'.format(ex))
 
-    else:
+    else:  # key was revoked use old key
         try:
             helping.validateSignedResource(signer, raw, history['history']['signers'][index - 1])
         except didering.ValidationError as ex:
