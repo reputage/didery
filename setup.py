@@ -44,8 +44,6 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
-from didery import __version__
-
 try:
     # Allow installing package without any Cython available. This
     # assumes you are going to include the .c files in your sdist.
@@ -94,7 +92,7 @@ class optional_build_ext(build_ext):
 
 setup(
     name='didery',
-    version=__version__,
+    version="0.0.3",
     license='Apache2',
     description='DIDery Key Management Server',
     long_description="Redundant persistent backup of key rotation events and otp encrypted private keys.",
