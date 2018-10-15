@@ -18,9 +18,9 @@ Linux or macOS
 
 Development Dependencies
 ========================
-git
-npm
-wheel
+git  
+npm  
+wheel  
 
 Installation
 ============
