@@ -12,9 +12,9 @@ The project is built on the open source [ioflo](https://github.com/ioflo) framew
 
 System Requirements
 ===================
-python 3.6
-libsodium 1.0.16
-Linux or macOS
+python 3.6  
+libsodium 1.0.16  
+Linux or macOS  
 
 Development Dependencies
 ========================
