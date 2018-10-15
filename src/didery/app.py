@@ -43,7 +43,6 @@ def parseArgs(version=__version__):
 
 def main():
     args = parseArgs(version=__version__)
-    print(args)
 
     projectDirpath = os.path.dirname(
         os.path.dirname(

@@ -25,7 +25,7 @@ import os
 import re
 
 v = sys.version_info
-if v < (3, 6):
+if v < (3, 5):
     msg = "FAIL: Requires Python 3.6 or later, but setup.py was run using {}.{}.{}"
     print(msg.format(v.major, v.minor, v.micro))
     print("NOTE: Installation failed. Run setup.py using python3")
@@ -92,7 +92,7 @@ class optional_build_ext(build_ext):
 
 setup(
     name='didery',
-    version="0.0.3",
+    version="0.1.0",
     license='Apache2',
     description='DIDery Key Management Server',
     long_description="Redundant persistent backup of key rotation events and otp encrypted private keys.",
@@ -128,6 +128,7 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Utilities',
     ],
@@ -149,7 +150,8 @@ setup(
     ] if Cython else [],
     entry_points={
         'console_scripts': [
-            'dideryd = didery.cli:main',
+            'didery = didery.cli:main',
+            'dideryd = didery.app:main',
         ]
     },
     cmdclass={'build_ext': optional_build_ext},
