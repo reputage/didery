@@ -234,8 +234,8 @@ class History:
 
         """
         if 'data' in data:
-            for key, history in data['data'].items():
-                self.history.append(JSON.parse(history))
+            for key, history in enumerate(data['data']):
+                self.history.append(history)
 
 # ================================================== #
 
@@ -289,7 +289,7 @@ class OTPBlobs:
 
         if 'data' in data:
             for blob in data['data']:
-                self.blobs.append(JSON.parse(blob))
+                self.blobs.append(blob)
 
 # ================================================== #
 
