@@ -1,5 +1,9 @@
 # Versions
-Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.
+Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.  There are two files that need to be updated with the new version number:
+```bash
+didery/src/didery/__init_.py
+didery/setup.py
+```
 
 # Building Wheels
 Make sure you have installed the packaging dependencies
