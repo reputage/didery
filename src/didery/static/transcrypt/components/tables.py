@@ -422,9 +422,9 @@ class BlobsTable(Table):
         """
 
         if field.name == "did":
-            return obj.id
+            return obj.otp_data.id
         elif field.name == "blob":
-            return obj.blob
+            return obj.otp_data.blob
 
 # ================================================== #
 
