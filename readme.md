@@ -94,7 +94,7 @@ You can manage the backend from your browser by going to:
 http://localhost:8080
 ```
 
-The CLI uses click to build its interface.  Unfortunately it doesn't always work well with other tools like circus because of character encodings. For this reason there is an alternative entry point into didery that uses parseArgs for the cli.  If you run into character encoding errors you can try running didery shown below.
+The CLI uses click to build its interface.  Unfortunately it doesn't always work well with other tools like circus because of character encodings. For this reason there is an alternative entry point into didery that uses parseArgs for the cli.  If you run into character encoding errors you can try running didery as shown below.
 ```
 $ dideryd
 ```
