@@ -75,7 +75,7 @@ def main(port, version, verbose, path):
     verbose = VERBIAGE_NAMES.index(verbose)
 
     ioflo.app.run.run(name="skedder",
-                      period=0.125,
+                      period=100,
                       real=True,
                       retro=True,
                       filepath=floScriptpath,
