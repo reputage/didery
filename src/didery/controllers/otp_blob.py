@@ -1,5 +1,8 @@
 import falcon
 import arrow
+
+import didery.crypto.eddsa
+
 try:
     import simplejson as json
 except ImportError:
@@ -76,7 +79,7 @@ def validatePost(req, resp, resource, params):
     raw, sig, didKey = basicValidation(req, resp, resource, params)
 
     try:
-        helping.validateSignedResource(sig, raw, didKey)
+        didery.crypto.eddsa.validateSignedResource(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -106,7 +109,7 @@ def validatePut(req, resp, resource, params):
                                'Url did must match id field did.')
 
     try:
-        helping.validateSignedResource(sig, raw, didKey)
+        didery.crypto.eddsa.validateSignedResource(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -150,7 +153,7 @@ def validateDelete(req, resp, resource, params):
     vk = helping.extractDidParts(otp["otp_data"]['id'])
 
     try:
-        helping.validateSignedResource(signer, raw, vk)
+        didery.crypto.eddsa.validateSignedResource(signer, raw, vk)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',

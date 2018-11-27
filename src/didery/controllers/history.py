@@ -1,6 +1,9 @@
 import falcon
 import arrow
 import time
+
+import didery.crypto.eddsa
+
 try:
     import simplejson as json
 except ImportError:
@@ -116,7 +119,7 @@ def validatePost(req, resp, resource, params):
 
     index = body['signer']
     try:
-        helping.validateSignedResource(sig, raw, body['signers'][index])
+        didery.crypto.eddsa.validateSignedResource(sig, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -185,14 +188,14 @@ def validatePut(req, resp, resource, params):
         index = body['signer']
 
     try:
-        helping.validateSignedResource(rotation, raw, body['signers'][index])
+        didery.crypto.eddsa.validateSignedResource(rotation, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
     try:
-        helping.validateSignedResource(signer, raw, body['signers'][index-1])
+        didery.crypto.eddsa.validateSignedResource(signer, raw, body['signers'][index - 1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -238,7 +241,7 @@ def validateDelete(req, resp, resource, params):
 
     if vk is not None:  # key has not been revoked
         try:
-            helping.validateSignedResource(signer, raw, vk)
+            didery.crypto.eddsa.validateSignedResource(signer, raw, vk)
         except didering.ValidationError as ex:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
@@ -246,7 +249,7 @@ def validateDelete(req, resp, resource, params):
 
     else:  # key was revoked use old key
         try:
-            helping.validateSignedResource(signer, raw, history['history']['signers'][index - 1])
+            didery.crypto.eddsa.validateSignedResource(signer, raw, history['history']['signers'][index - 1])
         except didering.ValidationError as ex:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
