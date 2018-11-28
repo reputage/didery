@@ -1,8 +1,6 @@
 import falcon
 import arrow
 
-import didery.crypto.eddsa
-
 try:
     import simplejson as json
 except ImportError:
@@ -11,9 +9,7 @@ except ImportError:
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
-
-
-tempDB = {}
+from ..crypto import factory as cryptoFactory
 
 
 def basicValidation(req, resp, resource, params):
@@ -31,6 +27,7 @@ def basicValidation(req, resp, resource, params):
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
     req.signatures = sigs
+    validator = cryptoFactory.signatureValidationFactory(sigs)
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -65,7 +62,7 @@ def basicValidation(req, resp, resource, params):
                                'Validation Error',
                                "Invalid did format. {}".format(str(ex)))
 
-    return raw, sig, didKey
+    return raw, sig, didKey, validator
 
 
 def validatePost(req, resp, resource, params):
@@ -76,10 +73,10 @@ def validatePost(req, resp, resource, params):
     :param resource: OtpBlob object
     :param params: dict of url params
     """
-    raw, sig, didKey = basicValidation(req, resp, resource, params)
+    raw, sig, didKey, validator = basicValidation(req, resp, resource, params)
 
     try:
-        didery.crypto.eddsa.validateSignedResource(sig, raw, didKey)
+        validator(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -100,7 +97,7 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'DID value missing from url.')
 
-    raw, sig, didKey = basicValidation(req, resp, resource, params)
+    raw, sig, didKey, validator = basicValidation(req, resp, resource, params)
 
     # Prevent did data from being clobbered
     if params['did'] != req.body['id']:
@@ -109,7 +106,7 @@ def validatePut(req, resp, resource, params):
                                'Url did must match id field did.')
 
     try:
-        didery.crypto.eddsa.validateSignedResource(sig, raw, didKey)
+        validator(sig, raw, didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -127,6 +124,7 @@ def validateDelete(req, resp, resource, params):
     sigs = helping.parseSignatureHeader(signature)
     req.signatures = sigs
     body = req.body
+    validator = cryptoFactory.signatureValidationFactory(sigs)
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -153,7 +151,7 @@ def validateDelete(req, resp, resource, params):
     vk = helping.extractDidParts(otp["otp_data"]['id'])
 
     try:
-        didery.crypto.eddsa.validateSignedResource(signer, raw, vk)
+        validator(signer, raw, vk)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
