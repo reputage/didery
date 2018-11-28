@@ -2,8 +2,6 @@ import falcon
 import arrow
 import time
 
-import didery.crypto.eddsa
-
 try:
     import simplejson as json
 except ImportError:
@@ -13,6 +11,7 @@ from collections import OrderedDict
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
+from ..crypto import factory as cryptoFactory
 
 
 def basicValidation(req, resp, resource, params):
@@ -25,6 +24,7 @@ def basicValidation(req, resp, resource, params):
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
     req.signatures = sigs
+    validator = cryptoFactory.signatureValidationFactory(sigs)
 
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -71,7 +71,7 @@ def basicValidation(req, resp, resource, params):
                                    'Validation Error',
                                    'signers keys cannot be empty.')
 
-    return raw, sigs
+    return raw, sigs, validator
 
 
 def validatePost(req, resp, resource, params):
@@ -84,7 +84,7 @@ def validatePost(req, resp, resource, params):
     if params:
         raise falcon.HTTPError(falcon.HTTP_404)
 
-    raw, sigs = basicValidation(req, resp, resource, params)
+    raw, sigs, validator = basicValidation(req, resp, resource, params)
     body = req.body
 
     sig = sigs.get('signer')  # str not bytes
@@ -119,7 +119,7 @@ def validatePost(req, resp, resource, params):
 
     index = body['signer']
     try:
-        didery.crypto.eddsa.validateSignedResource(sig, raw, body['signers'][index])
+        validator(sig, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -138,7 +138,7 @@ def validatePut(req, resp, resource, params):
                                'Validation Error',
                                'DID value missing from url.')
 
-    raw, sigs = basicValidation(req, resp, resource, params)
+    raw, sigs, validator = basicValidation(req, resp, resource, params)
     body = req.body
 
     signer = sigs.get('signer')  # str not bytes
@@ -188,14 +188,14 @@ def validatePut(req, resp, resource, params):
         index = body['signer']
 
     try:
-        didery.crypto.eddsa.validateSignedResource(rotation, raw, body['signers'][index])
+        validator(rotation, raw, body['signers'][index])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
     try:
-        didery.crypto.eddsa.validateSignedResource(signer, raw, body['signers'][index - 1])
+        validator(signer, raw, body['signers'][index - 1])
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -212,6 +212,7 @@ def validateDelete(req, resp, resource, params):
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
     req.signatures = sigs
+    validator = cryptoFactory.signatureValidationFactory(sigs)
     body = req.body
 
     if len(sigs) == 0:
@@ -241,7 +242,7 @@ def validateDelete(req, resp, resource, params):
 
     if vk is not None:  # key has not been revoked
         try:
-            didery.crypto.eddsa.validateSignedResource(signer, raw, vk)
+            validator(signer, raw, vk)
         except didering.ValidationError as ex:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
@@ -249,7 +250,7 @@ def validateDelete(req, resp, resource, params):
 
     else:  # key was revoked use old key
         try:
-            didery.crypto.eddsa.validateSignedResource(signer, raw, history['history']['signers'][index - 1])
+            validator(signer, raw, history['history']['signers'][index - 1])
         except didering.ValidationError as ex:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
