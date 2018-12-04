@@ -5,9 +5,11 @@
     To see test coverage install pytest-cov with pip then run this command:
         py.test --cov-report term-missing --cov=src/didery/controllers/ tests/controllers/
 '''
-
+import didery.crypto.eddsa
 import falcon
 import libnacl
+
+import tests.testing_utils.utils
 
 try:
     import simplejson as json
@@ -34,7 +36,7 @@ data = {
     "changed": "2000-01-01T00:00:00+00:00"
 }
 
-verifyRequest = h.verifyPublicApiRequest
+verifyRequest = tests.testing_utils.utils.verifyPublicApiRequest
 
 
 def genOtpBlob(seed=None, changed="2000-01-01T00:00:00+00:00"):
@@ -179,7 +181,7 @@ def signatureValidation(reqFunc, url):
     body = deepcopy(data)
 
     headers = {
-        "Signature": 'test="' + h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
+        "Signature": 'test="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
     exp_result = {
@@ -197,7 +199,8 @@ def signatureValidation(reqFunc, url):
         "description": "Could not validate the request body and signature. Unverifiable signature."
     }
 
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), BAD_SK))}
+    headers = {"Signature": 'signer="{0}"'.format(
+        didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), BAD_SK))}
 
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
 
@@ -242,7 +245,7 @@ def testPutValidation(client):
     exp_result = {"title": "404 Not Found"}
 
     headers = {
-        "Signature": 'signer="{}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     verifyRequest(client.simulate_put,
@@ -269,7 +272,7 @@ def testPutValidation(client):
     vk, sk, did, body = genOtpBlob(seed)
 
     headers = {
-        "Signature": 'signer="{}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -307,7 +310,7 @@ def testGetOne(client):
 
     # Test basic valid Get One
     body = deepcopy(data)
-    signature = h.signResource(json.dumps(body).encode(), SK)
+    signature = didery.crypto.eddsa.signResource(json.dumps(body).encode(), SK)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature)
@@ -412,7 +415,7 @@ def testGetAll(client):
     # setup
     vk1, sk1, did1, body1 = genOtpBlob()
 
-    signature1 = h.signResource(body1, sk1)
+    signature1 = didery.crypto.eddsa.signResource(body1, sk1)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature1)
@@ -422,7 +425,7 @@ def testGetAll(client):
 
     vk2, sk2, did2, body2 = genOtpBlob()
 
-    signature2 = h.signResource(body2, sk2)
+    signature2 = didery.crypto.eddsa.signResource(body2, sk2)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature2)
@@ -466,13 +469,13 @@ def testDeleteValidation(client):
 
     # Test missing url did
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(BLOB_BASE_PATH, body=data, headers=headers)
 
@@ -485,7 +488,7 @@ def testDeleteValidation(client):
     # Test no Signature header
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -502,7 +505,7 @@ def testDeleteValidation(client):
 
     # Test empty Signature header
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -520,13 +523,13 @@ def testDeleteValidation(client):
 
     # Test bad Signature header tag
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'rotation="{0}"'.format(h.signResource(data, sk))}
+    headers = {"Signature": 'rotation="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -540,13 +543,13 @@ def testDeleteValidation(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, DID)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -559,7 +562,7 @@ def testDeleteValidation(client):
     # Test delete non existent resource
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
 
     client.simulate_delete(url, body=data, headers=headers)
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -570,13 +573,13 @@ def testDeleteValidation(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(h.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, SK))}
+    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, SK))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -593,7 +596,7 @@ def testValidDelete(client):
     vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
-    signature = h.signResource(body, sk)
+    signature = didery.crypto.eddsa.signResource(body, sk)
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
     }
@@ -601,7 +604,7 @@ def testValidDelete(client):
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(h.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)

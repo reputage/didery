@@ -1,3 +1,5 @@
+import didery.crypto.eddsa
+
 try:
     import simplejson as json
 except ImportError:
@@ -67,7 +69,7 @@ def testSaveHistory():
         ]
     }
 
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     exp_data = dbing.saveHistory(DID, data, sigs)
 
@@ -91,7 +93,7 @@ def testGetHistory():
         ]
     }
 
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     exp_data = dbing.saveHistory(DID, data, sigs)
 
@@ -122,13 +124,13 @@ def testGetAllHistories():
         ]
     }
 
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     history1 = dbing.saveHistory(DID, data, sigs)
 
-    vk, sk, did, body = help.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = json.loads(body)
-    sigs = [help.signResource(json.dumps(data).encode(), sk)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
     history2 = dbing.saveHistory(did, data, sigs)
 
@@ -155,9 +157,9 @@ def testGetAllHistoriesOnEmptyDB():
 def testDeleteHistory():
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
-    vk, sk, did, body = help.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = json.loads(body)
-    sigs = [help.signResource(json.dumps(data).encode(), sk)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
     dbing.saveHistory(did, data, sigs)
 
@@ -205,7 +207,7 @@ def testSaveOtpBlob():
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
 
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     exp_data = dbing.saveOtpBlob(DID, data, sigs)
 
@@ -225,7 +227,7 @@ def testGetOtpBlob():
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
 
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     exp_data = dbing.saveOtpBlob(DID, data, sigs)
 
@@ -251,16 +253,16 @@ def testGetAllOtpBlobs():
         "id": DID,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     otpBlob1 = dbing.saveOtpBlob(DID, data, sigs)
 
-    vk, sk, did, body = help.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = {
         "id": did,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
-    sigs = [help.signResource(json.dumps(data).encode(), sk)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
     otpBlob2 = dbing.saveOtpBlob(did, data, sigs)
 
@@ -289,7 +291,7 @@ def testDeleteOtpBlob():
         "id": DID,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
-    sigs = [help.signResource(json.dumps(data).encode(), SK)]
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
     dbing.saveOtpBlob(DID, data, sigs)
 

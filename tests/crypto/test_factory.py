@@ -1,3 +1,4 @@
+import didery.crypto.eddsa
 import didery.crypto.factory as factory
 
 from collections import OrderedDict as ODict
@@ -30,9 +31,9 @@ def testEdDSAFactory():
 
     # test that factory returned EdDSA validator
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
-    signature = h.signResource(body, sk)
+    signature = didery.crypto.eddsa.signResource(body, sk)
 
     valid = validator(signature, body, vk)
 
@@ -46,9 +47,9 @@ def testEdDSAFactory():
 
     # test that factory returned EdDSA validator
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
-    signature = h.signResource(body, sk)
+    signature = didery.crypto.eddsa.signResource(body, sk)
 
     valid = validator(signature, body, vk)
 
@@ -65,9 +66,9 @@ def testInvalidKind():
 
     # test that factory returned default EdDSA validator
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
-    signature = h.signResource(body, sk)
+    signature = didery.crypto.eddsa.signResource(body, sk)
 
     valid = validator(signature, body, vk)
 
@@ -83,9 +84,9 @@ def testEmptyDict():
 
     # test that factory returned default EdDSA validator
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = h.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.keyToKey64u(vk)
-    signature = h.signResource(body, sk)
+    signature = didery.crypto.eddsa.signResource(body, sk)
 
     valid = validator(signature, body, vk)
 

@@ -15,6 +15,7 @@ System Requirements
 python 3.6  
 libsodium 1.0.16  
 Linux or macOS  
+libgmp3-dev
 
 Development Dependencies
 ========================
@@ -61,6 +62,8 @@ $ cd libsodium-1.0.16
 $ ./configure  
 $ make && make check  
 $ sudo make install  
+
+$ sudo apt install python-dev libgmp3-dev
 ```
 
 Starting The Server

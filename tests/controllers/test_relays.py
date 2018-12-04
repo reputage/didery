@@ -7,6 +7,9 @@
 '''
 
 import falcon
+
+import tests.testing_utils.utils
+
 try:
     import simplejson as json
 except ImportError:
@@ -18,7 +21,7 @@ from didery.routing import *
 from didery.help import helping as h
 
 
-verifyRequest = h.verifyManagementApiRequest
+verifyRequest = tests.testing_utils.utils.verifyManagementApiRequest
 
 data = {
     "host_address": "127.0.0.1",
