@@ -1,10 +1,13 @@
 from collections import OrderedDict as ODict
 
 import libnacl
-import simplejson as json
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 from didery import didering
-from didery.help.helping import key64uToKey, keyToKey64u, makeDid
+from didery.help.helping import str64uToBytes, bytesToStr64u, makeDid
 
 
 def verify(sig, msg, vk):
@@ -29,8 +32,8 @@ def verify64u(signature, message, verkey):
     and message is unicode string as would be the case for a json object
 
     """
-    sig = key64uToKey(signature)
-    vk = key64uToKey(verkey)
+    sig = str64uToBytes(signature)
+    vk = str64uToBytes(verkey)
     # msg = message.encode("utf-8")
     return verify(sig, message, vk)
 
@@ -69,7 +72,7 @@ def validateSignedResource(signature, resource, verkey, method="dad"):
             raise didering.ValidationError("Invalid format did field")
 
         if pre != "did" or meth != method:
-            raise didering.ValidationError("Invalid format did field") # did format bad
+            raise didering.ValidationError("Invalid format did field")  # did format bad
 
         if len(verkey) != 44:
             raise didering.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
@@ -86,11 +89,16 @@ def validateSignedResource(signature, resource, verkey, method="dad"):
     return rsrc
 
 
-def signResource(resource, sKey):
-    sig = libnacl.crypto_sign(resource, sKey)
+def signResource(resource, sk):
+    """
+    :param resource: byte string message to be signed
+    :param sk: byte string signing key
+    :return: base64 url-file safe string
+    """
+    sig = libnacl.crypto_sign(resource, sk)
     sig = sig[:libnacl.crypto_sign_BYTES]
 
-    return keyToKey64u(sig)
+    return bytesToStr64u(sig)
 
 
 def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
@@ -106,6 +114,6 @@ def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigner
     }
 
     for i in range(0, numSigners):
-        body['signers'].append(keyToKey64u(vk))
+        body['signers'].append(bytesToStr64u(vk))
 
     return vk, sk, did, json.dumps(body, ensure_ascii=False).encode()

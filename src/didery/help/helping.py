@@ -1,6 +1,7 @@
 from collections import OrderedDict as ODict
 import falcon
 import base64
+import base58
 import tempfile
 import os
 import shutil
@@ -104,18 +105,32 @@ def validateRequiredFields(required, resource):
                                    'Request must contain {} field.'.format(req))
 
 
-def keyToKey64u(key):
+def bytesToStr64u(bytes):
     """
-    Convert and return bytes key to unicode base64 url-file safe version
+    Convert and return bytes string to unicode base64 url-file safe version
     """
-    return base64.urlsafe_b64encode(key).decode("utf-8")
+    return base64.urlsafe_b64encode(bytes).decode("utf-8")
 
 
-def key64uToKey(key64u):
+def str64uToBytes(str64u):
     """
-    Convert and return unicode base64 url-file safe key64u to bytes key
+    Convert and return unicode base64 url-file safe string to bytes version
     """
-    return base64.urlsafe_b64decode(key64u.encode("utf-8"))
+    return base64.urlsafe_b64decode(str64u.encode("utf-8"))
+
+
+def bytesToStr58(bytes):
+    """
+    Convert and return bytes string to unicode base58 version
+    """
+    return base58.b58encode(bytes).decode("utf-8")
+
+
+def str58ToBytes(str58):
+    """
+    Convert and return unicode base58 string to bytes version
+    """
+    return base58.b58decode(str58.encode("utf-8"))
 
 
 def makeDid(vk, method="dad"):

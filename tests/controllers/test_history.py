@@ -61,7 +61,7 @@ def testKeyRevocation(client):
 
     # Test Valid rotation event
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
-    vk = h.keyToKey64u(vk)
+    vk = h.bytesToStr64u(vk)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
@@ -646,9 +646,9 @@ def testPutSignValidation(client):
     ppvk, ppsk = libnacl.crypto_sign_seed_keypair(seed)
 
     did = h.makeDid(vk)
-    vk = h.keyToKey64u(vk)
-    pvk = h.keyToKey64u(pvk)
-    ppvk = h.keyToKey64u(ppvk)
+    vk = h.bytesToStr64u(vk)
+    pvk = h.bytesToStr64u(pvk)
+    ppvk = h.bytesToStr64u(ppvk)
     body = {
         "id": did,
         "changed": str(arrow.utcnow()),
@@ -883,7 +883,7 @@ def testPutValidation(client):
     # test that signer field is updated from previous requests
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
-    vk = h.keyToKey64u(vk)
+    vk = h.bytesToStr64u(vk)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
