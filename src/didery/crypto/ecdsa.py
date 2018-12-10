@@ -3,7 +3,6 @@ import ecdsa.util
 import ecdsa.keys
 import ecdsa.ellipticcurve
 
-from ..help.helping import str64uToBytes, bytesToStr64u, makeDid
 from hashlib import sha3_256
 from fastecdsa.keys import gen_keypair
 from fastecdsa import curve as fast_curve
@@ -17,6 +16,7 @@ try:
 except ImportError:
     import json
 
+from ..help.helping import str64uToBytes, bytesToStr64u, makeDid
 from didery import didering
 
 
@@ -60,44 +60,30 @@ def verify64u(signature, message, verkey):
     return verify(sig, message, vk)
 
 
-def validateSignedResource(signature, resource, verkey, method="dad"):
+def validateSignedResource(signature, resource, verkey):
     """
         Returns dict of deserialized resource if signature verifies for resource given
-        verification key verkey in base64 url safe unicode format
-        Otherwise returns None
+    verification key verkey in base64 url safe unicode format
+    Otherwise raises ValidationError
 
+    :param signature: base64 url-file safe unicode string signature generated
+        by signing bytes version of resource with privated signing key associated with
+        public verification key referenced by key indexed signer field in resource
 
-        signature is base64 url-file safe unicode string signature generated
-            by signing bytes version of resource with privated signing key associated with
-            public verification key referenced by key indexed signer field in resource
+    :param resource: json encoded unicode string of resource record
 
-        resource is json encoded unicode string of resource record
+    :param verkey: base64 url-file safe unicode string public verification key referenced
+        by signer field in resource. This is looked up in database from signer's
+        agent data resource
 
-        verkey is base64 url-file safe unicode string public verification key referenced
-            by signer field in resource. This is looked up in database from signer's
-            agent data resource
-
-        method is the method string used to generate dids in the resource
-        """
+    :return: dict deserialized json resource
+    """
 
     try:
         try:
             rsrc = json.loads(resource, object_pairs_hook=ODict)
         except ValueError as ex:
             raise didering.ValidationError("Invalid JSON")  # invalid json
-
-        ddid = rsrc["id"]
-
-        try:  # correct did format  pre:method:keystr
-            pre, meth, keystr = ddid.split(":")
-        except ValueError as ex:
-            raise didering.ValidationError("Invalid format did field")
-
-        if pre != "did" or meth != method:
-            raise didering.ValidationError("Invalid format did field")  # did format bad
-
-        if len(verkey) != 88:
-            raise didering.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
 
         if not verify64u(signature, resource, verkey):
             raise didering.ValidationError("Unverifiable signature")  # signature fails

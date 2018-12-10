@@ -14,7 +14,11 @@ def verify(sig, msg, vk):
     """
     Returns True if signature sig of message msg is verified with
     verification key vk Otherwise False
-    All of sig, msg, vk are bytes
+
+    :param sig: utf-8 encoded byte string signature
+    :param msg: utf-8 encoded byte string message
+    :param vk: utf-8 encoded byte string message
+    :return: boolean True if valid False otherwise
     """
     try:
         result = libnacl.crypto_sign_open(sig + msg, vk)
@@ -28,9 +32,10 @@ def verify64u(signature, message, verkey):
     Returns True if signature is valid for message with respect to verification
     key verkey
 
-    signature and verkey are encoded as unicode base64 url-file strings
-    and message is unicode string as would be the case for a json object
-
+    :param signature: base64 url-file safe encoded signature string
+    :param message: json encoded unicode string of resource record
+    :param verkey: base64 url-file safe encoded public key string
+    :return: boolean True if valid False otherwise
     """
     sig = str64uToBytes(signature)
     vk = str64uToBytes(verkey)
@@ -38,24 +43,23 @@ def verify64u(signature, message, verkey):
     return verify(sig, message, vk)
 
 
-def validateSignedResource(signature, resource, verkey, method="dad"):
+def validateSignedResource(signature, resource, verkey):
     """
     Returns dict of deserialized resource if signature verifies for resource given
     verification key verkey in base64 url safe unicode format
-    Otherwise returns None
+    Otherwise raises ValidationError
 
-
-    signature is base64 url-file safe unicode string signature generated
+    :param signature: base64 url-file safe unicode string signature generated
         by signing bytes version of resource with privated signing key associated with
         public verification key referenced by key indexed signer field in resource
 
-    resource is json encoded unicode string of resource record
+    :param resource: json encoded unicode string of resource record
 
-    verkey is base64 url-file safe unicode string public verification key referenced
+    :param verkey: base64 url-file safe unicode string public verification key referenced
         by signer field in resource. This is looked up in database from signer's
         agent data resource
 
-    method is the method string used to generate dids in the resource
+    :return: dict deserialized json resource
     """
 
     try:
@@ -63,19 +67,6 @@ def validateSignedResource(signature, resource, verkey, method="dad"):
             rsrc = json.loads(resource, object_pairs_hook=ODict)
         except ValueError as ex:
             raise didering.ValidationError("Invalid JSON")  # invalid json
-
-        ddid = rsrc["id"]
-
-        try:  # correct did format  pre:method:keystr
-            pre, meth, keystr = ddid.split(":")
-        except ValueError as ex:
-            raise didering.ValidationError("Invalid format did field")
-
-        if pre != "did" or meth != method:
-            raise didering.ValidationError("Invalid format did field")  # did format bad
-
-        if len(verkey) != 44:
-            raise didering.ValidationError("Verkey invalid")  # invalid length for base64 encoded key
 
         if not verify64u(signature, resource, verkey):
             raise didering.ValidationError("Unverifiable signature")  # signature fails
@@ -91,6 +82,8 @@ def validateSignedResource(signature, resource, verkey, method="dad"):
 
 def signResource(resource, sk):
     """
+    Produce a signature for resource
+
     :param resource: byte string message to be signed
     :param sk: byte string signing key
     :return: base64 url-file safe string
