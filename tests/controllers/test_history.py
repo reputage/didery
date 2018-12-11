@@ -56,10 +56,10 @@ putData = {
        }
 
 
-def testKeyRevocation(client):
-    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-
-    # Test Valid rotation event
+def setupBasicHistory(client):
+    # Setup
+    # seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.bytesToStr64u(vk)
 
@@ -70,7 +70,34 @@ def testKeyRevocation(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    # revoke key
+    return vk, sk, did, body
+
+
+def setupRevokedHistory(client):
+    vk, sk, did, body = setupBasicHistory(client)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 2
+    body['signers'].append(None)
+
+    signature = didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            signature,
+            signature)
+    }
+
+    client.simulate_put(HISTORY_BASE_PATH, body=json.dumps(body).encode(), headers=headers)
+
+    return vk, sk, did, body
+
+
+def testKeyRevocation(client):
+    vk, sk, did, body = setupBasicHistory(client)
+
+    # Test Key Revocation
     body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:01+00:00"
     body['signer'] = 2
@@ -86,12 +113,12 @@ def testKeyRevocation(client):
 
     exp_result = {
         "history": {
-            "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+            "id": did,
             "changed": "2000-01-01T00:00:01+00:00",
             "signer": 2,
             "signers": [
-                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                vk,
+                vk,
                 None
             ]
         },
@@ -107,6 +134,10 @@ def testKeyRevocation(client):
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_200)
+
+
+def testRotateNullKey(client):
+    vk, sk, did, body = setupRevokedHistory(client)
 
     # try to rotate away from the null key
     body['changed'] = "2000-01-01T00:00:02+00:00"
@@ -157,16 +188,9 @@ def testKeyRevocation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
-    # try to rotate into the null key prematurely
-    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
-    headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
-    }
-
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+def testPrematureNullRotation(client):
+    vk, sk, did, body = setupBasicHistory(client)
 
     body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:02+00:00"
@@ -195,14 +219,7 @@ def testKeyRevocation(client):
 
 
 def testPutPreRotationIsNull(client):
-    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
-
-    headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
-    }
-
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+    vk, sk, did, body = setupBasicHistory(client)
 
     body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:02+00:00"
@@ -229,14 +246,7 @@ def testPutPreRotationIsNull(client):
 
 
 def testPutPreRotationIsEmpty(client):
-    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
-
-    headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
-    }
-
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+    vk, sk, did, body = setupBasicHistory(client)
 
     body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:02+00:00"
@@ -364,11 +374,29 @@ def basicValidation(reqFunc, url, data):
 
 
 def testValidPost(client):
-    body = postData
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
 
-    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
-    # TODO:
-    # assert json.loads(response.content) == expected_response
+    signature = didery.crypto.eddsa.signResource(body, sk)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    exp_result = {
+        "history": json.loads(body.decode()),
+        "signatures": {
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  HISTORY_BASE_PATH,
+                  json.loads(body.decode()),
+                  headers=headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_201)
 
 
 def testPostPreRotationIsNull(client):

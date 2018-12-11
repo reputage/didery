@@ -8,7 +8,7 @@ except ImportError:
 from didery.routing import *
 
 
-def testGetAllValidation(client):
+def testGetAllInvalidQueryString(client):
     # Test that query params have values
     response = client.simulate_get(ERRORS_BASE_PATH, query_string="offset&limit=10")
 
@@ -30,6 +30,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllInvalidQueryValue(client):
     # Test that query params values are ints
     response = client.simulate_get(ERRORS_BASE_PATH, query_string="offset=a&limit=10")
 
@@ -51,6 +53,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllEmptyQueryValue(client):
     response = client.simulate_get(ERRORS_BASE_PATH, query_string="offset=10&limit=")
 
     exp_result = {
