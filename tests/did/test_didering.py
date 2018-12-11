@@ -3,14 +3,26 @@ import pytest
 from didery.did import didering
 
 
-def extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment):
+def didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment):
+    """
+    Tests a didery.did.didering.Did objects parsing of a DID
+
+    :param did_reference: String
+    :param did: didery.did.didering.Did object
+    :param exp_scheme: String
+    :param exp_method: String
+    :param exp_idstring: String
+    :param exp_query: String
+    :param exp_path: String
+    :param exp_fragment: String
+    """
 
     assert exp_scheme == did.scheme
     assert exp_method == did.method
@@ -22,7 +34,7 @@ def extractDidPartsAssertions(did_reference,
     assert did.did == "{}:{}:{}".format(exp_scheme, exp_method, exp_idstring)
 
 
-def testBasicExtractDidParts():
+def testBasicDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue/customers/1234#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -32,17 +44,17 @@ def testBasicExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testMissingQueryExtractDidParts():
+def testMissingQueryDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=/customers/1234#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -52,17 +64,17 @@ def testMissingQueryExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testMissingPathExtractDidParts():
+def testMissingPathDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -72,17 +84,17 @@ def testMissingPathExtractDidParts():
     exp_path = None
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testMissingFragmentExtractDidParts():
+def testMissingFragmentDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue/customers/1234"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -92,17 +104,17 @@ def testMissingFragmentExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = None
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testDIDOnlyExtractDidParts():
+def testDIDOnlyDid():
     # No Query, Path, or Fragment
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     did = didering.Did(did_reference)
@@ -113,17 +125,17 @@ def testDIDOnlyExtractDidParts():
     exp_path = None
     exp_fragment = None
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testFragmentOnlyExtractDidParts():
+def testFragmentOnlyDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -133,17 +145,17 @@ def testFragmentOnlyExtractDidParts():
     exp_path = None
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testQueryOnlyExtractDidParts():
+def testQueryOnlyDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -153,17 +165,17 @@ def testQueryOnlyExtractDidParts():
     exp_path = None
     exp_fragment = None
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testPathOnlyExtractDidParts():
+def testPathOnlyDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=/customers/1234"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -173,17 +185,17 @@ def testPathOnlyExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = None
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testComplexIdstringDidOnlyExtractDidParts():
+def testComplexIdstringWithoutReferenceDid():
     did_reference = "did:ala:quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -193,17 +205,17 @@ def testComplexIdstringDidOnlyExtractDidParts():
     exp_path = None
     exp_fragment = None
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testComplexIdstringExtractDidParts():
+def testComplexIdstringWithReferenceDid():
     did_reference = "did:ala:quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb?color=blue/customers/1234#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -213,17 +225,17 @@ def testComplexIdstringExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testComplexQueryExtractDidParts():
+def testComplexQueryDid():
     did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue&type=tshirt/customers/1234#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
@@ -233,17 +245,17 @@ def testComplexQueryExtractDidParts():
     exp_path = "customers/1234"
     exp_fragment = "test_did"
 
-    extractDidPartsAssertions(did_reference,
-                              did,
-                              exp_scheme,
-                              exp_method,
-                              exp_idstring,
-                              exp_query,
-                              exp_path,
-                              exp_fragment)
+    didAssertions(did_reference,
+                  did,
+                  exp_scheme,
+                  exp_method,
+                  exp_idstring,
+                  exp_query,
+                  exp_path,
+                  exp_fragment)
 
 
-def testEmptyExtractDidParts():
+def testEmptyDid():
     did_reference = ""
 
     with pytest.raises(ValueError) as ex:
