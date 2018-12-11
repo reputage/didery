@@ -12,6 +12,7 @@ from ..help import helping
 from .. import didering
 from ..db import dbing as db
 from ..crypto import factory as cryptoFactory
+from ..did.didering import Did
 
 
 def basicValidation(req, resp, resource, params):
@@ -94,7 +95,7 @@ def validatePost(req, resp, resource, params):
                                'Signature header missing "signer" tag and signature.')
 
     try:
-        didkey = helping.extractDidParts(body['id'])
+        did = Did(body['id'])
     except ValueError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
@@ -126,7 +127,7 @@ def validatePost(req, resp, resource, params):
                                'Could not validate the request body and signature. {}.'.format(ex))
 
     # Prevent bad actors from trying to commandeer a DID before its owner posts it
-    if didkey != body['signers'][0]:
+    if did.pubkey != body['signers'][0]:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'The DIDs key must match the first key in the signers field.')

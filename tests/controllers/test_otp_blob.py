@@ -124,21 +124,11 @@ def basicValidation(reqFunc, url):
 
     # Test valid did format in id field
     body = deepcopy(data)
-    body['id'] = "did:fake:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
-
-    exp_result = {
-        "title": "Validation Error",
-        "description": "Invalid did format. Invalid DID method"
-    }
-
-    verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
-
-    body = deepcopy(data)
     body['id'] = "did:dad"
 
     exp_result = {
         "title": "Validation Error",
-        "description": "Invalid did format. Invalid DID value"
+        "description": "Invalid did format. Could not parse DID."
     }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -148,7 +138,7 @@ def basicValidation(reqFunc, url):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "Invalid did format. Invalid DID identifier"
+        "description": "Invalid did format. Invalid Scheme Value."
     }
 
     verifyRequest(reqFunc, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)

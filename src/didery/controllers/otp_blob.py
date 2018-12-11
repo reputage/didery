@@ -10,6 +10,7 @@ from ..help import helping
 from .. import didering
 from ..db import dbing as db
 from ..crypto import factory as cryptoFactory
+from ..did.didering import Did
 
 
 def basicValidation(req, resp, resource, params):
@@ -56,13 +57,13 @@ def basicValidation(req, resp, resource, params):
                                'changed field cannot be empty.')
 
     try:
-        didKey = helping.extractDidParts(body['id'])
+        did = Did(body['id'])
     except ValueError as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                "Invalid did format. {}".format(str(ex)))
 
-    return raw, sig, didKey, validator
+    return raw, sig, did.pubkey, validator
 
 
 def validatePost(req, resp, resource, params):
@@ -148,10 +149,10 @@ def validateDelete(req, resp, resource, params):
     if otp is None:
         raise falcon.HTTPError(falcon.HTTP_404)
 
-    vk = helping.extractDidParts(otp["otp_data"]['id'])
+    did = Did(otp["otp_data"]['id'])
 
     try:
-        validator(signer, raw, vk)
+        validator(signer, raw, did.pubkey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',

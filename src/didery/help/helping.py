@@ -144,25 +144,6 @@ def makeDid(vk, method="dad"):
     return did
 
 
-def extractDidParts(did, method="dad"):
-    """
-    Parses and returns keystr from did
-    raises ValueError if fails parsing
-    """
-    try:  # correct did format  pre:method:keystr
-        pre, meth, keystr = did.split(":")
-    except ValueError as ex:
-        raise ValueError("Invalid DID value")
-
-    if pre != "did":
-        raise ValueError("Invalid DID identifier")
-
-    if meth != method:
-        raise ValueError("Invalid DID method")
-
-    return keystr
-
-
 def parseQString(req, resp, resource, params):
     req.offset = 0
     req.limit = 10

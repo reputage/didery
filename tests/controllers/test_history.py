@@ -485,21 +485,11 @@ def testPostValidation(client):
 
     # Test valid did format in id field
     body = deepcopy(postData)
-    body['id'] = "did:fake:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
-
-    exp_result = {
-        "title": "Validation Error",
-        "description": "Invalid did format. Invalid DID method"
-    }
-
-    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
-
-    body = deepcopy(postData)
     body['id'] = "did:fake"
 
     exp_result = {
         "title": "Validation Error",
-        "description": "Invalid did format. Invalid DID value"
+        "description": "Invalid did format. Could not parse DID."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -508,7 +498,7 @@ def testPostValidation(client):
     body['id'] = "fake:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 
     exp_result = {
-        "title": "Validation Error", "description": "Invalid did format. Invalid DID identifier"
+        "title": "Validation Error", "description": "Invalid did format. Invalid Scheme Value."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
