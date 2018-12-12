@@ -138,7 +138,7 @@ setup(
     install_requires=[
         'click', 'falcon>=1.2', 'ioflo>=1.6.8', 'libnacl>=1.5.1',
         'simplejson>=3.11.1', 'pytest-falcon>=0.4.2', 'arrow>=0.10.0',
-        'transcrypt<=3.6.101', 'lmdb', 'fastecdsa>=1.2.1', 'ecdsa==0.13', 'base64', 'base58==1.0.2'
+        'transcrypt<=3.6.101', 'lmdb', 'fastecdsa>=1.2.1', 'ecdsa==0.13', 'base58==1.0.2'
     ],
     extras_require={
         # eg:
