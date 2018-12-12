@@ -574,7 +574,6 @@ def testDeleteValidation(client):
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
-    print(resp_content)
 
     assert response.status == falcon.HTTP_401
     assert resp_content["title"] == "Authorization Error"
@@ -598,7 +597,6 @@ def testValidDelete(client):
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
-    print(resp_content)
 
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"]["otp_data"] == json.loads(body)

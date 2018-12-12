@@ -15,7 +15,7 @@ def verifyPublicApiRequest(reqFunc, url, body, headers=None, exp_result=None, ex
 
     response = reqFunc(url, body=body, headers=headers)
 
-    print("status: {0},  content: {1}".format(response.status, response.content))
+    # print("status: {0},  content: {1}".format(response.status, response.content))
     if exp_result is not None:
         assert json.loads(response.content) == exp_result
     if exp_status is not None:
@@ -26,7 +26,7 @@ def verifyManagementApiRequest(reqFunc, url, body=None, exp_result=None, exp_sta
 
     response = reqFunc(url, body=json.dumps(body, ensure_ascii=False))
 
-    print("status: {0},  content: {1}".format(response.status, response.content))
+    # print("status: {0},  content: {1}".format(response.status, response.content))
     if exp_result is not None:
         assert json.loads(response.content) == exp_result
     if exp_status is not None:

@@ -30,6 +30,8 @@ DID = "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
 
 verifyRequest = tests.testing_utils.utils.verifyPublicApiRequest
 SEED = b'PTi\x15\xd5\xd3`\xf1u\x15}^r\x9bfH\x02l\xc6\x1b\x1d\x1c\x0b9\xd7{\xc0_\xf2K\x93`'
+PUT_URL = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+GET_ONE_URL = PUT_URL
 
 postData = {
             "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
@@ -445,10 +447,9 @@ def testPostPreRotationIsEmpty(client):
     assert json.loads(response.content) == exp_result
 
 
-def testPostSignValidation(client):
+def testPostEmptySignatureHeader(client):
     headers = {"Signature": ""}
 
-    # Test missing Signature Header
     body = deepcopy(postData)
     body = json.dumps(body, ensure_ascii=False).encode('utf-8')
 
@@ -461,6 +462,11 @@ def testPostSignValidation(client):
     assert response.status == falcon.HTTP_401
     assert json.loads(response.content) == exp_result
 
+
+def testPostMissingSignatureHeader(client):
+    body = deepcopy(postData)
+    body = json.dumps(body, ensure_ascii=False).encode('utf-8')
+
     exp_result = {
         "title": "Missing header value",
         "description": "The Signature header is required."
@@ -470,7 +476,8 @@ def testPostSignValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
-    # Test missing signer tag in signature header
+
+def testPostMissingSignerTag(client):
     body = deepcopy(postData)
 
     headers = {
@@ -484,7 +491,8 @@ def testPostSignValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers, exp_result, falcon.HTTP_401)
 
-    # Test invalid signature
+
+def testPostInvalidSignature(client):
     body = deepcopy(postData)
     body['signers'][0] = "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 
@@ -495,6 +503,9 @@ def testPostSignValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
+
+def testPostDIDAndPublicKeyMatch(client):
+    # SECURITY:
     # Test the public key in the id field did matches the first public key in rotation history
     body = deepcopy(postData)
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
@@ -511,7 +522,8 @@ def testPostValidation(client):
     # Run basic validation tests
     basicValidation(client.simulate_post, HISTORY_BASE_PATH, postData)
 
-    # Test valid did format in id field
+
+def testPostPartialDid(client):
     body = deepcopy(postData)
     body['id'] = "did:fake"
 
@@ -522,6 +534,8 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPostInvalidDidScheme(client):
     body = deepcopy(postData)
     body['id'] = "fake:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 
@@ -531,7 +545,9 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signers field has two keys
+
+def testPostEmptyPreRotation(client):
+    # Test that signers field requires two keys
     body = deepcopy(postData)
     body['signers'] = ["Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="]
 
@@ -542,7 +558,9 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signers field has two keys
+
+def testPostEmptySignersField(client):
+    # Test that signers field requires two keys
     body = deepcopy(postData)
     body['signers'] = []
 
@@ -553,12 +571,15 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signers field has two keys
+
+def testPostValidSignersField(client):
     body = deepcopy(postData)
     body['signers'] = ["NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=", "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="]
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_status=falcon.HTTP_201)
 
+
+def testPostSignerIsZero(client):
     # Test that signer field is a valid index into signers field
     body = deepcopy(postData)
     body['signer'] = 4
@@ -570,6 +591,8 @@ def testPostValidation(client):
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPostRouting(client):
     # Test that server doesn't crash if anything is added after /history
     body = deepcopy(postData)
     path = "{0}/{1}".format(HISTORY_BASE_PATH, "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
@@ -577,11 +600,7 @@ def testPostValidation(client):
     verifyRequest(client.simulate_post, path, body, exp_status=falcon.HTTP_404)
 
 
-def testPutSignValidation(client):
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
-    headers = {"Signature": ""}
-
-    # Test url did matches id did
+def testPutUrlDIDAndIdDIDMatch(client):
     body = deepcopy(putData)
     body['id'] = "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 
@@ -590,9 +609,11 @@ def testPutSignValidation(client):
         "description": "Url did must match id field did."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test missing Signature Header
+
+def testPutEmptySignatureHeader(client):
+    headers = {"Signature": ""}
     body = deepcopy(putData)
 
     exp_result = {
@@ -600,18 +621,25 @@ def testPutSignValidation(client):
         "description": "Empty Signature header."
     }
 
-    verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
+    verifyRequest(client.simulate_put, PUT_URL, body, headers, exp_result, falcon.HTTP_401)
+
+
+def testPutMissingSignatureHeader(client):
+    body = deepcopy(putData)
 
     exp_result = {
         "title": "Missing header value",
         "description": "The Signature header is required."
     }
 
-    response = client.simulate_put(url, body=json.dumps(body, ensure_ascii=False).encode('utf-8'))
+    response = client.simulate_put(PUT_URL, body=json.dumps(body, ensure_ascii=False).encode('utf-8'))
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
-    # Test partial signature header
+
+def testPutMissingRotationSignature(client):
+    body = deepcopy(putData)
+
     headers = {
         "Signature": 'signer="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
@@ -621,8 +649,11 @@ def testPutSignValidation(client):
         "description": "Signature header missing signature for \"rotation\"."
     }
 
-    verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
+    verifyRequest(client.simulate_put, PUT_URL, body, headers, exp_result, falcon.HTTP_401)
 
+
+def testPutMissingSignerSignature(client):
+    body = deepcopy(putData)
     headers = {
         "Signature": 'rotation="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
@@ -632,9 +663,10 @@ def testPutSignValidation(client):
         "description": "Signature header missing signature for \"signer\"."
     }
 
-    verifyRequest(client.simulate_put, url, body, headers, exp_result, falcon.HTTP_401)
+    verifyRequest(client.simulate_put, PUT_URL, body, headers, exp_result, falcon.HTTP_401)
 
-    # Test invalid signer signature
+
+def testPutInvalidSignerSignature(client):
     body = deepcopy(putData)
     body['signers'][1] = "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
 
@@ -643,9 +675,10 @@ def testPutSignValidation(client):
         "description": "Could not validate the request signature for rotation field. Unverifiable signature."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
-    # Test invalid rotation signature
+
+def testPutInvalidRotationSignature(client):
     body = deepcopy(putData)
     body['signers'][0] = "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     body['signers'][1] = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
@@ -655,8 +688,10 @@ def testPutSignValidation(client):
         "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
 
+
+def testPutCryptography(client):
     # validate that signer and rotation signature fields are working correctly
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk = libnacl.crypto_sign_seed_keypair(seed)
@@ -694,7 +729,11 @@ def testPutSignValidation(client):
 
 
 def testPutValidation(client):
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+    # Run basic validation tests
+    basicValidation(client.simulate_put, PUT_URL, putData)
+
+
+def testPutResourceMustAlreadyExist(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
@@ -714,9 +753,8 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_404)
 
-    # Run basic validation tests
-    basicValidation(client.simulate_put, url, putData)
 
+def testPutSignersHasThreeKeys(client):
     # Test that signers field has three keys
     body = deepcopy(putData)
     del body['signers'][3]
@@ -728,9 +766,10 @@ def testPutValidation(client):
                        " key, and a pre-rotated key."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signers field has three keys
+
+def testPutSignersNotEmpty(client):
     body = deepcopy(putData)
     body['signers'] = []
 
@@ -740,9 +779,10 @@ def testPutValidation(client):
                        " key, and a pre-rotated key."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signers field has three keys
+
+def testPutValidSignersField(client):
     body = deepcopy(putData)
     body['signer'] = 0
     body['signers'] = [
@@ -759,8 +799,10 @@ def testPutValidation(client):
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
     ]
 
-    verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_status=falcon.HTTP_200)
 
+
+def testPutInvalidSignerIndex(client):
     # Test that signer field is a valid index into signers field
     body = deepcopy(putData)
     body['signer'] = 4
@@ -770,9 +812,10 @@ def testPutValidation(client):
         "description": "\"signer\" cannot reference the first or last key in the \"signers\" field on PUT requests."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
-    # Test that signer is not 0
+
+def testPutSingerNotZero(client):
     body = deepcopy(putData)
     body['signer'] = 0
 
@@ -781,8 +824,10 @@ def testPutValidation(client):
         "description": "\"signer\" cannot reference the first or last key in the \"signers\" field on PUT requests."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPutRequiresNewPreRotation(client):
     # Test that signers field has a pre-rotated key
     body = deepcopy(putData)
     body['signer'] = 3
@@ -792,8 +837,10 @@ def testPutValidation(client):
         "description": "Missing pre rotated key in the signers field."
     }
 
-    verifyRequest(client.simulate_put, url, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+    verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPutRequiresDidInUrl(client):
     # Test that the url has a did in it
     body = deepcopy(putData)
 
@@ -804,7 +851,10 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPutChangedFieldMustUpdate(client):
     # Test that changed field is greater than previous date
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
@@ -812,7 +862,7 @@ def testPutValidation(client):
                                                            didery.crypto.eddsa.signResource(body, sk))
     }
 
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers) # Add did to database
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     body = json.loads(body)
     body['signer'] = 1
@@ -835,7 +885,21 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
+
+def testPutSignerFieldHasNewKeys(client):
     # Test that signers field length hasn't changed
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
+                                                           didery.crypto.eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['signer'] = 1
     body['changed'] = "2000-01-01T00:00:01+00:00"
 
     headers = {
@@ -856,6 +920,21 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
+
+def testPutSignerFieldMissingKeys(client):
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
+                                                           didery.crypto.eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['signer'] = 1
+    body['changed'] = "2000-01-01T00:00:01+00:00"
     del body['signers'][3]
 
     headers = {
@@ -876,7 +955,23 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
+
+def testPutChangeVerifiedKeys(client):
     # Test that previously verified keys have not been changed
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
+                                                           didery.crypto.eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['signer'] = 1
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    del body['signers'][3]
     body['signers'].append("Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=")
     body['signers'].append("Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=")
 
@@ -898,6 +993,8 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
 
+
+def testPutUpdatedSignerField(client):
     # test that signer field is updated from previous requests
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
@@ -929,10 +1026,40 @@ def testPutValidation(client):
                   headers,
                   exp_status=falcon.HTTP_200)
 
+
+def testPutUnchangedSignerField(client):
     # send updated history with new public key but unchanged signer field
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
+                                                           didery.crypto.eddsa.signResource(body, sk))
+    }
+
+    # send inception event
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
     body['changed'] = "2000-01-01T00:00:02+00:00"
     body['signer'] = 1
     body['signers'].append(vk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+    }
+
+    # rotate once
+    client.simulate_put("{0}/{1}".format(HISTORY_BASE_PATH, did),
+                        body=json.dumps(body).encode(),
+                        headers=headers)
+
+    # Add new pre-rotated key but don't update signer field
+    body['signers'].append(vk)
+    body['changed'] = "2000-01-01T00:00:03+00:00"
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
@@ -1002,7 +1129,7 @@ def testValidPut(client):
                   exp_status=falcon.HTTP_200)
 
 
-def testGetAllValidation(client):
+def testGetAllInvalidQueryString(client):
     # Test that query params have values
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset&limit=10")
 
@@ -1024,6 +1151,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllInvalidQueryValue(client):
     # Test that query params values are ints
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=a&limit=10")
 
@@ -1045,6 +1174,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllEmptyQueryValue(client):
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=10&limit=")
 
     exp_result = {
@@ -1149,14 +1280,23 @@ def testValidGetAll(client):
     assert json.loads(response.content) == exp_result
 
 
-def testGetOne(client):
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+def testGetAllEmptyDB(client):
+    response = client.simulate_get(HISTORY_BASE_PATH)
 
+    exp_result = {}
+
+    assert response.status == falcon.HTTP_200
+    assert json.loads(response.content) == exp_result
+
+
+def testGetOneEmptyDB(client):
     # Test that 404 is returned when db is empty
-    response = client.simulate_get(url)
+    response = client.simulate_get(GET_ONE_URL)
 
     assert response.status == falcon.HTTP_404
 
+
+def testValidGetOne(client):
     # Test basic valid Get One
     body = deepcopy(putData)
     body['signer'] = 0
@@ -1170,7 +1310,7 @@ def testGetOne(client):
     }
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
 
-    response = client.simulate_get(url)
+    response = client.simulate_get(GET_ONE_URL)
 
     exp_result = {
         "history": {
@@ -1190,7 +1330,23 @@ def testGetOne(client):
     assert response.status == falcon.HTTP_200
     assert json.loads(response.content) == exp_result
 
+
+def testGetOneNonExistent(client):
     # Test GET with non existent resource
+
+    # Add something to the DB
+    body = deepcopy(putData)
+    body['signer'] = 0
+    body['signers'] = [
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+    ]
+    headers = {
+        "Signature": 'signer="{0}"'.format(
+            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
+    }
+    verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
+
     response = client.simulate_get("{0}/{1}".format(
         HISTORY_BASE_PATH,
         "did:dad:COf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
@@ -1202,7 +1358,7 @@ def testGetOne(client):
     assert json.loads(response.content) == exp_result
 
 
-def testDeleteValidation(client):
+def testDeleteUrlMissingDid(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
@@ -1224,8 +1380,12 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Validation Error"
     assert resp_content["description"] == "DID value missing from url."
 
-    # Test no Signature header
+
+def testDeleteNoSignatureHeader(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -1242,7 +1402,13 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Missing header value"
     assert resp_content["description"] == "The Signature header is required."
 
+
+def testDeleteEmptySignatureHeader(client):
     # Test empty Signature header
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -1260,7 +1426,13 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Authorization Error"
     assert resp_content["description"] == "Empty Signature header."
 
+
+def testDeleteBadSignatureHeader(client):
     # Test bad Signature header tag
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -1278,8 +1450,12 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Authorization Error"
     assert resp_content["description"] == 'Signature header missing signature for "signer".'
 
+
+def testDeleteMismatchedDids(client):
     # Test mismatched dids
     url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
@@ -1298,6 +1474,8 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Validation Error"
     assert resp_content["description"] == "Url did must match id field did."
 
+
+def testDeleteNonExistentResource(client):
     # Test delete non existent resource
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
@@ -1308,6 +1486,8 @@ def testDeleteValidation(client):
 
     assert response.status == falcon.HTTP_404
 
+
+def testDeleteInvalidSignature(client):
     # Test invalid signature
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
@@ -1323,7 +1503,6 @@ def testDeleteValidation(client):
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
-    print(resp_content)
 
     assert response.status == falcon.HTTP_401
     assert resp_content["title"] == "Authorization Error"
