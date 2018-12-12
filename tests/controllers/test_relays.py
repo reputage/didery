@@ -188,7 +188,8 @@ def basicValidation(reqFunc, url):
 def testPostValidation(client):
     basicValidation(client.simulate_post, RELAY_BASE_PATH)
 
-    # Test uid in post request
+
+def testPostUidInRequest(client):
     body = deepcopy(data)
 
     exp_result = {
@@ -219,7 +220,8 @@ def testPutValidation(client):
 
     basicValidation(client.simulate_put, url)
 
-    # Test missing uid in url
+
+def testPutUrlMissingUid(client):
     body = deepcopy(data)
 
     exp_result = {
@@ -229,6 +231,8 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, RELAY_BASE_PATH, body, exp_result, falcon.HTTP_400)
 
+
+def testPutUidsMatch(client):
     # Test url uid matches the uid in the body
     body = deepcopy(data)
 
@@ -239,7 +243,8 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_400)
 
-    # Test url uid matches the uid in the body
+
+def testPutNonExistentUid(client):
     body = deepcopy(data)
     body['uid'] = "2"
 
@@ -247,6 +252,8 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, "{}/2".format(RELAY_BASE_PATH), body, exp_result, falcon.HTTP_404)
 
+
+def testPutUpdatedChangedField(client):
     # Test changed field has been updated
     uid = addTestData(client)
     body = deepcopy(data)
@@ -272,14 +279,24 @@ def testValidPut(client):
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
+
+def testValidPutNoUidInBody(client):
     # Test request without uid in body
+    uid = addTestData(client)
+    url = "{0}/{1}".format(RELAY_BASE_PATH, uid)
+
     body = deepcopy(data)
     del body['uid']
     body['changed'] = "2000-01-01T00:00:02+00:00"
 
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
+
+def testValidPutEmptyUidInBody(client):
     # Test empty uid values
+    uid = addTestData(client)
+    url = "{0}/{1}".format(RELAY_BASE_PATH, uid)
+
     body = deepcopy(data)
     body['uid'] = ""
     body['changed'] = "2000-01-01T00:00:03+00:00"
@@ -287,7 +304,7 @@ def testValidPut(client):
     verifyRequest(client.simulate_put, url, body, exp_status=falcon.HTTP_200)
 
 
-def testGetAllValidation(client):
+def testGetAllInvalidQueryString(client):
     # Test that query params have values
     response = client.simulate_get(RELAY_BASE_PATH, query_string="offset&limit=10")
 
@@ -309,6 +326,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllInvalidQueryValue(client):
     # Test that query params values are ints
     response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=a&limit=10")
 
@@ -330,6 +349,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllEmptyQueryValue(client):
     response = client.simulate_get(RELAY_BASE_PATH, query_string="offset=10&limit=")
 
     exp_result = {
@@ -357,7 +378,7 @@ def testGetAll(client):
     resp = json.loads(response.content)
 
     assert response.status == falcon.HTTP_200
-    assert len(resp) == 4
+    assert len(resp) == 6
 
     for val in resp.items():
         assert val[0] == val[1]['uid']
@@ -374,7 +395,7 @@ def testGetAll(client):
     assert json.loads(response.content) == exp_result
 
 
-def testDeleteValidation(client):
+def testDeleteUidInUrl(client):
     # Test that uid is in url
     exp_result = {
         "title": "Validation Error",
@@ -383,7 +404,8 @@ def testDeleteValidation(client):
 
     verifyRequest(client.simulate_delete, RELAY_BASE_PATH, exp_result=exp_result,  exp_status=falcon.HTTP_400)
 
-    # Test resource exists
+
+def testDeleteNonExistentResource(client):
     exp_result = {"title": "404 Not Found"}
 
     verifyRequest(
