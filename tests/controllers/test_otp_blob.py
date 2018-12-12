@@ -21,6 +21,7 @@ from copy import deepcopy
 
 from didery.routing import *
 from didery.help import helping as h
+from didery.crypto.eddsa import signResource
 
 
 SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
@@ -206,9 +207,24 @@ def testPostValidation(client):
 def testValidPost(client):
     body = deepcopy(data)
 
-    # TODO:
-    # assert response.content == exp_result
-    verifyRequest(client.simulate_post, BLOB_BASE_PATH, body, exp_status=falcon.HTTP_201)
+    signature = signResource(json.dumps(body).encode(), SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    exp_result = {
+        "otp_data": body,
+        "signatures": {
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_201,
+                  exp_result=exp_result)
 
 
 def testPutSignValidation(client):
@@ -226,7 +242,7 @@ def testPutSignValidation(client):
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
 
-def testPutValidation(client):
+def testPutNonExistentResource(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
@@ -245,6 +261,8 @@ def testPutValidation(client):
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_404)
 
+
+def testPutUrlMissingDid(client):
     # Test url missing did
     body = deepcopy(data)
 
@@ -255,10 +273,15 @@ def testPutValidation(client):
 
     verifyRequest(client.simulate_put, BLOB_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
 
+
+def testPutBasic(client):
     # Run basic tests
     basicValidation(client.simulate_put, PUT_URL)
 
+
+def testPutUpdatedChangedField(client):
     # Test that changed field is greater than previous date
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
     vk, sk, did, body = genOtpBlob(seed)
 
     headers = {
@@ -287,17 +310,34 @@ def testValidPut(client):
 
     body['changed'] = "2000-01-01T00:00:01+00:00"
 
-    # TODO:
-    # assert response.content == exp_result
-    verifyRequest(client.simulate_put, PUT_URL, body, exp_status=falcon.HTTP_200)
+    signature = signResource(json.dumps(body).encode(), SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    exp_result = {
+        "otp_data": body,
+        "signatures": {
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  PUT_URL,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_200,
+                  exp_result=exp_result)
 
 
-def testGetOne(client):
+def testGetOneEmptyDB(client):
     # Test Get One with empty DB
     response = client.simulate_get("{0}/{1}".format(BLOB_BASE_PATH, DID))
 
     assert response.status == falcon.HTTP_404
 
+
+def testValidGetOne(client):
     # Test basic valid Get One
     body = deepcopy(data)
     signature = didery.crypto.eddsa.signResource(json.dumps(body).encode(), SK)
@@ -325,6 +365,8 @@ def testGetOne(client):
     assert response.status == falcon.HTTP_200
     assert json.loads(response.content) == exp_result
 
+
+def testGetOneNonExistentResource(client):
     # Test GET with non existent resource
     response = client.simulate_get("{0}/{1}".format(
         BLOB_BASE_PATH,
@@ -337,7 +379,7 @@ def testGetOne(client):
     assert json.loads(response.content) == exp_result
 
 
-def testGetAllValidation(client):
+def testGetAllInvalidQueryString(client):
     # Test that query params have values
     response = client.simulate_get(BLOB_BASE_PATH, query_string="offset&limit=10")
 
@@ -359,6 +401,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllInvalidQueryValue(client):
     # Test that query params values are ints
     response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=a&limit=10")
 
@@ -380,6 +424,8 @@ def testGetAllValidation(client):
     assert response.status == falcon.HTTP_400
     assert json.loads(response.content) == exp_result
 
+
+def testGetAllEmptyQueryValue(client):
     response = client.simulate_get(BLOB_BASE_PATH, query_string="offset=10&limit=")
 
     exp_result = {
@@ -453,7 +499,7 @@ def testGetAll(client):
     assert json.loads(response.content) == exp_result
 
 
-def testDeleteValidation(client):
+def testDeleteUrlMissingDid(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = genOtpBlob(seed)
 
@@ -475,8 +521,12 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Validation Error"
     assert resp_content["description"] == "DID value missing from url."
 
-    # Test no Signature header
+
+def testDeleteNoSignatureHeader(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -493,7 +543,12 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Missing header value"
     assert resp_content["description"] == "The Signature header is required."
 
-    # Test empty Signature header
+
+def testDeleteEmptySignatureHeader(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
+    url = "{0}/{1}".format(BLOB_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -511,7 +566,12 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Authorization Error"
     assert resp_content["description"] == "Empty Signature header."
 
-    # Test bad Signature header tag
+
+def testDeleteBadSignatureHeader(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
+    url = "{0}/{1}".format(BLOB_BASE_PATH, did)
+
     headers = {
         "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
     }
@@ -529,7 +589,10 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Authorization Error"
     assert resp_content["description"] == 'Signature header missing signature for "signer".'
 
-    # Test mismatched dids
+
+def testDeleteMismatchedDids(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, DID)
 
     headers = {
@@ -549,7 +612,10 @@ def testDeleteValidation(client):
     assert resp_content["title"] == "Validation Error"
     assert resp_content["description"] == "Url did must match id field did."
 
-    # Test delete non existent resource
+
+def testDeleteNonExistentResource(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
@@ -559,7 +625,10 @@ def testDeleteValidation(client):
 
     assert response.status == falcon.HTTP_404
 
-    # Test invalid signature
+
+def testDeleteInvalidSignature(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {

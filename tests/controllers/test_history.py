@@ -1477,6 +1477,8 @@ def testDeleteMismatchedDids(client):
 
 def testDeleteNonExistentResource(client):
     # Test delete non existent resource
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
@@ -1489,6 +1491,8 @@ def testDeleteNonExistentResource(client):
 
 def testDeleteInvalidSignature(client):
     # Test invalid signature
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
