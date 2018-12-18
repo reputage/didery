@@ -113,7 +113,19 @@ def signResource(resource, sk):
     return bytesToStr64u(signature)
 
 
-def genDidHistory(changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+def signResource64u(resource, sk):
+    """
+
+    :param resource: string resource
+    :param sk: base64 url-file safe encoded private key
+    :return: base64 url-file safe encoded signature
+    """
+    sk = str64uToBytes(sk)
+
+    return signResource(resource, sk)
+
+
+def generateByteKeys():
     priv_key, pub_key = gen_keypair(fast_curve.secp256k1)
     curve = ecdsa.curves.SECP256k1.curve
     order = ecdsa.curves.SECP256k1.order
@@ -122,6 +134,18 @@ def genDidHistory(changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
     pyec_privateKey = ecdsa.keys.SigningKey.from_secret_exponent(priv_key, ecdsa.curves.SECP256k1)
     vk = pyec_publicKey.to_string()
     sk = pyec_privateKey.to_string()
+
+    return vk, sk
+
+
+def generate64uKeys():
+    vk, sk = generateByteKeys()
+
+    return bytesToStr64u(vk), bytesToStr64u(sk)
+
+
+def genDidHistory(changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+    vk, sk = generateByteKeys()
 
     did = makeDid(vk)
     body = {
