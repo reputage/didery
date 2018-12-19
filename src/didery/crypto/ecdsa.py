@@ -26,7 +26,7 @@ def verify(sig, msg, vk):
     verification key vk Otherwise False
 
     :param sig: byte string representation of signature
-    :param msg: string representation of message
+    :param msg: byte string representation of message
     :param vk: ecdsa.keys.VerifyingKey instance
     :return: boolean
     """
@@ -36,7 +36,7 @@ def verify(sig, msg, vk):
         x = vk.pubkey.point.x()
         y = vk.pubkey.point.y()
         point = fPoint(x, y, fast_curve.secp256k1)  # fastecdsa public key
-        result = fast_verify((r, s), msg, point, fast_curve.secp256k1, hashfunc=sha3_256)
+        result = fast_verify((r, s), msg.decode(), point, fast_curve.secp256k1, hashfunc=sha3_256)
     except Exception as ex:
         return False
     return True if result else False
@@ -56,8 +56,8 @@ def verify64u(signature, message, verkey):
     sig = str64uToBytes(signature)
     bytes_vk = str64uToBytes(verkey)
     vk = ecdsa.keys.VerifyingKey.from_string(bytes_vk, ecdsa.curves.SECP256k1)
-    # msg = message.encode("utf-8")
-    return verify(sig, message, vk)
+
+    return verify(sig, message.encode(), vk)
 
 
 def validateSignedResource(signature, resource, verkey):
@@ -101,13 +101,13 @@ def signResource(resource, sk):
     """
     Produce a signature for resource
 
-    :param resource: string resource
+    :param resource: byte string resource
     :param sk: byte string private key
     :return: base64 url-file safe encoded signature
     """
     pyec_sk = ecdsa.keys.SigningKey.from_string(sk, ecdsa.curves.SECP256k1, hashfunc=sha3_256)
     d = pyec_sk.privkey.secret_multiplier
-    r, s = fast_sign(resource, d, fast_curve.secp256k1, sha3_256)
+    r, s = fast_sign(resource.decode(), d, fast_curve.secp256k1, sha3_256)
     signature = ecdsa.util.sigencode_string(r, s, ecdsa.curves.SECP256k1.order)
 
     return bytesToStr64u(signature)
@@ -122,7 +122,7 @@ def signResource64u(resource, sk):
     """
     sk = str64uToBytes(sk)
 
-    return signResource(resource, sk)
+    return signResource(resource.encode(), sk)
 
 
 def generateByteKeys():
@@ -145,6 +145,13 @@ def generate64uKeys():
 
 
 def genDidHistory(changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+    """
+
+    :param changed: string time
+    :param signer: int "signer" index
+    :param numSigners: int number of public keys to include in "signers" field
+    :return: byte string vk, byte string sk, string did, byte string encoded json object
+    """
     vk, sk = generateByteKeys()
 
     did = makeDid(vk)

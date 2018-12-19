@@ -1,5 +1,3 @@
-import ecdsa.keys as keys
-import ecdsa.curves as curves
 import pytest
 
 try:
@@ -7,15 +5,15 @@ try:
 except ImportError:
     import json
 
-from didery.crypto import ecdsa
-from didery.help.helping import str64uToBytes, bytesToStr64u
+from didery.crypto import eddsa
+from didery.help.helping import str64uToBytes
 from didery import didering
 
 
 def testGenerateByteKeys():
-    vk, sk = ecdsa.generateByteKeys()
-    assert len(vk) == 64
-    assert len(sk) == 32
+    vk, sk = eddsa.generateByteKeys()
+    assert len(vk) == 32
+    assert len(sk) == 64
 
     # check that keys are byte strings
     assert str(vk) != vk
@@ -23,10 +21,10 @@ def testGenerateByteKeys():
 
 
 def testGenerate64uKeys():
-    vk, sk = ecdsa.generate64uKeys()
+    vk, sk = eddsa.generate64uKeys()
 
-    assert len(vk) == 88
-    assert len(sk) == 44
+    assert len(vk) == 44
+    assert len(sk) == 88
 
     # check that keys are strings
     assert str(vk) == vk
@@ -35,9 +33,9 @@ def testGenerate64uKeys():
 
 def testSignResource():
     resource = b"message"
-    vk, sk = ecdsa.generateByteKeys()
+    vk, sk = eddsa.generateByteKeys()
 
-    signature = ecdsa.signResource(resource, sk)
+    signature = eddsa.signResource(resource, sk)
 
     assert str(signature) == signature
     assert len(signature) == 88
@@ -46,9 +44,9 @@ def testSignResource():
 
 def testSignResource64u():
     resource = "message"
-    vk, sk = ecdsa.generate64uKeys()
+    vk, sk = eddsa.generate64uKeys()
 
-    signature = ecdsa.signResource64u(resource, sk)
+    signature = eddsa.signResource64u(resource, sk)
 
     assert str(signature) == signature
     assert len(signature) == 88
@@ -57,72 +55,70 @@ def testSignResource64u():
 
 def testVerify():
     resource = b"message"
-    vk, sk = ecdsa.generateByteKeys()
-    vk = keys.VerifyingKey.from_string(vk, curves.SECP256k1)
-    signature = str64uToBytes(ecdsa.signResource(resource, sk))
+    vk, sk = eddsa.generateByteKeys()
+    signature = str64uToBytes(eddsa.signResource(resource, sk))
 
-    assert ecdsa.verify(signature, resource, vk)
+    assert eddsa.verify(signature, resource, vk)
 
 
 def testVerify64u():
     resource = "message"
-    vk, sk = ecdsa.generateByteKeys()
-    vk = bytesToStr64u(vk)
-    signature = ecdsa.signResource(resource.encode(), sk)
+    vk, sk = eddsa.generate64uKeys()
+    signature = eddsa.signResource64u(resource, sk)
 
-    assert ecdsa.verify64u(signature, resource, vk)
+    assert eddsa.verify64u(signature, resource, vk)
 
 
 def testValidateSignedResourceInvalidJson():
     resource = "message"
-    vk, sk = ecdsa.generate64uKeys()
-    signature = ecdsa.signResource64u(resource, sk)
+    vk, sk = eddsa.generate64uKeys()
+    signature = eddsa.signResource64u(resource, sk)
 
     with pytest.raises(didering.ValidationError) as ex:
-        ecdsa.validateSignedResource(signature, resource, vk)
+        eddsa.validateSignedResource(signature, resource, vk)
 
         assert ex.value == "Invalid JSON"
 
 
 def testValidateSignedResourceInvalidSignature():
     resource = '{"1":"test"}'
-    vk, sk = ecdsa.generate64uKeys()
-    signature = ecdsa.signResource64u(resource, sk)
+    vk, sk = eddsa.generate64uKeys()
+    signature = eddsa.signResource64u(resource, sk)
 
     with pytest.raises(didering.ValidationError) as ex:
-        ecdsa.validateSignedResource(signature, '{"1":"tes"}', vk)
+        eddsa.validateSignedResource(signature, b'{"1":"tes"}', vk)
 
         assert ex.value == "Unverifiable signature"
 
 
 def testValidateSignedResource():
     resource = '{"1":"test"}'
-    vk, sk = ecdsa.generate64uKeys()
-    signature = ecdsa.signResource64u(resource, sk)
+    vk, sk = eddsa.generate64uKeys()
+    signature = eddsa.signResource64u(resource, sk)
 
     # returns parsed json if signature is valid
-    parsedResource = ecdsa.validateSignedResource(signature, resource, vk)
+    parsedResource = eddsa.validateSignedResource(signature, resource, vk)
 
     assert parsedResource == json.loads(resource)
 
 
 def testGenDidHistoryNumSigners():
     numSigners = 2
-    vk, sk, did, body = ecdsa.genDidHistory(numSigners=numSigners)
+    vk, sk, did, body = eddsa.genDidHistory(numSigners=numSigners)
 
     assert len(json.loads(body.decode())['signers']) == numSigners
 
 
 def testGenDidHistorySigner():
     signer = 1
-    vk, sk, did, body = ecdsa.genDidHistory(signer=signer)
+    vk, sk, did, body = eddsa.genDidHistory(signer=signer)
 
     assert json.loads(body.decode())['signer'] == signer
 
 
 def testGenDidHistoryChanged():
     changed = "2018-12-01T00:00:00+00:00"
-    vk, sk, did, body = ecdsa.genDidHistory(changed=changed)
+    vk, sk, did, body = eddsa.genDidHistory(changed=changed)
 
     assert json.loads(body.decode())['changed'] == changed
 

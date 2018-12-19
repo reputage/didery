@@ -77,7 +77,7 @@ def validatePost(req, resp, resource, params):
     raw, sig, didKey, validator = basicValidation(req, resp, resource, params)
 
     try:
-        validator(sig, raw, didKey)
+        validator(sig, raw.decode(), didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -107,7 +107,7 @@ def validatePut(req, resp, resource, params):
                                'Url did must match id field did.')
 
     try:
-        validator(sig, raw, didKey)
+        validator(sig, raw.decode(), didKey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
@@ -152,7 +152,7 @@ def validateDelete(req, resp, resource, params):
     did = Did(otp["otp_data"]['id'])
 
     try:
-        validator(signer, raw, did.pubkey)
+        validator(signer, raw.decode(), did.pubkey)
     except didering.ValidationError as ex:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',

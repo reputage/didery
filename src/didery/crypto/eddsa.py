@@ -40,7 +40,7 @@ def verify64u(signature, message, verkey):
     sig = str64uToBytes(signature)
     vk = str64uToBytes(verkey)
     # msg = message.encode("utf-8")
-    return verify(sig, message, vk)
+    return verify(sig, message.encode(), vk)
 
 
 def validateSignedResource(signature, resource, verkey):
@@ -94,9 +94,45 @@ def signResource(resource, sk):
     return bytesToStr64u(sig)
 
 
-def genDidHistory(seed, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+def signResource64u(resource, sk):
+    """
+
+    :param resource: string resource
+    :param sk: base64 url-file safe private key
+    :return: base64 url-file safe signature string
+    """
+    resource = resource.encode()
+    sk = str64uToBytes(sk)
+
+    return signResource(resource, sk)
+
+
+def generateByteKeys(seed=None):
+    """
+
+    :param seed: optional seed value for libnacl.crypto_sign_seed_keypair()
+    :return: byte strings (vk, sk)
+    """
+    if seed is None:
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+
+    return libnacl.crypto_sign_seed_keypair(seed)
+
+
+def generate64uKeys(seed=None):
+    """
+
+    :param seed: optional seed value for libnacl.crypto_sign_seed_keypair()
+    :return: base64 url-file safe key string (vk, sk)
+    """
+    vk, sk = generateByteKeys(seed)
+
+    return bytesToStr64u(vk), bytesToStr64u(sk)
+
+
+def genDidHistory(seed=None, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
     # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk = libnacl.crypto_sign_seed_keypair(seed)
+    vk, sk = generateByteKeys(seed)
 
     did = makeDid(vk)
     body = {
