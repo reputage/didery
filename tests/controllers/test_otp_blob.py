@@ -5,7 +5,8 @@
     To see test coverage install pytest-cov with pip then run this command:
         py.test --cov-report term-missing --cov=src/didery/controllers/ tests/controllers/
 '''
-import didery.crypto.eddsa
+import didery.crypto.eddsa as eddsa
+import didery.crypto.ecdsa as ecdsa
 import falcon
 import libnacl
 
@@ -21,7 +22,6 @@ from copy import deepcopy
 
 from didery.routing import *
 from didery.help import helping as h
-from didery.crypto.eddsa import signResource
 
 
 SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
@@ -40,10 +40,13 @@ data = {
 verifyRequest = tests.testing_utils.utils.verifyPublicApiRequest
 
 
-def genOtpBlob(seed=None, changed="2000-01-01T00:00:00+00:00"):
-    if seed is None:
-        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk = libnacl.crypto_sign_seed_keypair(seed)
+def genOtpBlob(seed=None, changed="2000-01-01T00:00:00+00:00", crypto="EdDSA"):
+    if crypto == "EdDSA":
+        if seed is None:
+            seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk = eddsa.generateByteKeys(seed)
+    else:
+        vk, sk = ecdsa.generateByteKeys()
 
     did = h.makeDid(vk)
     body = {
@@ -172,7 +175,7 @@ def signatureValidation(reqFunc, url):
     body = deepcopy(data)
 
     headers = {
-        "Signature": 'test="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
+        "Signature": 'test="' + eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
     exp_result = {
@@ -191,7 +194,7 @@ def signatureValidation(reqFunc, url):
     }
 
     headers = {"Signature": 'signer="{0}"'.format(
-        didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), BAD_SK))}
+        eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), BAD_SK))}
 
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
 
@@ -207,7 +210,7 @@ def testPostValidation(client):
 def testValidPost(client):
     body = deepcopy(data)
 
-    signature = signResource(json.dumps(body).encode(), SK)
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
     }
@@ -251,7 +254,7 @@ def testPutNonExistentResource(client):
     exp_result = {"title": "404 Not Found"}
 
     headers = {
-        "Signature": 'signer="{}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{}"'.format(eddsa.signResource(body, sk))
     }
 
     verifyRequest(client.simulate_put,
@@ -285,7 +288,7 @@ def testPutUpdatedChangedField(client):
     vk, sk, did, body = genOtpBlob(seed)
 
     headers = {
-        "Signature": 'signer="{}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -310,7 +313,7 @@ def testValidPut(client):
 
     body['changed'] = "2000-01-01T00:00:01+00:00"
 
-    signature = signResource(json.dumps(body).encode(), SK)
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
     }
@@ -340,7 +343,7 @@ def testGetOneEmptyDB(client):
 def testValidGetOne(client):
     # Test basic valid Get One
     body = deepcopy(data)
-    signature = didery.crypto.eddsa.signResource(json.dumps(body).encode(), SK)
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature)
@@ -451,7 +454,7 @@ def testGetAll(client):
     # setup
     vk1, sk1, did1, body1 = genOtpBlob()
 
-    signature1 = didery.crypto.eddsa.signResource(body1, sk1)
+    signature1 = eddsa.signResource(body1, sk1)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature1)
@@ -461,7 +464,7 @@ def testGetAll(client):
 
     vk2, sk2, did2, body2 = genOtpBlob()
 
-    signature2 = didery.crypto.eddsa.signResource(body2, sk2)
+    signature2 = eddsa.signResource(body2, sk2)
 
     headers = {
         "Signature": 'signer="{}"'.format(signature2)
@@ -505,13 +508,13 @@ def testDeleteUrlMissingDid(client):
 
     # Test missing url did
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(BLOB_BASE_PATH, body=data, headers=headers)
 
@@ -528,7 +531,7 @@ def testDeleteNoSignatureHeader(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -550,7 +553,7 @@ def testDeleteEmptySignatureHeader(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -573,13 +576,13 @@ def testDeleteBadSignatureHeader(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'rotation="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'rotation="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -596,13 +599,13 @@ def testDeleteMismatchedDids(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, DID)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -618,7 +621,7 @@ def testDeleteNonExistentResource(client):
     vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     client.simulate_delete(url, body=data, headers=headers)
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -632,13 +635,13 @@ def testDeleteInvalidSignature(client):
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, SK))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, SK))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -654,7 +657,7 @@ def testValidDelete(client):
     vk, sk, did, body = genOtpBlob(seed)
     url = "{0}/{1}".format(BLOB_BASE_PATH, did)
 
-    signature = didery.crypto.eddsa.signResource(body, sk)
+    signature = eddsa.signResource(body, sk)
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
     }
@@ -662,7 +665,7 @@ def testValidDelete(client):
     client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
@@ -670,3 +673,183 @@ def testValidDelete(client):
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"]["otp_data"] == json.loads(body)
     assert resp_content["deleted"]["signatures"]["signer"] == signature
+
+
+def testValidEcdsaPost(client):
+    cryptoScheme = "ECDSA"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "otp_data": json.loads(body),
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  json.loads(body),
+                  headers=headers,
+                  exp_status=falcon.HTTP_201,
+                  exp_result=exp_result)
+
+
+def testValidSecp256k1Post(client):
+    cryptoScheme = "secp256k1"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "otp_data": json.loads(body),
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  json.loads(body),
+                  headers=headers,
+                  exp_status=falcon.HTTP_201,
+                  exp_result=exp_result)
+
+
+def testInvalidEcdsaPostSig(client):
+    cryptoScheme = "ECDSA"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_401,
+                  exp_result=exp_result)
+
+
+def testInvalidSecp256k1PostSig(client):
+    cryptoScheme = "secp256k1"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_401,
+                  exp_result=exp_result)
+
+
+def testValidEcdsaPut(client):
+    cryptoScheme = "ECDSA"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, json.loads(body), headers=headers, exp_status=falcon.HTTP_201)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+
+    signature = ecdsa.signResource(json.dumps(body).encode(), sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "otp_data": body,
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_200,
+                  exp_result=exp_result)
+
+
+def testValidSecp256k1Put(client):
+    cryptoScheme = "secp256k1"
+
+
+def testInvalidEcdsaPutSig(client):
+    cryptoScheme = "ECDSA"
+
+
+def testInvalidSecp256k1PutSig(client):
+    cryptoScheme = "secp256k1"
+
+
+def testValidEcdsaDelete(client):
+    cryptoScheme = "ECDSA"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+    url = "{0}/{1}".format(BLOB_BASE_PATH, did)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert resp_content["deleted"]["otp_data"] == json.loads(body)
+    assert resp_content["deleted"]["signatures"]["signer"] == signature
+
+
+def testValidSecp256k1Delete(client):
+    cryptoScheme = "secp256k1"

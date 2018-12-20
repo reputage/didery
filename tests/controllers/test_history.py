@@ -5,7 +5,8 @@
     To see test coverage install pytest-cov with pip then run this command:
         py.test --cov-report term-missing --cov=src/didery/controllers/ tests/controllers/
 '''
-import didery.crypto.eddsa
+import didery.crypto.eddsa as eddsa
+import didery.crypto.ecdsa as ecdsa
 import falcon
 import libnacl
 import arrow
@@ -62,12 +63,12 @@ def setupBasicHistory(client):
     # Setup
     # seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.bytesToStr64u(vk)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -83,7 +84,7 @@ def setupRevokedHistory(client):
     body['signer'] = 2
     body['signers'].append(None)
 
-    signature = didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+    signature = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
@@ -105,7 +106,7 @@ def testKeyRevocation(client):
     body['signer'] = 2
     body['signers'].append(None)
 
-    signature = didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+    signature = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
@@ -149,8 +150,8 @@ def testRotateNullKey(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -174,8 +175,8 @@ def testRotateNullKey(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -203,8 +204,8 @@ def testPrematureNullRotation(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -230,8 +231,8 @@ def testPutPreRotationIsNull(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -257,8 +258,8 @@ def testPutPreRotationIsEmpty(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -377,10 +378,10 @@ def basicValidation(reqFunc, url, data):
 
 def testValidPost(client):
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.bytesToStr64u(vk)
 
-    signature = didery.crypto.eddsa.signResource(body, sk)
+    signature = eddsa.signResource(body, sk)
 
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
@@ -403,14 +404,14 @@ def testValidPost(client):
 
 def testPostPreRotationIsNull(client):
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     body = json.loads(body)
     body['signers'][1] = None
     body = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -426,14 +427,14 @@ def testPostPreRotationIsNull(client):
 
 def testPostPreRotationIsEmpty(client):
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     body = json.loads(body)
     body['signers'][1] = ""
     body = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -481,7 +482,7 @@ def testPostMissingSignerTag(client):
     body = deepcopy(postData)
 
     headers = {
-        "Signature": 'test="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
+        "Signature": 'test="' + eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
     exp_result = {
@@ -641,7 +642,7 @@ def testPutMissingRotationSignature(client):
     body = deepcopy(putData)
 
     headers = {
-        "Signature": 'signer="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
+        "Signature": 'signer="' + eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
     exp_result = {
@@ -655,7 +656,7 @@ def testPutMissingRotationSignature(client):
 def testPutMissingSignerSignature(client):
     body = deepcopy(putData)
     headers = {
-        "Signature": 'rotation="' + didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
+        "Signature": 'rotation="' + eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), SK) + '"'
     }
 
     exp_result = {
@@ -710,7 +711,7 @@ def testPutCryptography(client):
     }
     bbody = json.dumps(body, ensure_ascii=False).encode('utf-8')
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(bbody, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(bbody, sk))
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
@@ -720,8 +721,8 @@ def testPutCryptography(client):
     body['signers'].append(ppvk)
     bbody = json.dumps(body, ensure_ascii=False).encode('utf-8')
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(bbody, sk),
-                                                           didery.crypto.eddsa.signResource(bbody, psk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(bbody, sk),
+                                                           eddsa.signResource(bbody, psk))
     }
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
@@ -737,13 +738,13 @@ def testPutResourceMustAlreadyExist(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
 
     # Test that did resource already exists
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=1)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=1)
 
     exp_result = {"title": "404 Not Found"}
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     verifyRequest(client.simulate_put,
@@ -855,11 +856,11 @@ def testPutRequiresDidInUrl(client):
 def testPutChangedFieldMustUpdate(client):
     # Test that changed field is greater than previous date
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -869,8 +870,8 @@ def testPutChangedFieldMustUpdate(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
     exp_result = {
@@ -889,11 +890,11 @@ def testPutChangedFieldMustUpdate(client):
 def testPutSignerFieldHasNewKeys(client):
     # Test that signers field length hasn't changed
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -904,8 +905,8 @@ def testPutSignerFieldHasNewKeys(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
     exp_result = {
@@ -923,11 +924,11 @@ def testPutSignerFieldHasNewKeys(client):
 
 def testPutSignerFieldMissingKeys(client):
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -939,8 +940,8 @@ def testPutSignerFieldMissingKeys(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
     exp_result = {
@@ -959,11 +960,11 @@ def testPutSignerFieldMissingKeys(client):
 def testPutChangeVerifiedKeys(client):
     # Test that previously verified keys have not been changed
     seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=4)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=4)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -977,8 +978,8 @@ def testPutChangeVerifiedKeys(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
     exp_result = {
@@ -997,12 +998,12 @@ def testPutChangeVerifiedKeys(client):
 def testPutUpdatedSignerField(client):
     # test that signer field is updated from previous requests
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.bytesToStr64u(vk)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     # send inception event
@@ -1016,8 +1017,8 @@ def testPutUpdatedSignerField(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     verifyRequest(client.simulate_put,
@@ -1030,12 +1031,12 @@ def testPutUpdatedSignerField(client):
 def testPutUnchangedSignerField(client):
     # send updated history with new public key but unchanged signer field
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     vk = h.bytesToStr64u(vk)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     # send inception event
@@ -1048,8 +1049,8 @@ def testPutUnchangedSignerField(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     # rotate once
@@ -1063,8 +1064,8 @@ def testPutUnchangedSignerField(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), sk))
     }
 
     exp_result = {
@@ -1084,11 +1085,11 @@ def testValidPut(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     # Test Valid rotation event
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(didery.crypto.eddsa.signResource(body, sk),
-                                                           didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -1100,8 +1101,8 @@ def testValidPut(client):
 
     headers = {
         "Signature": 'signer="{0}"; rotation="{1}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk),
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
     exp_result = {
@@ -1306,7 +1307,7 @@ def testValidGetOne(client):
     ]
     headers = {
         "Signature": 'signer="{0}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
     }
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
 
@@ -1343,7 +1344,7 @@ def testGetOneNonExistent(client):
     ]
     headers = {
         "Signature": 'signer="{0}"'.format(
-            didery.crypto.eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
+            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
     }
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
 
@@ -1360,17 +1361,17 @@ def testGetOneNonExistent(client):
 
 def testDeleteUrlMissingDid(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     # Test missing url did
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(HISTORY_BASE_PATH, body=data, headers=headers)
 
@@ -1383,11 +1384,11 @@ def testDeleteUrlMissingDid(client):
 
 def testDeleteNoSignatureHeader(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -1406,11 +1407,11 @@ def testDeleteNoSignatureHeader(client):
 def testDeleteEmptySignatureHeader(client):
     # Test empty Signature header
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
@@ -1430,17 +1431,17 @@ def testDeleteEmptySignatureHeader(client):
 def testDeleteBadSignatureHeader(client):
     # Test bad Signature header tag
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'rotation="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'rotation="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -1455,16 +1456,16 @@ def testDeleteMismatchedDids(client):
     # Test mismatched dids
     url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -1478,10 +1479,10 @@ def testDeleteMismatchedDids(client):
 def testDeleteNonExistentResource(client):
     # Test delete non existent resource
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     client.simulate_delete(url, body=data, headers=headers)
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -1492,17 +1493,17 @@ def testDeleteNonExistentResource(client):
 def testDeleteInvalidSignature(client):
     # Test invalid signature
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
-        "Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(body, sk))
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
     }
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, SK))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, SK))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -1515,10 +1516,10 @@ def testDeleteInvalidSignature(client):
 
 def testValidDelete(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
-    signature = didery.crypto.eddsa.signResource(body, sk)
+    signature = eddsa.signResource(body, sk)
     headers = {
         "Signature": 'signer="{0}"'.format(signature)
     }
@@ -1526,10 +1527,334 @@ def testValidDelete(client):
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(didery.crypto.eddsa.signResource(data, sk))}
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert resp_content["deleted"]["history"] == json.loads(body)
+    assert resp_content["deleted"]["signatures"]["signer"] == signature
+
+
+def testValidEcdsaPost(client):
+    cryptoScheme = "ECDSA"
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    signature = ecdsa.signResource(body, sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "history": json.loads(body.decode()),
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  HISTORY_BASE_PATH,
+                  json.loads(body.decode()),
+                  headers=headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_201)
+
+
+def testValidSecp256k1Post(client):
+    cryptoScheme = "secp256k1"
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    signature = ecdsa.signResource(body, sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "history": json.loads(body.decode()),
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_post,
+                  HISTORY_BASE_PATH,
+                  json.loads(body.decode()),
+                  headers=headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_201)
+
+
+def testInvalidEcdsaPostSig(client):
+    cryptoScheme = "ECDSA"
+    vk, sk, did, body = ecdsa.genDidHistory(changed="2000-01-01T00:00:00+00:00", numSigners=2)
+    vk = h.bytesToStr64u(vk)
+
+    signature = ecdsa.signResource(body, sk)
+
+    body = json.loads(body.decode())
+    body["changed"] = "2000-01-01T11:11:11+11:11"
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_post,
+                  HISTORY_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
+
+def testInvalidSecp256k1PostSig(client):
+    cryptoScheme = "secp256k1"
+    vk, sk, did, body = ecdsa.genDidHistory(changed="2000-01-01T00:00:00+00:00", numSigners=2)
+    vk = h.bytesToStr64u(vk)
+
+    signature = ecdsa.signResource(body, sk)
+
+    body = json.loads(body.decode())
+    body["changed"] = "2000-01-01T11:11:11+11:11"
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_post,
+                  HISTORY_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
+
+def testValidEcdsaPut(client):
+    cryptoScheme = "ECDSA"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(body['signers'][0])
+    signature = ecdsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"; rotation="{2}"'.format(
+            cryptoScheme,
+            signature,
+            signature)
+    }
+
+    exp_result = {
+        "history": body,
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature,
+            "rotation": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_200)
+
+
+def testValidSecp256k1Put(client):
+    cryptoScheme = "secp256k1"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(body['signers'][0])
+    signature = ecdsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"; rotation="{2}"'.format(
+            cryptoScheme,
+            signature,
+            signature)
+    }
+
+    exp_result = {
+        "history": body,
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature,
+            "rotation": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_200)
+
+
+def testInvalidEcdsaPutSig(client):
+    cryptoScheme = "ECDSA"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(body['signers'][0])
+    signature = ecdsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"; rotation="{2}"'.format(
+            cryptoScheme,
+            signature,
+            signature)
+    }
+
+    # Invalidate signature
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for rotation field. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
+
+def testInvalidSecp256k1PutSig(client):
+    cryptoScheme = "secp256k1"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(body['signers'][0])
+    signature = ecdsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"; rotation="{2}"'.format(
+            cryptoScheme,
+            signature,
+            signature)
+    }
+
+    # Invalidate signature
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request signature for rotation field. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_401)
+
+
+def testValidEcdsaDelete(client):
+    cryptoScheme = "ECDSA"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+    signature = ecdsa.signResource(body, sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+    print(resp_content)
+
+    assert response.status == falcon.HTTP_200
+    assert resp_content["deleted"]["history"] == json.loads(body)
+    assert resp_content["deleted"]["signatures"]["signer"] == signature
+
+
+def testValidSecp256k1Delete(client):
+    cryptoScheme = "secp256k1"
+
+    # Test Valid rotation event
+    vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+    signature = ecdsa.signResource(body, sk)
+
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+    print(resp_content)
 
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"]["history"] == json.loads(body)
