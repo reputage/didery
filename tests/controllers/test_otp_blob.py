@@ -818,13 +818,109 @@ def testValidEcdsaPut(client):
 def testValidSecp256k1Put(client):
     cryptoScheme = "secp256k1"
 
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, json.loads(body), headers=headers, exp_status=falcon.HTTP_201)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+
+    signature = ecdsa.signResource(json.dumps(body).encode(), sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    exp_result = {
+        "otp_data": body,
+        "signatures": {
+            "name": cryptoScheme,
+            "signer": signature
+        }
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_200,
+                  exp_result=exp_result)
+
 
 def testInvalidEcdsaPutSig(client):
     cryptoScheme = "ECDSA"
 
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, json.loads(body), headers=headers, exp_status=falcon.HTTP_201)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+
+    signature = ecdsa.signResource(json.dumps(body).encode(), sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    # Invalidate Signature
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_401,
+                  exp_result=exp_result)
+
 
 def testInvalidSecp256k1PutSig(client):
     cryptoScheme = "secp256k1"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    verifyRequest(client.simulate_post, BLOB_BASE_PATH, json.loads(body), headers=headers, exp_status=falcon.HTTP_201)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+
+    signature = ecdsa.signResource(json.dumps(body).encode(), sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    # Invalidate Signature
+    body['changed'] = "2000-01-01T11:11:11+11:11"
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Could not validate the request body and signature. Unverifiable signature."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_401,
+                  exp_result=exp_result)
 
 
 def testValidEcdsaDelete(client):
@@ -853,3 +949,23 @@ def testValidEcdsaDelete(client):
 
 def testValidSecp256k1Delete(client):
     cryptoScheme = "secp256k1"
+
+    vk, sk, did, body = genOtpBlob(crypto=cryptoScheme)
+    url = "{0}/{1}".format(BLOB_BASE_PATH, did)
+
+    signature = ecdsa.signResource(body, sk)
+    headers = {
+        "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_200
+    assert resp_content["deleted"]["otp_data"] == json.loads(body)
+    assert resp_content["deleted"]["signatures"]["signer"] == signature
