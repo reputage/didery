@@ -21,7 +21,7 @@ The key rotation store utilizes pre-rotation to solve the secure rotation proble
 
 The pre-rotation protocol works as follows:
 
-##### Key Pair Inception
+#### Key Pair Inception
 1. Generate key pair (current key pair)
 2. Generate a second key pair (pre-rotated key pair)
 3. Create a rotation history that contains the two public keys above
@@ -51,7 +51,7 @@ Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5S
 }
 ```
 
-##### Rotation Event
+#### Rotation Event
 1. Generate a new key pair (new pre-rotated key pair)
 2. Add newly generated public key to the history
 3. Sign the history data with the current and pre-rotated key pairs
