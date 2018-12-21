@@ -10,6 +10,89 @@ Cryptographic key management is a challenging problem for the blockchain communi
 
 The project is built on the open source [ioflo](https://github.com/ioflo) framework and also utilizes [click](http://click.pocoo.org/5/), and [lmdb](https://lmdb.readthedocs.io/en/release/) on the back end.  The frontend is built with [Transcrypt](https://www.transcrypt.org/documentation) and [mithril.js](https://mithril.js.org/).
 
+How Didery Works
+================
+Didery offers two completely separate but complementary services.  The first is a store of key rotation histories and the second is a store for encrypted data.
+
+All information uploaded to didery requires a decentralized identifier(DID) and a signature to ensure data provenance.
+
+Rotation Histories
+------------------
+The key rotation store utilizes pre-rotation to solve the secure rotation problem. Pre-rotation requires that you declare ahead of time what public key you will rotate to.  Didery provides a protocol for pre-rotation and a public store of rotation histories.  
+
+The pre-rotation protocol works as follows:
+
+Key Pair Inception
+1. Generate key pair (current key pair)
+2. Generate a second key pair (pre-rotated key pair)
+3. Create a rotation history that contains the two public keys above
+4. Sign the rotation history data with only the current private key
+5. Upload the rotation history and signature to Didery 
+
+```
+POST /history HTTP/1.1
+Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
+    
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+    "changed": "2000-01-01T00:00:00+00:00",
+    "signer": 0,
+    "signers": 
+    [
+        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+    ]
+}
+```
+
+Rotation Event
+1. Generate a new key pair (new pre-rotated key pair)
+2. Add newly generated public key to the history
+3. Sign the history data with the current and pre-rotated key pairs
+4. Upload the rotation history and signature to Didery
+```
+PUT /history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 324
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
+Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="; rotation="o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
+    
+{
+    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+    "changed": "2000-01-01T00:00:00+00:00",
+    "signer": 1,
+    "signers": 
+    [
+        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+    ]
+}
+```
+
+Encrypted Data Store
+--------------------
+The encrypted data store is meant to be used in conjunction with SeedQuest and One Time Pads(OTP). However, the service only requires that uploaded data include a DID and a signature.  You are free to upload data that is not encrypted, or encrypted with another method other than OTP.  
+
+Keep in mind that any data uploaded to this store will be publicly available for anyone to view.  For this reason we chose to use OTP’s because they offer perfect security meaning they can only be cracked via brute force.
+
+Decentralized Redundant Immutable Data
+--------------------------------------
+The didery service is designed to be a decentralized redundant immutable data store. In practice this means that the service can be run by anyone and works best with multiple instances.
+
+We offer a Javascript and a Python SDK that handles broadcasting updates and polling data from a group of trusted servers.  This gives an added level of redundancy and security to the service, but if you choose you can use a single server.
+
+How To Use Didery
+=================
+Didery is meant to be a back end service for you to publicly store your rotation histories and so others can verify what key you are using.  Your service should send updates to Didery using the protocol outlined [here](#how-didery-works) and [here](https://github.com/reputage/didery/blob/master/docs/api/public_api/public_api.md#key-rotation-history).
+
+You will need to point anyone you’re communicating with to the didery instances you use and trust. The DID Document(DDO) provides a solution for this. You can add a service endpoint section to your DDO that includes all the Didery instances you trust. This will allow those you are communicating with to verify that the key pair you signed with belongs to you.
+
+
 System Requirements
 ===================
 python 3.6  
