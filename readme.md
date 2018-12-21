@@ -16,8 +16,7 @@ Didery offers two completely separate but complementary services.  The first is 
 
 All information uploaded to didery requires a decentralized identifier(DID) and a signature to ensure data provenance.
 
-Rotation Histories
-------------------
+## Rotation Histories
 The key rotation store utilizes pre-rotation to solve the secure rotation problem. Pre-rotation requires that you declare ahead of time what public key you will rotate to.  Didery provides a protocol for pre-rotation and a public store of rotation histories.  
 
 The pre-rotation protocol works as follows:
@@ -74,14 +73,12 @@ Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5S
 }
 ```
 
-Encrypted Data Store
---------------------
+## Encrypted Data Store
 The encrypted data store is meant to be used in conjunction with SeedQuest and One Time Pads(OTP). However, the service only requires that uploaded data include a DID and a signature.  You are free to upload data that is not encrypted, or encrypted with another method other than OTP.  
 
 Keep in mind that any data uploaded to this store will be publicly available for anyone to view.  For this reason we chose to use OTP’s because they offer perfect security meaning they can only be cracked via brute force.
 
-Decentralized Redundant Immutable Data
---------------------------------------
+## Decentralized Redundant Immutable Data
 The didery service is designed to be a decentralized redundant immutable data store. In practice this means that the service can be run by anyone and works best with multiple instances.
 
 We offer a Javascript and a Python SDK that handles broadcasting updates and polling data from a group of trusted servers.  This gives an added level of redundancy and security to the service, but if you choose you can use a single server.
