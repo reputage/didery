@@ -30,6 +30,13 @@ The pre-rotation protocol works as follows:
 
 ```
 POST /history HTTP/1.1
+Accept: application/json, */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 324
+Content-Type: application/json
+Host: localhost:8000
+User-Agent: HTTPie/0.9.9
 Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
     
 {
