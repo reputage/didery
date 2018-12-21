@@ -202,5 +202,12 @@ Running these tests prior to hosting the server helps ensure that everything in 
 
 
 Documentation
-===
+=============
 You can read the REST API documentation in the [wiki](https://github.com/reputage/didery/wiki) and the frontend documentation in the [docs](https://github.com/reputage/didery/tree/master/docs) folder.
+
+One Time Pad Cryptography
+=========================
+Didery’s encrypted data store, in conjunction with [SeedQuest](https://github.com/reputage/seedQuest), uses One Time Pads(OTP) and signatures to encrypt private keys. Didery is storing encrypted private keys in an open and pubic database, because of this the encryption must be of the highest strength. OTP’s have perfect security providing a strong enough encryption for storing private keys publicly.  
+
+SeedQuest uses a cryptographically secure pseudo-random number generator(CSPRNG) from [libsodium](https://libsodium.gitbook.io/doc/) to generate a 128 bit seed. The seed is stretched to the size of the data to create the one time pad. The pad is then XOR'd with the data to encrypt it. Finally the data is signed to make it tamper proof. Didery will only allow new data to be added to the public store if the signature validates.
+
