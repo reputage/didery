@@ -1,19 +1,37 @@
 # Versions
-Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.
+Use Semantic versioning as described [here](https://semver.org/) when releasing any new code.  There are two files that need to be updated with the new version number:
+```bash
+didery/src/didery/__init_.py
+didery/setup.py
+```
 
 # Building Wheels
-Make sure you have installed wheel with pip
+Make sure you have installed the packaging dependencies
 ```bash
 pip install wheel
+pip install twine
+sudo apt install npm
 ```
 
 Then run these commands
 ```bash
+cd /path/to/didery/src/didery/static/
+npm install
+npm run-script transcrypt
+
 cd path/to/didery/
 python3 setup.py sdist bdist_wheel
 ```
 
 # Uploading to Pypi
+
+## Test
+```bash
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple didery
+```
+
+## Live
 ```bash
 twine upload dist/*
 ```

@@ -20,6 +20,8 @@ DEFAULT_INTERVAL = 1000
 # ================================================== #
 
 __pragma__("kwargs")
+
+
 def request(path, **kwargs):
     """
     Performs a mithril GET request.
@@ -38,6 +40,7 @@ def request(path, **kwargs):
     return m.request(path)
 
 # ================================================== #
+
 
 def onlyOne(func, interval=1000):
     """
@@ -70,6 +73,7 @@ __pragma__("nokwargs")
 #                  CLASS DEFINITIONS                 #
 # ================================================== #
 
+
 def clearArray(a):
     """
     Clears an array/list.
@@ -81,6 +85,7 @@ def clearArray(a):
         a.pop()
 
 # ================================================== #
+
 
 class Manager:
     """
@@ -96,6 +101,7 @@ class Manager:
         self.relays = Relays()
 
 # ================================================== #
+
 
 class Errors:
     """
@@ -144,11 +150,12 @@ class Errors:
                     }]
             }
         """
-
-        for error in data['data']:
-            self.errors.append(error)
+        if 'data' in data:
+            for error in data['data']:
+                self.errors.append(error)
 
 # ================================================== #
+
 
 class History:
     """
@@ -226,11 +233,12 @@ class History:
             }
 
         """
-
-        for history in data['data']:
-            self.history.append(JSON.parse(history))
+        if 'data' in data:
+            for key, history in enumerate(data['data']):
+                self.history.append(history)
 
 # ================================================== #
+
 
 class OTPBlobs:
     """
@@ -279,10 +287,12 @@ class OTPBlobs:
             }
         """
 
-        for blob in data['data']:
-            self.blobs.append(JSON.parse(blob))
+        if 'data' in data:
+            for blob in data['data']:
+                self.blobs.append(blob)
 
 # ================================================== #
+
 
 class Relays:
     """
