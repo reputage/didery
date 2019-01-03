@@ -55,7 +55,23 @@ from didery.db.dbing import DATABASE_DIR_PATH
     type=click.Path(file_okay=False, resolve_path=True, writable=True),
     help='Path to the database folder. Defaults to {}.'.format(DATABASE_DIR_PATH)
 )
-def main(port, version, verbose, path):
+@click.option(
+    '--method',
+    'mode',
+    flag_value='method'
+)
+@click.option(
+    '--promiscuous',
+    'mode',
+    flag_value='promiscuous',
+    default=True
+)
+@click.option(
+    '--race',
+    'mode',
+    flag_value='race'
+)
+def main(port, version, verbose, path, mode):
     if version:
         click.echo(__version__)
         return
@@ -88,5 +104,6 @@ def main(port, version, verbose, path):
                       statistics=False,
                       preloads=[
                           ('.main.server.port', odict(value=port)),
-                          ('.main.server.db', odict(value=path))
+                          ('.main.server.db', odict(value=path)),
+                          ('.main.server.mode', odict(value=mode)),
                       ])

@@ -25,6 +25,7 @@ frame server
                                         test="",
                                         port=odict(ival=8080),
                                         db=odict(ival=""),
+                                        mode=odict(ival=""),
                                         ))
 def dideryServerOpen(self):
     """

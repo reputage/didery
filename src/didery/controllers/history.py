@@ -75,7 +75,7 @@ def basicValidation(req, resp, resource, params):
     return raw, sigs, validator
 
 
-def validatePost(req, resp, resource, params):
+def validatePost(req, resp, resource, params, store):
     """
     Validate incoming POST request and prepare
     body of request for processing.
@@ -133,7 +133,7 @@ def validatePost(req, resp, resource, params):
                                'The DIDs key must match the first key in the signers field.')
 
 
-def validatePut(req, resp, resource, params):
+def validatePut(req, resp, resource, params, store):
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
@@ -203,7 +203,7 @@ def validatePut(req, resp, resource, params):
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
 
-def validateDelete(req, resp, resource, params):
+def validateDelete(req, resp, resource, params, store):
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
@@ -305,7 +305,7 @@ class History:
     For manual testing of the endpoint:
         http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePost)
+    @falcon.before(validatePost, [self.store])
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
@@ -332,7 +332,7 @@ class History:
     For manual testing of the endpoint:
         http PUT localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePut)
+    @falcon.before(validatePut, [self.store])
     def on_put(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.
@@ -385,7 +385,7 @@ class History:
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
-    @falcon.before(validateDelete)
+    @falcon.before(validateDelete, [self.store])
     def on_delete(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.
