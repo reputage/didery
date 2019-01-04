@@ -27,11 +27,13 @@ def basicValidation(req, resp, resource, params):
     req.signatures = sigs
     validator = cryptoFactory.signatureValidationFactory(sigs)
 
+    # HasSignatureValidator
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Empty Signature header.')
 
+    # SignersIsListOrArrayValidator
     try:
         if not isinstance(body['signers'], list):
             body['signers'] = json.loads(
@@ -42,16 +44,20 @@ def basicValidation(req, resp, resource, params):
                                'Validation Error',
                                'signers field must be a list or array.')
 
+    # IdNotEmptyValidator
     if body['id'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'id field cannot be empty.')
 
+    # ChangedFieldNotEmptyValidator
     if body['changed'] == "":
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'changed field cannot be empty.')
 
+    # SignerIsIntValidator
+    # Need to separate conversion/assignment from validation
     try:
         req.body['signer'] = int(body['signer'])
     except ValueError:
@@ -59,6 +65,7 @@ def basicValidation(req, resp, resource, params):
                                'Validation Error',
                                'signer field must be a number.')
 
+    # ChangedIsISODatetimeValidator
     try:
         dt = arrow.get(body["changed"])
     except arrow.parser.ParserError as ex:
@@ -66,6 +73,7 @@ def basicValidation(req, resp, resource, params):
                                'Validation Error',
                                'ISO datetime could not be parsed.')
 
+    # NoEmptyKeysValidator
     for value in body['signers']:
         if value == "":
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -88,12 +96,14 @@ def validatePost(req, resp, resource, params, store):
     raw, sigs, validator = basicValidation(req, resp, resource, params)
     body = req.body
 
+    # SignerSigExistsValidator
     sig = sigs.get('signer')  # str not bytes
     if not sig:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Signature header missing "signer" tag and signature.')
 
+    # DIDFormatValidator
     try:
         did = Did(body['id'])
     except ValueError as ex:
@@ -101,11 +111,13 @@ def validatePost(req, resp, resource, params, store):
                                'Validation Error',
                                "Invalid did format. {}".format(str(ex)))
 
+    # SignersLengthGreaterThanValidator
     if len(body['signers']) < 2:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'signers field must contain at least the current public key and its first pre-rotation.')
 
+    # SignersKeysNotNone
     # If it is decided that revocation on inception is allowed we can remove this check
     for value in body['signers']:
         if value is None:
@@ -113,11 +125,13 @@ def validatePost(req, resp, resource, params, store):
                                    'Validation Error',
                                    'signers keys cannot be null on inception.')
 
+    # SingerIsZeroValidator
     if body['signer'] != 0:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'signer field must equal 0 on creation of new rotation history.')
 
+    #
     index = body['signer']
     try:
         validator(sig, raw.decode(), body['signers'][index])
