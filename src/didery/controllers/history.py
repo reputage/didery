@@ -19,6 +19,7 @@ def basicValidation(req, resp, resource, params):
     raw = helping.parseReqBody(req)
     body = req.body
 
+    # HistoryRequiredFieldsValidator
     required = ["id", "changed", "signer", "signers"]
     helping.validateRequiredFields(required, body)
 
@@ -96,7 +97,7 @@ def validatePost(req, resp, resource, params, store):
     raw, sigs, validator = basicValidation(req, resp, resource, params)
     body = req.body
 
-    # SignerSigExistsValidator
+    # SigExistsValidator
     sig = sigs.get('signer')  # str not bytes
     if not sig:
         raise falcon.HTTPError(falcon.HTTP_401,
@@ -111,13 +112,13 @@ def validatePost(req, resp, resource, params, store):
                                'Validation Error',
                                "Invalid did format. {}".format(str(ex)))
 
-    # SignersLengthGreaterThanValidator
+    # ContainsPreRotationValidator
     if len(body['signers']) < 2:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'signers field must contain at least the current public key and its first pre-rotation.')
 
-    # SignersKeysNotNone
+    # SignersKeysNotNoneValidator
     # If it is decided that revocation on inception is allowed we can remove this check
     for value in body['signers']:
         if value is None:
@@ -125,13 +126,13 @@ def validatePost(req, resp, resource, params, store):
                                    'Validation Error',
                                    'signers keys cannot be null on inception.')
 
-    # SingerIsZeroValidator
+    # SignerIsZeroValidator
     if body['signer'] != 0:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'signer field must equal 0 on creation of new rotation history.')
 
-    #
+    # SignatureValidator
     index = body['signer']
     try:
         validator(sig, raw.decode(), body['signers'][index])
@@ -140,6 +141,7 @@ def validatePost(req, resp, resource, params, store):
                                'Authorization Error',
                                'Could not validate the request body and signature. {}.'.format(ex))
 
+    # DidHijackingValidator
     # Prevent bad actors from trying to commandeer a DID before its owner posts it
     if did.pubkey != body['signers'][0]:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -148,6 +150,7 @@ def validatePost(req, resp, resource, params, store):
 
 
 def validatePut(req, resp, resource, params, store):
+    # DidInURLValidator
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
@@ -156,41 +159,48 @@ def validatePut(req, resp, resource, params, store):
     raw, sigs, validator = basicValidation(req, resp, resource, params)
     body = req.body
 
+    # SigExistsValidator
     signer = sigs.get('signer')  # str not bytes
     if not signer:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Signature header missing signature for "signer".')
 
+    # SigExistsValidator
     rotation = sigs.get('rotation')  # str not bytes
     if not rotation:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Signature header missing signature for "rotation".')
 
+    # SignersLengthGreaterThanValidator
     if len(body['signers']) < 3:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'PUT endpoint is for rotation events. Must contain at least the original key, a '
                                'current signing key, and a pre-rotated key.')
 
+    # SignerValueValidator
     if body['signer'] < 1 or body['signer'] >= len(body['signers']):
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                '"signer" cannot reference the first or last key in the "signers" '
                                'field on PUT requests.')
 
+    # ContainsPreRotationOrRevokedValidator
     if body['signer'] + 1 == len(body['signers']) and body['signers'][body["signer"]] is not None:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
-                               'Missing pre rotated key in the signers field.')
+                               'Missing pre rotated key in "signers" field.')
 
+    # URLDidMatchesIdValidator
     # Prevent did data from being clobbered
     if params['did'] != body['id']:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
                                'Url did must match id field did.')
 
+    # SignersNotNoneValidator
     for key, value in enumerate(body['signers']):
         if value is None and body['signer'] != key:
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -202,6 +212,7 @@ def validatePut(req, resp, resource, params, store):
     else:
         index = body['signer']
 
+    # SignatureValidator
     try:
         validator(rotation, raw.decode(), body['signers'][index])
     except didering.ValidationError as ex:
@@ -209,6 +220,7 @@ def validatePut(req, resp, resource, params, store):
                                'Authorization Error',
                                'Could not validate the request signature for rotation field. {}.'.format(ex))
 
+    # SignatureValidator
     try:
         validator(signer, raw.decode(), body['signers'][index - 1])
     except didering.ValidationError as ex:
@@ -218,6 +230,7 @@ def validatePut(req, resp, resource, params, store):
 
 
 def validateDelete(req, resp, resource, params, store):
+    # DidInURLValidator
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Validation Error',
@@ -230,17 +243,20 @@ def validateDelete(req, resp, resource, params, store):
     validator = cryptoFactory.signatureValidationFactory(sigs)
     body = req.body
 
+    # HasSignatureValidator
     if len(sigs) == 0:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Empty Signature header.')
 
+    # SigExistsValidator
     signer = sigs.get('signer')  # str not bytes
     if not signer:
         raise falcon.HTTPError(falcon.HTTP_401,
                                'Authorization Error',
                                'Signature header missing signature for "signer".')
 
+    # URLDidMatchesIdValidator
     # Prevent did data from being clobbered
     if params['did'] != body['id']:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -273,6 +289,8 @@ def validateDelete(req, resp, resource, params, store):
 
 
 class History:
+    store = None
+
     def __init__(self, store=None):
         """
         :param store: Store
@@ -319,7 +337,7 @@ class History:
     For manual testing of the endpoint:
         http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePost, [self.store])
+    @falcon.before(validatePost, [store])
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
@@ -346,7 +364,7 @@ class History:
     For manual testing of the endpoint:
         http PUT localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePut, [self.store])
+    @falcon.before(validatePut, [store])
     def on_put(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.
@@ -399,7 +417,7 @@ class History:
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
-    @falcon.before(validateDelete, [self.store])
+    @falcon.before(validateDelete, [store])
     def on_delete(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.

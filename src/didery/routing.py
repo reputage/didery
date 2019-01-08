@@ -36,6 +36,7 @@ def loadEndPoints(app, store):
     sink = static.StaticSink()
     app.add_sink(sink, prefix=DEFAULT_STATIC_BASE_PATH)
 
+    histories.History.store = store
     history = histories.History(store)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
