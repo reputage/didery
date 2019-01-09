@@ -835,7 +835,7 @@ def testPutRequiresNewPreRotation(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "Missing pre rotated key in the signers field."
+        "description": "Missing pre rotated key in \"signers\" field."
     }
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)

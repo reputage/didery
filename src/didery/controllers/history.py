@@ -23,6 +23,7 @@ def basicValidation(req, resp, resource, params):
     required = ["id", "changed", "signer", "signers"]
     helping.validateRequiredFields(required, body)
 
+    # HasSignatureHeaderValidator
     signature = req.get_header("Signature", required=True)
     sigs = helping.parseSignatureHeader(signature)
     req.signatures = sigs
@@ -84,12 +85,13 @@ def basicValidation(req, resp, resource, params):
     return raw, sigs, validator
 
 
-def validatePost(req, resp, resource, params, store):
+def validatePost(req, resp, resource, params):
     """
     Validate incoming POST request and prepare
     body of request for processing.
     :param req: Request object
     """
+    # ParamsNotAllowedValidator
     # server crashes without this if someone adds anything after /history
     if params:
         raise falcon.HTTPError(falcon.HTTP_404)
@@ -149,7 +151,7 @@ def validatePost(req, resp, resource, params, store):
                                'The DIDs key must match the first key in the signers field.')
 
 
-def validatePut(req, resp, resource, params, store):
+def validatePut(req, resp, resource, params):
     # DidInURLValidator
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -229,7 +231,7 @@ def validatePut(req, resp, resource, params, store):
                                'Could not validate the request signature for signer field. {}.'.format(ex))
 
 
-def validateDelete(req, resp, resource, params, store):
+def validateDelete(req, resp, resource, params):
     # DidInURLValidator
     if 'did' not in params:
         raise falcon.HTTPError(falcon.HTTP_400,
@@ -289,8 +291,6 @@ def validateDelete(req, resp, resource, params, store):
 
 
 class History:
-    store = None
-
     def __init__(self, store=None):
         """
         :param store: Store
@@ -337,7 +337,7 @@ class History:
     For manual testing of the endpoint:
         http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePost, [store])
+    @falcon.before(validatePost)
     def on_post(self, req, resp):
         """
         Handle and respond to incoming POST request.
@@ -364,7 +364,7 @@ class History:
     For manual testing of the endpoint:
         http PUT localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
     """
-    @falcon.before(validatePut, [store])
+    @falcon.before(validatePut)
     def on_put(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.
@@ -417,7 +417,7 @@ class History:
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
-    @falcon.before(validateDelete, [store])
+    @falcon.before(validateDelete)
     def on_delete(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.

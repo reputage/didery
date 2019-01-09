@@ -9,16 +9,18 @@ except ImportError:
 from didery.did.didering import Did
 from didery.crypto import factory as cryptoFactory
 from didery import didering
+from didery.help import helping
 
 
 class Validator:
-    def __init__(self, body, sigs, params, **kwargs):
+    def __init__(self, req, params):
         """
-        :param body: (dict) data items
-        :param sigs: (OrderedDict) signatures from request header
+        :param req: (falcon.Request) Request object
+        :param params: (dict) URI Template field names
         """
-        self.body = body
-        self.sigs = sigs
+        self.req = req
+        self.raw = helping.parseReqBody(req)
+        self.body = req.body
         self.params = params
 
     def validate(self):
@@ -29,8 +31,8 @@ class Validator:
 
 
 class HistoryRequiredFieldsValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
         self.required = ["id", "changed", "signer", "signers"]
 
@@ -42,9 +44,29 @@ class HistoryRequiredFieldsValidator(Validator):
                                        'Request must contain {} field.'.format(req))
 
 
+class HasSignatureHeaderValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+    
+    def validate(self):
+        self.req.get_header("Signature", required=True)
+
+
+class ParamsNotAllowedValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        # server crashes without this if someone adds anything after /history on POST requests
+        if self.params:
+            raise falcon.HTTPError(falcon.HTTP_404)
+
+
 class HasSignatureValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params, sigs):
+        Validator.__init__(self, req, params)
+
+        self.sigs = sigs
 
     def validate(self):
         if len(self.sigs) == 0:
@@ -54,8 +76,8 @@ class HasSignatureValidator(Validator):
 
 
 class SignersIsListOrArrayValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         try:
@@ -70,8 +92,8 @@ class SignersIsListOrArrayValidator(Validator):
 
 
 class IdNotEmptyValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if self.body['id'] == "":
@@ -81,8 +103,8 @@ class IdNotEmptyValidator(Validator):
 
 
 class ChangedFieldNotEmptyValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if self.body['changed'] == "":
@@ -92,8 +114,8 @@ class ChangedFieldNotEmptyValidator(Validator):
 
 
 class SignerIsIntValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         try:
@@ -105,8 +127,8 @@ class SignerIsIntValidator(Validator):
 
 
 class ChangedIsISODatetimeValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         try:
@@ -118,8 +140,8 @@ class ChangedIsISODatetimeValidator(Validator):
 
 
 class NoEmptyKeysValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         for value in self.body['signers']:
@@ -130,8 +152,8 @@ class NoEmptyKeysValidator(Validator):
 
 
 class SignersNotNoneValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         for key, value in enumerate(self.body['signers']):
@@ -142,14 +164,10 @@ class SignersNotNoneValidator(Validator):
 
 
 class SigExistsValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
-        sig_name = "signer"
+    def __init__(self, req, params, sigs, sig_name):
+        Validator.__init__(self, req, params)
 
-        if "sig_name" in kwargs:
-            sig_name = kwargs["sig_name"]
-
-        self.sig = self.sigs.get(sig_name)  # str not bytes
+        self.sig = sigs.get(sig_name)  # str not bytes
 
     def validate(self):
         if not self.sig:
@@ -159,8 +177,8 @@ class SigExistsValidator(Validator):
 
 
 class DIDFormatValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         try:
@@ -172,8 +190,8 @@ class DIDFormatValidator(Validator):
 
 
 class ContainsPreRotationValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if self.body['signer'] + 1 == len(self.body['signers']):
@@ -183,10 +201,10 @@ class ContainsPreRotationValidator(Validator):
 
 
 class ContainsPreRotationOrRevokedValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
-        self.preRotationValidator = ContainsPreRotationValidator(body, sigs, params, **kwargs)
+        self.preRotationValidator = ContainsPreRotationValidator(req, params)
 
     def validate(self):
         # Key revoked no pre-rotation necessary
@@ -198,8 +216,8 @@ class ContainsPreRotationOrRevokedValidator(Validator):
 
 
 class SignersKeysNotNoneValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         for value in self.body['signers']:
@@ -210,8 +228,8 @@ class SignersKeysNotNoneValidator(Validator):
 
 
 class SignerIsZeroValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if int(self.body['signer']) != 0:
@@ -221,8 +239,8 @@ class SignerIsZeroValidator(Validator):
 
 
 class SignerValueValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if self.body['signer'] < 1 or self.body['signer'] >= len(self.body['signers']):
@@ -233,21 +251,11 @@ class SignerValueValidator(Validator):
 
 
 class SignatureValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
-        self.vk = ""
+    def __init__(self, req, params, vk, sigs, signature):
+        Validator.__init__(self, req, params)
+        self.vk = vk
         self.cryptoValidator = cryptoFactory.signatureValidationFactory(sigs)
-        self.signature = ""
-        self.raw = b''
-
-        if "vk" in kwargs:
-            self.vk = kwargs["vk"]
-
-        if "signature" in kwargs:
-            self.signature = kwargs["signature"]
-
-        if "raw" in kwargs:
-            self.raw = kwargs["raw"]
+        self.signature = signature
 
     def validate(self):
         try:
@@ -259,10 +267,10 @@ class SignatureValidator(Validator):
 
 
 class DidHijackingValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
-        self.didFormatValidator = DIDFormatValidator(body, sigs, params, **kwargs)
+        self.didFormatValidator = DIDFormatValidator(req, params)
 
     def validate(self):
         self.didFormatValidator.validate()
@@ -276,8 +284,8 @@ class DidHijackingValidator(Validator):
 
 
 class DidInURLValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         if 'did' not in self.params:
@@ -287,8 +295,8 @@ class DidInURLValidator(Validator):
 
 
 class URLDidMatchesIdValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
     def validate(self):
         # Prevent did data from being clobbered
@@ -299,18 +307,18 @@ class URLDidMatchesIdValidator(Validator):
 
 
 class InceptionSigValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
-        self.hasSignature = HasSignatureValidator(self.body, self.sigs, self.params, **kwargs)
-        self.sigExists = SigExistsValidator(self.body, self.sigs, self.params, sig_name="signer")
+        sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
+        self.hasSignature = HasSignatureValidator(req, self.params, sigs)
+        self.sigExists = SigExistsValidator(req, self.params, sigs, "signer")
         self.sigIsValid = SignatureValidator(
-            body,
-            sigs,
+            req,
             params,
-            vk=body["signers"][int(body["signer"])],
-            signature=sigs.get("signer"),
-            raw=json.dumps(body).encode()
+            self.body["signers"][int(self.body["signer"])],
+            sigs,
+            sigs.get("signer"),
         )
 
     def validate(self):
@@ -320,26 +328,25 @@ class InceptionSigValidator(Validator):
 
 
 class RotationSigValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
 
-        self.hasSignature = HasSignatureValidator(self.body, self.sigs, self.params, **kwargs)
-        self.sigExists = SigExistsValidator(self.body, self.sigs, self.params, sig_name="rotation")
+        sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
+        self.hasSignature = HasSignatureValidator(req, self.params, sigs)
+        self.sigExists = SigExistsValidator(req, self.params, sigs, "rotation")
         self.signerIsValid = SignatureValidator(
-            body,
-            sigs,
+            req,
             params,
-            vk=body["signers"][int(body["signer"])-1],
-            signature=sigs.get("signer"),
-            raw=json.dumps(body).encode()
+            self.body["signers"][int(self.body["signer"])-1],
+            sigs,
+            sigs.get("signer")
         )
         self.rotationIsValid = SignatureValidator(
-            body,
-            sigs,
+            req,
             params,
-            vk=body["signers"][int(body["signer"])],
-            signature=sigs.get("rotation"),
-            raw=json.dumps(body).encode()
+            self.body["signers"][int(self.body["signer"])],
+            sigs,
+            sigs.get("rotation")
         )
 
     def validate(self):
@@ -350,16 +357,11 @@ class RotationSigValidator(Validator):
 
 
 class CompositeValidator(Validator):
-    def __init__(self, body, sigs, params, **kwargs):
-        Validator.__init__(self, body, sigs, params, **kwargs)
+    def __init__(self, req, params, validators):
+        Validator.__init__(self, req, params)
 
-        if "validators" in kwargs:
-            self.validators = kwargs["validators"]
+        self.validators = validators
 
     def validate(self):
         for validator in self.validators:
             validator.validate()
-
-
-# TODO remove **kwargs and other vars from init function.
-# TODO the init functions don't need to be uniform

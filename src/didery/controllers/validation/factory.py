@@ -1,24 +1,26 @@
 import didery.controllers.validation.validating as validation
 
 
-def historyFactory(method, body, sigs, params):
+def historyFactory(method, req, params):
     if method == "POST" or method == "post":
         validators = [
-            validation.HistoryRequiredFieldsValidator(body, sigs, params),
-            validation.SignersIsListOrArrayValidator(body, sigs, params),
-            validation.IdNotEmptyValidator(body, sigs, params),
-            validation.ChangedFieldNotEmptyValidator(body, sigs, params),
-            validation.SignerIsIntValidator(body, sigs, params),
-            validation.ChangedIsISODatetimeValidator(body, sigs, params),
-            validation.NoEmptyKeysValidator(body, sigs, params),
-            validation.DIDFormatValidator(body, sigs, params),
-            validation.ContainsPreRotationValidator(body, sigs, params),
-            validation.SignersKeysNotNoneValidator(body, sigs, params),
-            validation.SignerIsZeroValidator(body, sigs, params),
-            validation.InceptionSigValidator(body, sigs, params),
-            validation.DidHijackingValidator(body, sigs, params)
+            validation.HistoryRequiredFieldsValidator(req, params),
+            validation.HasSignatureHeaderValidator(req, params),
+            validation.ParamsNotAllowedValidator(req, params),
+            validation.SignersIsListOrArrayValidator(req, params),
+            validation.IdNotEmptyValidator(req, params),
+            validation.ChangedFieldNotEmptyValidator(req, params),
+            validation.SignerIsIntValidator(req, params),
+            validation.ChangedIsISODatetimeValidator(req, params),
+            validation.NoEmptyKeysValidator(req, params),
+            validation.DIDFormatValidator(req, params),
+            validation.ContainsPreRotationValidator(req, params),
+            validation.SignersKeysNotNoneValidator(req, params),
+            validation.SignerIsZeroValidator(req, params),
+            validation.InceptionSigValidator(req, params),
+            validation.DidHijackingValidator(req, params)
         ]
-        return validation.CompositeValidator(body, sigs, params, validators=validators)
+        return validation.CompositeValidator(req, params, validators)
     elif method == "PUT" or method == "put":
         pass
     elif method == "DELETE" or method == "delete":
