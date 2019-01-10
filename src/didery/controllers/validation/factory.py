@@ -14,7 +14,7 @@ def historyFactory(method, mode, req, params):
     req.raw = helping.parseReqBody(req)
     if method == "POST" or method == "post":
         validators = [
-            validation.HistoryRequiredFieldsValidator(req, params),
+            validation.RequiredFieldsValidator(req, params, ["id", "changed", "signer", "signers"]),
             validation.HasSignatureHeaderValidator(req, params),
             validation.ParamsNotAllowedValidator(req, params),
             validation.SignersIsListOrArrayValidator(req, params),
@@ -34,7 +34,7 @@ def historyFactory(method, mode, req, params):
         return validation.CompositeValidator(req, params, validators)
     elif method == "PUT" or method == "put":
         validators = [
-            validation.HistoryRequiredFieldsValidator(req, params),
+            validation.RequiredFieldsValidator(req, params, ["id", "changed", "signer", "signers"]),
             validation.HasSignatureHeaderValidator(req, params),
             validation.SignersIsListOrArrayValidator(req, params),
             validation.IdNotEmptyValidator(req, params),
@@ -52,6 +52,16 @@ def historyFactory(method, mode, req, params):
             validation.RotationSigValidator(req, params)
         ]
         return validation.CompositeValidator(req, params, validators)
-        pass
     elif method == "DELETE" or method == "delete":
-        pass
+        validators = [
+            validation.RequiredFieldsValidator(req, params, ["id"]),
+            validation.HasSignatureHeaderValidator(req, params),
+            validation.DidInURLValidator(req, params),
+            validation.IdNotEmptyValidator(req, params),
+            validation.URLDidMatchesIdValidator(req, params),
+            validation.DeletionSigValidator(req, params),
+        ]
+        return validation.CompositeValidator(req, params, validators)
+    else:
+        # TODO add error logging here
+        return None

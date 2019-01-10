@@ -7,86 +7,25 @@ try:
 except ImportError:
     import json
 
-from collections import OrderedDict
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
 from ..crypto import factory as cryptoFactory
-from ..did.didering import Did
-from ..controllers.validation import validating, factory
+from ..controllers.validation import factory
 
 
 def validate(req, resp, resource, params):
     """
-        Validate incoming POST request and prepare
-        body of request for processing.
+    Validate incoming requests and prepare
+    body of request for processing.
 
-        :param req: falcon.Request object
-        :param resp: falcon.Response object
-        :param resource: History controller object
-        :param params: (dict) URI Template field names
-        """
+    :param req: falcon.Request object
+    :param resp: falcon.Response object
+    :param resource: History controller object
+    :param params: (dict) URI Template field names
+    """
     validator = factory.historyFactory(req.method, resource.mode, req, params)
     validator.validate()
-
-
-def validateDelete(req, resp, resource, params):
-    # DidInURLValidator
-    if 'did' not in params:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Validation Error',
-                               'DID value missing from url.')
-
-    raw = helping.parseReqBody(req)
-    signature = req.get_header("Signature", required=True)
-    sigs = helping.parseSignatureHeader(signature)
-    req.signatures = sigs
-    validator = cryptoFactory.signatureValidationFactory(sigs)
-    body = req.body
-
-    # HasSignatureValidator
-    if len(sigs) == 0:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Authorization Error',
-                               'Empty Signature header.')
-
-    # SigExistsValidator
-    signer = sigs.get('signer')  # str not bytes
-    if not signer:
-        raise falcon.HTTPError(falcon.HTTP_401,
-                               'Authorization Error',
-                               'Signature header missing signature for "signer".')
-
-    # URLDidMatchesIdValidator
-    # Prevent did data from being clobbered
-    if params['did'] != body['id']:
-        raise falcon.HTTPError(falcon.HTTP_400,
-                               'Validation Error',
-                               'Url did must match id field did.')
-
-    history = db.getHistory(params['did'])
-    req.history = history
-    if history is None:
-        raise falcon.HTTPError(falcon.HTTP_404)
-
-    index = history['history']['signer']
-    vk = history['history']['signers'][index]
-
-    if vk is not None:  # key has not been revoked
-        try:
-            validator(signer, raw.decode(), vk)
-        except didering.ValidationError as ex:
-            raise falcon.HTTPError(falcon.HTTP_401,
-                                   'Authorization Error',
-                                   'Could not validate the request signature for signer field. {}.'.format(ex))
-
-    else:  # key was revoked use old key
-        try:
-            validator(signer, raw, history['history']['signers'][index - 1])
-        except didering.ValidationError as ex:
-            raise falcon.HTTPError(falcon.HTTP_401,
-                                   'Authorization Error',
-                                   'Could not validate the request signature for signer field. {}.'.format(ex))
 
 
 class History:
@@ -217,7 +156,7 @@ class History:
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
-    @falcon.before(validateDelete)
+    @falcon.before(validate)
     def on_delete(self, req, resp, did):
         """
             Handle and respond to incoming PUT request.

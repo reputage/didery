@@ -1512,6 +1512,52 @@ def testDeleteInvalidSignature(client):
     assert resp_content["description"] == "Could not validate the request signature for signer field. Unverifiable signature."
 
 
+def testDeleteMissingRequiredFields(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Missing Required Field"
+    assert resp_content["description"] == "Request must contain id field."
+
+
+def testDeleteIdNotEmpty(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
+
+    headers = {
+        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    data = json.dumps({"id": ""}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Validation Error"
+    assert resp_content["description"] == "id field cannot be empty."
+
+
 def testValidDelete(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
@@ -1826,7 +1872,6 @@ def testValidEcdsaDelete(client):
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
-    print(resp_content)
 
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"]["history"] == json.loads(body)
@@ -1852,7 +1897,6 @@ def testValidSecp256k1Delete(client):
     response = client.simulate_delete(url, body=data, headers=headers)
 
     resp_content = json.loads(response.content)
-    print(resp_content)
 
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"]["history"] == json.loads(body)

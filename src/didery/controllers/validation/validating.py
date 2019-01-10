@@ -10,6 +10,7 @@ from didery.did.didering import Did
 from didery.crypto import factory as cryptoFactory
 from didery import didering
 from didery.help import helping
+from didery.db import dbing as db
 
 
 class Validator:
@@ -30,18 +31,18 @@ class Validator:
         pass
 
 
-class HistoryRequiredFieldsValidator(Validator):
-    def __init__(self, req, params):
+class RequiredFieldsValidator(Validator):
+    def __init__(self, req, params, required):
         Validator.__init__(self, req, params)
 
-        self.required = ["id", "changed", "signer", "signers"]
+        self.requiredFields = required
 
     def validate(self):
-        for req in self.required:
-            if req not in self.body:
+        for required in self.requiredFields:
+            if required not in self.body:
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Missing Required Field',
-                                       'Request must contain {} field.'.format(req))
+                                       'Request must contain {} field.'.format(required))
 
 
 class HasSignatureHeaderValidator(Validator):
@@ -49,7 +50,8 @@ class HasSignatureHeaderValidator(Validator):
         Validator.__init__(self, req, params)
     
     def validate(self):
-        self.req.get_header("Signature", required=True)
+        header = self.req.get_header("Signature", required=True)
+        self.req.signatures = helping.parseSignatureHeader(header)
 
 
 class ParamsNotAllowedValidator(Validator):
@@ -73,6 +75,17 @@ class HasSignatureValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
                                    'Empty Signature header.')
+
+
+class HistoryExistsValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        self.req.history = db.getHistory(self.params['did'])
+
+        if self.req.history is None:
+            raise falcon.HTTPError(falcon.HTTP_404)
 
 
 class SignersIsListOrArrayValidator(Validator):
@@ -336,8 +349,7 @@ class InceptionSigValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
-        self.req.signatures = sigs
+        sigs = self.req.signatures
         hasSignature = HasSignatureValidator(self.req, self.params, sigs)
         sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
         sigIsValid = SignatureValidator(
@@ -359,8 +371,7 @@ class RotationSigValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
-        self.req.signatures = sigs
+        sigs = self.req.signatures
         hasSignature = HasSignatureValidator(self.req, self.params, sigs)
         signerExists = SigExistsValidator(self.req, self.params, sigs, "signer")
         rotationExists = SigExistsValidator(self.req, self.params, sigs, "rotation")
@@ -392,6 +403,36 @@ class RotationSigValidator(Validator):
         rotationExists.validate()
         rotationIsValid.validate()
         signerIsValid.validate()
+
+
+class DeletionSigValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        HistoryExistsValidator(self.req, self.params).validate()
+
+        index = int(self.req.history['history']['signer'])
+        vk = self.req.history['history']['signers'][index]
+        if vk is None:  # Key was revoked use old key
+            vk = self.req.history['history']['signers'][index - 1]
+
+        sigs = self.req.signatures
+
+        hasSignature = HasSignatureValidator(self.req, self.params, sigs)
+        sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
+        sigIsValid = SignatureValidator(
+            self.req,
+            self.params,
+            vk,
+            sigs,
+            sigs.get("signer"),
+            "signer"
+        )
+
+        hasSignature.validate()
+        sigExists.validate()
+        sigIsValid.validate()
 
 
 class CompositeValidator(Validator):
