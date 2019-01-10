@@ -19,7 +19,7 @@ class Validator:
         :param params: (dict) URI Template field names
         """
         self.req = req
-        self.raw = helping.parseReqBody(req)
+        self.raw = req.raw
         self.body = req.body
         self.params = params
 
@@ -167,13 +167,14 @@ class SigExistsValidator(Validator):
     def __init__(self, req, params, sigs, sig_name):
         Validator.__init__(self, req, params)
 
+        self.sig_name = sig_name
         self.sig = sigs.get(sig_name)  # str not bytes
 
     def validate(self):
         if not self.sig:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
-                                   'Signature header missing "signer" tag and signature.')
+                                   'Signature header missing signature for "' + self.sig_name + '".')
 
 
 class DIDFormatValidator(Validator):
@@ -187,6 +188,18 @@ class DIDFormatValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    "Invalid did format. {}".format(str(ex)))
+
+
+class MinSignersLengthValidator(Validator):
+    def __init__(self, req, params, minLength):
+        Validator.__init__(self, req, params)
+        self.minLength = minLength
+
+    def validate(self):
+        if len(self.body['signers']) < self.minLength:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers field missing keys.')
 
 
 class ContainsPreRotationValidator(Validator):
@@ -227,6 +240,17 @@ class SignersKeysNotNoneValidator(Validator):
                                        'signers keys cannot be null on inception.')
 
 
+class SignersNotEmptyValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        if len(self.body["signers"]) == 0:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers field cannot be empty.')
+
+
 class SignerIsZeroValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -251,11 +275,12 @@ class SignerValueValidator(Validator):
 
 
 class SignatureValidator(Validator):
-    def __init__(self, req, params, vk, sigs, signature):
+    def __init__(self, req, params, vk, sigs, signature, sigName):
         Validator.__init__(self, req, params)
         self.vk = vk
         self.cryptoValidator = cryptoFactory.signatureValidationFactory(sigs)
         self.signature = signature
+        self.sigName = sigName
 
     def validate(self):
         try:
@@ -263,7 +288,7 @@ class SignatureValidator(Validator):
         except didering.ValidationError as ex:
             raise falcon.HTTPError(falcon.HTTP_401,
                                    'Authorization Error',
-                                   'Could not validate the request body and signature. {}.'.format(ex))
+                                   'Could not validate the request signature for ' + self.sigName + ' field. {}.'.format(ex))
 
 
 class DidHijackingValidator(Validator):
@@ -310,50 +335,63 @@ class InceptionSigValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
 
+    def validate(self):
         sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
-        self.hasSignature = HasSignatureValidator(req, self.params, sigs)
-        self.sigExists = SigExistsValidator(req, self.params, sigs, "signer")
-        self.sigIsValid = SignatureValidator(
-            req,
-            params,
+        self.req.signatures = sigs
+        hasSignature = HasSignatureValidator(self.req, self.params, sigs)
+        sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
+        sigIsValid = SignatureValidator(
+            self.req,
+            self.params,
             self.body["signers"][int(self.body["signer"])],
             sigs,
             sigs.get("signer"),
+            "signer"
         )
 
-    def validate(self):
-        self.hasSignature.validate()
-        self.sigExists.validate()
-        self.sigIsValid.validate()
+        hasSignature.validate()
+        sigExists.validate()
+        sigIsValid.validate()
 
 
 class RotationSigValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
 
+    def validate(self):
         sigs = helping.parseSignatureHeader(self.req.get_header("Signature"))
-        self.hasSignature = HasSignatureValidator(req, self.params, sigs)
-        self.sigExists = SigExistsValidator(req, self.params, sigs, "rotation")
-        self.signerIsValid = SignatureValidator(
-            req,
-            params,
-            self.body["signers"][int(self.body["signer"])-1],
+        self.req.signatures = sigs
+        hasSignature = HasSignatureValidator(self.req, self.params, sigs)
+        signerExists = SigExistsValidator(self.req, self.params, sigs, "signer")
+        rotationExists = SigExistsValidator(self.req, self.params, sigs, "rotation")
+
+        if self.body["signers"][int(self.body["signer"])] is None:
+            index = self.body['signer'] - 1
+        else:
+            index = self.body['signer']
+
+        signerIsValid = SignatureValidator(
+            self.req,
+            self.params,
+            self.body["signers"][index - 1],
             sigs,
-            sigs.get("signer")
+            sigs.get("signer"),
+            "signer"
         )
-        self.rotationIsValid = SignatureValidator(
-            req,
-            params,
-            self.body["signers"][int(self.body["signer"])],
+        rotationIsValid = SignatureValidator(
+            self.req,
+            self.params,
+            self.body["signers"][index],
             sigs,
-            sigs.get("rotation")
+            sigs.get("rotation"),
+            "rotation"
         )
 
-    def validate(self):
-        self.hasSignature.validate()
-        self.sigExists.validate()
-        self.signerIsValid.validate()
-        self.rotationIsValid.validate()
+        hasSignature.validate()
+        signerExists.validate()
+        rotationExists.validate()
+        rotationIsValid.validate()
+        signerIsValid.validate()
 
 
 class CompositeValidator(Validator):

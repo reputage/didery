@@ -25,7 +25,7 @@ class CORSMiddleware:
                                    'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token, X-Auth-Token, Signature')
 
 
-def loadEndPoints(app, store):
+def loadEndPoints(app, store, mode):
     """
     Add Rest endpoints to a falcon.API object by mapping the API's routes.
     :param app: falcon.API object
@@ -36,7 +36,6 @@ def loadEndPoints(app, store):
     sink = static.StaticSink()
     app.add_sink(sink, prefix=DEFAULT_STATIC_BASE_PATH)
 
-    histories.History.store = store
     history = histories.History(store)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)

@@ -487,7 +487,7 @@ def testPostMissingSignerTag(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Signature header missing \"signer\" tag and signature."
+        "description": "Signature header missing signature for \"signer\"."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers, exp_result, falcon.HTTP_401)
@@ -499,7 +499,7 @@ def testPostInvalidSignature(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_401)
@@ -554,7 +554,7 @@ def testPostEmptyPreRotation(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "signers field must contain at least the current public key and its first pre-rotation."
+        "description": "Missing pre rotated key in \"signers\" field."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -567,7 +567,7 @@ def testPostEmptySignersField(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "signers field must contain at least the current public key and its first pre-rotation."
+        "description": "signers field cannot be empty."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -763,8 +763,7 @@ def testPutSignersHasThreeKeys(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "PUT endpoint is for rotation events. Must contain at least the original key, a current signing"
-                       " key, and a pre-rotated key."
+        "description": "signers field missing keys."
     }
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -776,8 +775,7 @@ def testPutSignersNotEmpty(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "PUT endpoint is for rotation events. Must contain at least the original key, a current signing"
-                       " key, and a pre-rotated key."
+        "description": "signers field missing keys."
     }
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -1605,7 +1603,7 @@ def testInvalidEcdsaPostSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_post,
@@ -1632,7 +1630,7 @@ def testInvalidSecp256k1PostSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_post,

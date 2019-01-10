@@ -28,7 +28,7 @@ def testApp():
 
     store = storing.Store(stamp=0.0)
     testApp = falcon.API()
-    loadEndPoints(testApp, store=store)
+    loadEndPoints(testApp, store=store, mode="METHOD")
 
     return testApp
 

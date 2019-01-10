@@ -44,7 +44,7 @@ def dideryServerOpen(self):
     dbing.setupDbEnv(self.db.value, self.port.value)
 
     app = falcon.API(middleware=[routing.CORSMiddleware()])
-    routing.loadEndPoints(app, store=self.store)
+    routing.loadEndPoints(app, store=self.store, mode=self.mode.value)
 
     self.valet.value = Valet(
                             port=port,
