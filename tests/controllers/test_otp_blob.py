@@ -180,7 +180,7 @@ def signatureValidation(reqFunc, url):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Signature header missing \"signer\" tag and signature."
+        "description": 'Signature header missing signature for "signer".'
     }
 
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
@@ -189,8 +189,8 @@ def signatureValidation(reqFunc, url):
     body = deepcopy(data)
 
     exp_result = {
-        "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        'title': 'Authorization Error',
+        'description': 'Could not validate the request signature for signer field. Unverifiable signature.'
     }
 
     headers = {"Signature": 'signer="{0}"'.format(
@@ -742,7 +742,7 @@ def testInvalidEcdsaPostSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_post,
@@ -768,7 +768,7 @@ def testInvalidSecp256k1PostSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_post,
@@ -876,7 +876,7 @@ def testInvalidEcdsaPutSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_put,
@@ -912,7 +912,7 @@ def testInvalidSecp256k1PutSig(client):
 
     exp_result = {
         "title": "Authorization Error",
-        "description": "Could not validate the request body and signature. Unverifiable signature."
+        "description": "Could not validate the request signature for signer field. Unverifiable signature."
     }
 
     verifyRequest(client.simulate_put,

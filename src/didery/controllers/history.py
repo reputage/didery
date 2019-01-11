@@ -8,9 +8,7 @@ except ImportError:
     import json
 
 from ..help import helping
-from .. import didering
 from ..db import dbing as db
-from ..crypto import factory as cryptoFactory
 from ..controllers.validation import factory
 
 
@@ -24,7 +22,7 @@ def validate(req, resp, resource, params):
     :param resource: History controller object
     :param params: (dict) URI Template field names
     """
-    validator = factory.historyFactory(req.method, resource.mode, req, params)
+    validator = factory.historyFactory(resource.mode, req, params)
     validator.validate()
 
 

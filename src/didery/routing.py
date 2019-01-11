@@ -36,7 +36,7 @@ def loadEndPoints(app, store, mode):
     sink = static.StaticSink()
     app.add_sink(sink, prefix=DEFAULT_STATIC_BASE_PATH)
 
-    history = histories.History(store)
+    history = histories.History(store, mode)
     app.add_route('{}/{{did}}'.format(HISTORY_BASE_PATH), history)
     app.add_route('{}'.format(HISTORY_BASE_PATH), history)
 
@@ -44,7 +44,7 @@ def loadEndPoints(app, store, mode):
     app.add_route('{}{}/{{did}}'.format(STREAM_BASE_PATH, HISTORY_BASE_PATH), historyStream)
     app.add_route('{}{}'.format(STREAM_BASE_PATH, HISTORY_BASE_PATH), historyStream)
 
-    blob = blobs.OtpBlob(store)
+    blob = blobs.OtpBlob(store, mode)
     app.add_route('{}/{{did}}'.format(BLOB_BASE_PATH), blob)
     app.add_route('{}'.format(BLOB_BASE_PATH), blob)
 

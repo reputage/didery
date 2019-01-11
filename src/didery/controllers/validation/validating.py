@@ -88,6 +88,30 @@ class HistoryExistsValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_404)
 
 
+class BlobExistsValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        self.req.otp = db.getOtpBlob(self.params['did'])
+
+        if self.req.otp is None:
+            raise falcon.HTTPError(falcon.HTTP_404)
+
+
+class BlobDoesntExistValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        did = self.body['id']
+
+        if db.getHistory(did) is not None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Resource Already Exists',
+                                   'Resource with did "{}" already exists. Use PUT request.'.format(did))
+
+
 class SignersIsListOrArrayValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -124,6 +148,17 @@ class ChangedFieldNotEmptyValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'changed field cannot be empty.')
+
+
+class BlobFieldNotEmptyValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        if self.body['blob'] == "":
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'blob field cannot be empty.')
 
 
 class SignerIsIntValidator(Validator):
@@ -425,6 +460,54 @@ class DeletionSigValidator(Validator):
             self.req,
             self.params,
             vk,
+            sigs,
+            sigs.get("signer"),
+            "signer"
+        )
+
+        hasSignature.validate()
+        sigExists.validate()
+        sigIsValid.validate()
+
+
+class BlobSigValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        did = Did(self.body['id'])
+        sigs = self.req.signatures
+        hasSignature = HasSignatureValidator(self.req, self.params, sigs)
+        sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
+        sigIsValid = SignatureValidator(
+            self.req,
+            self.params,
+            did.pubkey,
+            sigs,
+            sigs.get("signer"),
+            "signer"
+        )
+
+        hasSignature.validate()
+        sigExists.validate()
+        sigIsValid.validate()
+
+
+class DeleteBlobSigValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        BlobExistsValidator(self.req, self.params).validate()
+
+        did = Did(self.body['id'])
+        sigs = self.req.signatures
+        hasSignature = HasSignatureValidator(self.req, self.params, sigs)
+        sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
+        sigIsValid = SignatureValidator(
+            self.req,
+            self.params,
+            did.pubkey,
             sigs,
             sigs.get("signer"),
             "signer"
