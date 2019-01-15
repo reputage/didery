@@ -598,7 +598,7 @@ def testDeleteMissingRequiredFields(client):
     vk, sk, did, body = genOtpBlob(seed)
     url = "{}/{}".format(BLOB_BASE_PATH, did)
 
-    data = json.dumps({"fake":""}, ensure_ascii=False).encode()
+    data = json.dumps({}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)

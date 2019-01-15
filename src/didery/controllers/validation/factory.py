@@ -6,7 +6,6 @@ def historyFactory(mode, req, params):
     """
     Build Request Validators
 
-    :param method: (string) Request method
     :param mode: (string) mode that didery is operating in
     :param req: falcon.Request object
     :param params: (dict) URI Template field names
@@ -68,6 +67,13 @@ def historyFactory(mode, req, params):
 
 
 def blobFactory(mode, req, params):
+    """
+    Build Request Validators
+
+    :param mode: (string) mode that didery is operating in
+    :param req: falcon.Request object
+    :param params: (dict) URI Template field names
+    """
     req.raw = helping.parseReqBody(req)
     if req.method == "POST" or req.method == "post":
         validators = [
