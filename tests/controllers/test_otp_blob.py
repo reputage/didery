@@ -199,12 +199,72 @@ def signatureValidation(reqFunc, url):
     verifyRequest(reqFunc, url, body, headers, exp_result, falcon.HTTP_401)
 
 
+def testPostChangedIsISO(client):
+    # Test that changed field is greater than previous date
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+    vk, sk, did, body = genOtpBlob(seed)
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:"
+
+    headers = {
+        "Signature": 'signer="{}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "ISO datetime could not be parsed."
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
+
 def testPostSignValidation(client):
     signatureValidation(client.simulate_post, BLOB_BASE_PATH)
 
 
 def testPostValidation(client):
     basicValidation(client.simulate_post, BLOB_BASE_PATH)
+
+
+def testPostRouting(client):
+    # Test that server doesn't crash if anything is added after /history
+    body = deepcopy(data)
+    path = "{0}/{1}".format(BLOB_BASE_PATH, DID)
+
+    verifyRequest(client.simulate_post, path, body, exp_status=falcon.HTTP_404)
+
+
+def testPostResourceAlreadyExists(client):
+    body = deepcopy(data)
+
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_201)
+
+    exp_result = {
+        "title": "Resource Already Exists",
+        "description": "Resource with did \"{}\" already exists. Use PUT request.".format(DID)
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_400,
+                  exp_result=exp_result)
 
 
 def testValidPost(client):
@@ -301,6 +361,37 @@ def testPutUpdatedChangedField(client):
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(BLOB_BASE_PATH, did),
                   json.loads(body),
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)
+
+
+def testPutChangedFieldIsISO(client):
+    # Test that changed field is greater than previous date
+    seed = b'\x03\xa7w\xa6\x8c\xf3-&\xbf)\xdf\tk\xb5l\xc0-ry\x9bq\xecC\xbd\x1e\xe7\xdd\xe8\xad\x80\x95\x89'
+    vk, sk, did, body = genOtpBlob(seed)
+
+    headers = {
+        "Signature": 'signer="{}"'.format(eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "ISO datetime could not be parsed."
+    }
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:"
+
+    headers = {
+        "Signature": 'signer="{}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(BLOB_BASE_PATH, did),
+                  body,
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
@@ -500,6 +591,40 @@ def testGetAll(client):
 
     assert response.status == falcon.HTTP_200
     assert json.loads(response.content) == exp_result
+
+
+def testDeleteMissingRequiredFields(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
+    url = "{}/{}".format(BLOB_BASE_PATH, did)
+
+    data = json.dumps({"fake":""}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Missing Required Field"
+    assert resp_content["description"] == "Request must contain id field."
+
+
+def testDeleteEmptyId(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = genOtpBlob(seed)
+    url = "{}/{}".format(BLOB_BASE_PATH, did)
+
+    data = json.dumps({"id": ""}, ensure_ascii=False).encode()
+    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
+
+    response = client.simulate_delete(url, body=data, headers=headers)
+
+    resp_content = json.loads(response.content)
+
+    assert response.status == falcon.HTTP_400
+    assert resp_content["title"] == "Validation Error"
+    assert resp_content["description"] == "id field cannot be empty."
 
 
 def testDeleteUrlMissingDid(client):

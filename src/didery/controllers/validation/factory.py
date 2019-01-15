@@ -73,14 +73,14 @@ def blobFactory(mode, req, params):
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id", "blob", "changed"]),
             validation.HasSignatureHeaderValidator(req, params),
-            validation.ParamsNotAllowedValidator(req, params),  # NEW
+            validation.ParamsNotAllowedValidator(req, params),
             validation.IdNotEmptyValidator(req, params),
             validation.BlobFieldNotEmptyValidator(req, params),
             validation.ChangedFieldNotEmptyValidator(req, params),
-            validation.ChangedIsISODatetimeValidator(req, params),  # NEW
+            validation.ChangedIsISODatetimeValidator(req, params),
             validation.DIDFormatValidator(req, params),
             validation.BlobSigValidator(req, params),
-            validation.BlobDoesntExistValidator(req, params)  # NEW
+            validation.BlobDoesntExistValidator(req, params)
         ]
         return validation.CompositeValidator(req, params, validators)
     elif req.method == "PUT" or req.method == "put":
@@ -90,7 +90,7 @@ def blobFactory(mode, req, params):
             validation.IdNotEmptyValidator(req, params),
             validation.BlobFieldNotEmptyValidator(req, params),
             validation.ChangedFieldNotEmptyValidator(req, params),
-            validation.ChangedIsISODatetimeValidator(req, params),  # NEW
+            validation.ChangedIsISODatetimeValidator(req, params),
             validation.DIDFormatValidator(req, params),
             validation.DidInURLValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
@@ -99,10 +99,10 @@ def blobFactory(mode, req, params):
         return validation.CompositeValidator(req, params, validators)
     elif req.method == "DELETE" or req.method == "delete":
         validators = [
-            validation.RequiredFieldsValidator(req, params, ["id"]),  # NEW
+            validation.RequiredFieldsValidator(req, params, ["id"]),
             validation.HasSignatureHeaderValidator(req, params),
             validation.DidInURLValidator(req, params),
-            validation.IdNotEmptyValidator(req, params),  # NEW
+            validation.IdNotEmptyValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
             validation.DIDFormatValidator(req, params),
             validation.DeleteBlobSigValidator(req, params),

@@ -185,6 +185,10 @@ class ChangedIsISODatetimeValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'ISO datetime could not be parsed.')
+        except Exception as ex:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'ISO datetime could not be parsed.')
 
 
 class NoEmptyKeysValidator(Validator):
