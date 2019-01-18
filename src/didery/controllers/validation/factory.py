@@ -85,6 +85,8 @@ def blobFactory(mode, req, params):
     :param params: (dict) URI Template field names
     """
     req.raw = helping.parseReqBody(req)
+    validators = []
+
     if req.method == "POST" or req.method == "post":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id", "blob", "changed"]),
@@ -99,7 +101,6 @@ def blobFactory(mode, req, params):
             validation.BlobSigValidator(req, params),
             validation.BlobDoesntExistValidator(req, params)
         ]
-        return validation.CompositeValidator(req, params, validators)
     elif req.method == "PUT" or req.method == "put":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id", "blob", "changed"]),
@@ -114,7 +115,6 @@ def blobFactory(mode, req, params):
             validation.URLDidMatchesIdValidator(req, params),
             validation.BlobSigValidator(req, params)
         ]
-        return validation.CompositeValidator(req, params, validators)
     elif req.method == "DELETE" or req.method == "delete":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id"]),
@@ -125,7 +125,8 @@ def blobFactory(mode, req, params):
             validation.DIDFormatValidator(req, params),
             validation.DeleteBlobSigValidator(req, params),
         ]
-        return validation.CompositeValidator(req, params, validators)
     else:
         # TODO add error logging here
         return None
+
+    return validation.CompositeValidator(req, params, validators)
