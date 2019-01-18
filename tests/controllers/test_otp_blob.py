@@ -267,6 +267,32 @@ def testPostResourceAlreadyExists(client):
                   exp_result=exp_result)
 
 
+def testPostInvalidDIDMethod(client):
+    body = {
+        "id": "did:eth:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
+                "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+        "changed": "2000-01-01T00:00:00+00:00"
+    }
+
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "blob/ endpoint only accepts dad method for DIDs."
+    }
+
+    verifyRequest(client.simulate_post,
+                  BLOB_BASE_PATH,
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_400,
+                  exp_result=exp_result)
+
+
 def testValidPost(client):
     body = deepcopy(data)
 
@@ -395,6 +421,32 @@ def testPutChangedFieldIsISO(client):
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
+
+
+def testPutInvalidDIDMethod(client):
+    body = {
+        "id": "did:eth:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9y"
+                "juKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+        "changed": "2000-01-01T00:00:00+00:00"
+    }
+
+    signature = eddsa.signResource(json.dumps(body).encode(), SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    exp_result = {
+        "title": "Validation Error",
+        "description": "blob/ endpoint only accepts dad method for DIDs."
+    }
+
+    verifyRequest(client.simulate_put,
+                  "{}/{}".format(BLOB_BASE_PATH, body["id"]),
+                  body,
+                  headers=headers,
+                  exp_status=falcon.HTTP_400,
+                  exp_result=exp_result)
 
 
 def testValidPut(client):

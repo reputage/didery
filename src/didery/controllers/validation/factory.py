@@ -11,6 +11,8 @@ def historyFactory(mode, req, params):
     :param params: (dict) URI Template field names
     """
     req.raw = helping.parseReqBody(req)
+    validators = []
+
     if req.method == "POST" or req.method == "post":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id", "changed", "signer", "signers"]),
@@ -28,9 +30,7 @@ def historyFactory(mode, req, params):
             validation.SignersKeysNotNoneValidator(req, params),
             validation.SignerIsZeroValidator(req, params),
             validation.InceptionSigValidator(req, params),
-            validation.DidHijackingValidator(req, params)
         ]
-        return validation.CompositeValidator(req, params, validators)
     elif req.method == "PUT" or req.method == "put":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id", "changed", "signer", "signers"]),
@@ -50,7 +50,6 @@ def historyFactory(mode, req, params):
             validation.DIDFormatValidator(req, params),
             validation.RotationSigValidator(req, params)
         ]
-        return validation.CompositeValidator(req, params, validators)
     elif req.method == "DELETE" or req.method == "delete":
         validators = [
             validation.RequiredFieldsValidator(req, params, ["id"]),
@@ -60,10 +59,21 @@ def historyFactory(mode, req, params):
             validation.URLDidMatchesIdValidator(req, params),
             validation.DeletionSigValidator(req, params),
         ]
-        return validation.CompositeValidator(req, params, validators)
     else:
         # TODO add error logging here
         return None
+
+    if mode == "race":
+        if req.method == "POST" or req.method == "post":
+            validators.append(validation.HistoryDoesntExistValidator(req, params))
+    elif mode == "promiscuous":
+        pass  # Currently no additional validators
+    elif mode == "method":
+        if req.method == "POST" or req.method == "post":
+            validators.append(validation.DidHijackingValidator(req, params))
+            validators.append(validation.HistoryDoesntExistValidator(req, params))
+
+    return validation.CompositeValidator(req, params, validators)
 
 
 def blobFactory(mode, req, params):
@@ -85,6 +95,7 @@ def blobFactory(mode, req, params):
             validation.ChangedFieldNotEmptyValidator(req, params),
             validation.ChangedIsISODatetimeValidator(req, params),
             validation.DIDFormatValidator(req, params),
+            validation.DADValidator(req, params),
             validation.BlobSigValidator(req, params),
             validation.BlobDoesntExistValidator(req, params)
         ]
@@ -98,6 +109,7 @@ def blobFactory(mode, req, params):
             validation.ChangedFieldNotEmptyValidator(req, params),
             validation.ChangedIsISODatetimeValidator(req, params),
             validation.DIDFormatValidator(req, params),
+            validation.DADValidator(req, params),
             validation.DidInURLValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
             validation.BlobSigValidator(req, params)

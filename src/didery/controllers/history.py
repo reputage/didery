@@ -85,11 +85,6 @@ class History:
         sigs = req.signatures
         did = result_json['id']
 
-        if db.getHistory(did) is not None:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Resource Already Exists',
-                                   'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
-
         # TODO: review signature validation for any holes
         response_json = db.saveHistory(did, result_json, sigs)
         db.saveEvent(did, result_json, sigs)

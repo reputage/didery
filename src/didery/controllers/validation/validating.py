@@ -88,6 +88,18 @@ class HistoryExistsValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_404)
 
 
+class HistoryDoesntExistValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        did = self.body["id"]
+        if db.getHistory(did) is not None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Resource Already Exists',
+                                   'Resource with did "{}" already exists. Use PUT request.'.format(did))
+
+
 class BlobExistsValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -240,6 +252,19 @@ class DIDFormatValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    "Invalid did format. {}".format(str(ex)))
+
+
+class DADValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        did = Did(self.body['id'])
+
+        if did.method != 'dad':
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   "blob/ endpoint only accepts dad method for DIDs.")
 
 
 class MinSignersLengthValidator(Validator):
