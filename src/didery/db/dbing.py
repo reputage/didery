@@ -185,7 +185,12 @@ def saveHistory(did, data, sigs):
             A dict containing the rotation history and signatures
 
     """
-    certifiable_data = {
+    root_vk = data['signers'][0]
+    existing_history = getHistory(did)
+
+    existing_history = {} if existing_history is None else existing_history
+
+    existing_history[root_vk] = {
         "history": data,
         "signatures": sigs
     }
@@ -194,7 +199,7 @@ def saveHistory(did, data, sigs):
     with dideryDB.begin(db=subDb, write=True) as txn:
         txn.put(
             did.encode(),
-            json.dumps(certifiable_data).encode()
+            json.dumps(existing_history).encode()
         )
 
     return certifiable_data
