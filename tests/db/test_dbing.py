@@ -33,10 +33,8 @@ def testSetupDbEnvWithPort():
     pass
 
 
-def testEmptyHistoryCount():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    count = dbing.historyCount()
+def testEmptyHistoryCount(historyDB):
+    count = historyDB.historyCount()
 
     assert count == 0
 
@@ -52,14 +50,12 @@ def testHistoryCount():
 
         txn.put(id, data)
 
-    count = dbing.historyCount()
+    count = dbing.historyDB.historyCount()
 
     assert count == 1
 
 
-def testSaveHistory():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testSaveHistory(historyDB):
     data = {
         "id": DID,
         "signer": 0,
@@ -71,7 +67,7 @@ def testSaveHistory():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    exp_data = dbing.saveHistory(DID, data, sigs)
+    exp_data = historyDB.saveHistory(DID, data, sigs)
 
     dbHistory = dbing.dideryDB.open_db(dbing.DB_KEY_HISTORY_NAME)
 
@@ -81,9 +77,7 @@ def testSaveHistory():
     assert actual_data == json.dumps(exp_data).encode()
 
 
-def testGetHistory():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testGetHistory(historyDB):
     data = {
         "id": DID,
         "signer": 0,
@@ -95,25 +89,21 @@ def testGetHistory():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    exp_data = dbing.saveHistory(DID, data, sigs)
+    exp_data = historyDB.saveHistory(DID, data, sigs)
 
-    actual_data = dbing.getHistory(DID)
+    actual_data = historyDB.getHistory(DID)
 
     assert actual_data == exp_data
 
 
-def testGetNonExistentHistory():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    actual_data = dbing.getHistory(DID)
+def testGetNonExistentHistory(historyDB):
+    actual_data = historyDB.getHistory(DID)
 
     assert actual_data is None
 
 
-def testGetAllHistories():
+def testGetAllHistories(historyDB):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-
-    dbing.setupDbEnv(DB_DIR_PATH)
 
     data = {
         "id": DID,
@@ -126,13 +116,13 @@ def testGetAllHistories():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    history1 = dbing.saveHistory(DID, data, sigs)
+    history1 = historyDB.saveHistory(DID, data, sigs)
 
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = json.loads(body)
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
-    history2 = dbing.saveHistory(did, data, sigs)
+    history2 = historyDB.saveHistory(did, data, sigs)
 
     exp_data = {
         'data': [
@@ -141,51 +131,45 @@ def testGetAllHistories():
         ]
     }
 
-    actual_data = dbing.getAllHistories()
+    actual_data = historyDB.getAllHistories()
 
     assert actual_data == exp_data
 
 
-def testGetAllHistoriesOnEmptyDB():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    actual_data = dbing.getAllHistories()
+def testGetAllHistoriesOnEmptyDB(historyDB):
+    actual_data = historyDB.getAllHistories()
 
     assert actual_data == {'data': []}
 
 
-def testDeleteHistory():
+def testDeleteHistory(historyDB):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = json.loads(body)
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
-    dbing.saveHistory(did, data, sigs)
+    historyDB.saveHistory(did, data, sigs)
 
-    status = dbing.deleteHistory(did)
+    status = historyDB.deleteHistory(did)
 
     assert status is True
-    assert dbing.getHistory(did) is None
+    assert historyDB.getHistory(did) is None
 
 
-def testDeleteNonExistentHistory():
-    status = dbing.deleteHistory(DID)
+def testDeleteNonExistentHistory(historyDB):
+    status = historyDB.deleteHistory(DID)
 
     assert status is False
 
 
-def testEmptyOtpCount():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    count = dbing.otpBlobCount()
+def testEmptyOtpCount(otpDB):
+    count = otpDB.otpBlobCount()
 
     assert count == 0
 
 
-def testOtpBlobCount():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testOtpBlobCount(otpDB):
     dbOtpBlob = dbing.dideryDB.open_db(dbing.DB_OTP_BLOB_NAME)
 
     with dbing.dideryDB.begin(db=dbOtpBlob, write=True) as txn:
@@ -194,14 +178,12 @@ def testOtpBlobCount():
 
         txn.put(id, data)
 
-    count = dbing.otpBlobCount()
+    count = otpDB.otpBlobCount()
 
     assert count == 1
 
 
-def testSaveOtpBlob():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testSaveOtpBlob(otpDB):
     data = {
         "id": DID,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
@@ -209,7 +191,7 @@ def testSaveOtpBlob():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    exp_data = dbing.saveOtpBlob(DID, data, sigs)
+    exp_data = otpDB.saveOtpBlob(DID, data, sigs)
 
     dbOtpBlob = dbing.dideryDB.open_db(dbing.DB_OTP_BLOB_NAME)
 
@@ -219,9 +201,7 @@ def testSaveOtpBlob():
     assert actual_data == json.dumps(exp_data).encode()
 
 
-def testGetOtpBlob():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testGetOtpBlob(otpDB):
     data = {
         "id": DID,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
@@ -229,25 +209,21 @@ def testGetOtpBlob():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    exp_data = dbing.saveOtpBlob(DID, data, sigs)
+    exp_data = otpDB.saveOtpBlob(DID, data, sigs)
 
-    actual_data = dbing.getOtpBlob(DID)
+    actual_data = otpDB.getOtpBlob(DID)
 
     assert actual_data == exp_data
 
 
-def testGetNonExistentOtpBlob():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    actual_data = dbing.getOtpBlob(DID)
+def testGetNonExistentOtpBlob(otpDB):
+    actual_data = otpDB.getOtpBlob(DID)
 
     assert actual_data is None
 
 
-def testGetAllOtpBlobs():
+def testGetAllOtpBlobs(otpDB):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-
-    dbing.setupDbEnv(DB_DIR_PATH)
 
     data = {
         "id": DID,
@@ -255,7 +231,7 @@ def testGetAllOtpBlobs():
     }
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    otpBlob1 = dbing.saveOtpBlob(DID, data, sigs)
+    otpBlob1 = otpDB.saveOtpBlob(DID, data, sigs)
 
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = {
@@ -264,7 +240,7 @@ def testGetAllOtpBlobs():
     }
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
-    otpBlob2 = dbing.saveOtpBlob(did, data, sigs)
+    otpBlob2 = otpDB.saveOtpBlob(did, data, sigs)
 
     exp_data = {
         'data': [
@@ -273,35 +249,33 @@ def testGetAllOtpBlobs():
         ]
     }
 
-    actual_data = dbing.getAllOtpBlobs()
+    actual_data = otpDB.getAllOtpBlobs()
 
     assert actual_data == exp_data
 
 
-def testGetAllOtpBlobsOnEmptyDB():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    actual_data = dbing.getAllOtpBlobs()
+def testGetAllOtpBlobsOnEmptyDB(otpDB):
+    actual_data = otpDB.getAllOtpBlobs()
 
     assert actual_data == {'data': []}
 
 
-def testDeleteOtpBlob():
+def testDeleteOtpBlob(otpDB):
     data = {
         "id": DID,
         "blob": "aj;skldfjaoisfjweoijfoiajfo;iasjvjncowrnoiarejnfoj;csacivnfgo;afiewvajdfvo;hnafddjio;ahjfgoia;ehroi;hs"
     }
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    dbing.saveOtpBlob(DID, data, sigs)
+    otpDB.saveOtpBlob(DID, data, sigs)
 
-    status = dbing.deleteOtpBlob(DID)
+    status = otpDB.deleteOtpBlob(DID)
 
     assert status is True
-    assert dbing.getHistory(DID) is None
+    assert otpDB.getOtpBlob(DID) is None
 
 
-def testDeleteNonExistentOtpBlob():
-    status = dbing.deleteOtpBlob(DID)
+def testDeleteNonExistentOtpBlob(otpDB):
+    status = otpDB.deleteOtpBlob(DID)
 
     assert status is False

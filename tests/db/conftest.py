@@ -2,6 +2,8 @@ import pytest
 import os
 import shutil
 
+from didery.db import dbing
+
 
 DB_DIR_PATH = "/tmp/db_setup_test"
 
@@ -29,3 +31,15 @@ def setupTeardown():
     # teardown
     cleanupBaseDir(DB_DIR_PATH)
     assert not os.path.exists(DB_DIR_PATH)
+
+
+@pytest.fixture
+def historyDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.historyDB
+
+
+@pytest.fixture
+def otpDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.otpDB
