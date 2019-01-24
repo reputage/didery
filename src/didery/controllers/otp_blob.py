@@ -32,11 +32,6 @@ class OtpBlob:
         self.store = store
         self.mode = mode
 
-    """
-    For manual testing of the endpoint:
-        http localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
-        http localhost:8000/blob
-    """
     @falcon.before(helping.parseQString)
     def on_get(self, req, resp, did=None):
         """
@@ -49,10 +44,10 @@ class OtpBlob:
         offset = req.offset
         limit = req.limit
 
-        count = db.otpBlobCount()
+        count = db.otpDB.otpBlobCount()
 
         if did is not None:
-            body = db.getOtpBlob(did)
+            body = db.otpDB.getOtpBlob(did)
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
         else:
@@ -60,17 +55,12 @@ class OtpBlob:
                 resp.body = json.dumps({}, ensure_ascii=False)
                 return
 
-            body = db.getAllOtpBlobs(offset, limit)
+            body = db.otpDB.getAllOtpBlobs(offset, limit)
 
             resp.append_header('X-Total-Count', count)
 
         resp.body = json.dumps(body, ensure_ascii=False)
 
-
-    """
-        For manual testing of the endpoint:
-        http POST localhost:8000/blob id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-    """
     @falcon.before(validate)
     def on_post(self, req, resp):
         """
@@ -82,21 +72,17 @@ class OtpBlob:
         sigs = req.signatures
         did = result_json['id']
 
-        if db.getOtpBlob(did) is not None:
+        if db.otpDB.getOtpBlob(did) is not None:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Resource Already Exists',
                                    'Resource with did "{}" already exists. Use PUT request.'.format(result_json['id']))
 
         # TODO: review signature validation for any holes
-        response_json = db.saveOtpBlob(did, result_json, sigs)
+        response_json = db.otpDB.saveOtpBlob(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
 
-    """
-        For manual testing of the endpoint:
-        http PUT localhost:8000/blob/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" blob="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw"
-    """
     @falcon.before(validate)
     def on_put(self, req, resp, did):
         """
@@ -108,7 +94,7 @@ class OtpBlob:
         result_json = req.body
         sigs = req.signatures
 
-        resource = db.getOtpBlob(did)
+        resource = db.otpDB.getOtpBlob(did)
 
         if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
@@ -121,7 +107,7 @@ class OtpBlob:
                                    '"changed" field not later than previous update.')
 
         # TODO: review signature validation for any holes
-        response_json = db.saveOtpBlob(did, result_json, sigs)
+        response_json = db.otpDB.saveOtpBlob(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
@@ -135,7 +121,7 @@ class OtpBlob:
         """
         resource = req.otp
 
-        success = db.deleteOtpBlob(did)
+        success = db.otpDB.deleteOtpBlob(did)
 
         if not success:
             raise falcon.HTTPError(falcon.HTTP_500,

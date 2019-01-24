@@ -35,11 +35,6 @@ class History:
         self.store = store
         self.mode = mode
 
-    """
-    For manual testing of the endpoint:
-        http localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=
-        http localhost:8000/history
-    """
     @falcon.before(helping.parseQString)
     def on_get(self, req, resp, did=None):
         """
@@ -52,10 +47,10 @@ class History:
         offset = req.offset
         limit = req.limit
 
-        count = db.historyCount()
+        count = db.historyDB.historyCount()
 
         if did is not None:
-            body = db.getHistory(did)
+            body = db.historyDB.getHistory(did)
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
         else:
@@ -63,17 +58,12 @@ class History:
                 resp.body = json.dumps({}, ensure_ascii=False)
                 return
 
-            body = db.getAllHistories(offset, limit)
+            body = db.historyDB.getAllHistories(offset, limit)
 
             resp.append_header('X-Total-Count', count)
 
         resp.body = json.dumps(body, ensure_ascii=False)
 
-
-    """
-    For manual testing of the endpoint:
-        http POST localhost:8000/history id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
-    """
     @falcon.before(validate)
     def on_post(self, req, resp):
         """
@@ -86,16 +76,12 @@ class History:
         did = result_json['id']
 
         # TODO: review signature validation for any holes
-        response_json = db.saveHistory(did, result_json, sigs)
+        response_json = db.historyDB.saveHistory(did, result_json, sigs)
         db.saveEvent(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
 
-    """
-    For manual testing of the endpoint:
-        http PUT localhost:8000/history/did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE= id="did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=" changed="2000-01-01T00:00:00+00:00" signer=2 signers="['Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=', 'Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=', 'dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=', '3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA=']"
-    """
     @falcon.before(validate)
     def on_put(self, req, resp, did):
         """
@@ -107,7 +93,7 @@ class History:
         result_json = req.body
         sigs = req.signatures
 
-        resource = db.getHistory(did)
+        resource = db.historyDB.getHistory(did)
 
         if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
@@ -144,7 +130,7 @@ class History:
                                        'signer field must be one greater than previous.')
 
         # TODO: review signature validation for any holes
-        response_json = db.saveHistory(did, result_json, sigs)
+        response_json = db.historyDB.saveHistory(did, result_json, sigs)
         db.saveEvent(did, result_json, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
@@ -159,7 +145,7 @@ class History:
         """
         resource = req.history
 
-        success = db.deleteHistory(did)
+        success = db.historyDB.deleteHistory(did)
         db.deleteEvent(did)
 
         if not success:
@@ -182,12 +168,12 @@ class HistoryStream:
 
     def historyGenerator(self, did=None):
         if did is None:
-            count = db.historyCount()
+            count = db.historyDB.historyCount()
             if self.history == count:
                 time.sleep(2)
             else:
                 self.history = count
-                history = db.getAllHistories(limit=self.history)
+                history = db.historyDB.getAllHistories(limit=self.history)
                 temp = []
                 for entry in history['data']:
                     temp.append(json.loads(entry.decode('utf-8')))
@@ -198,7 +184,7 @@ class HistoryStream:
                 time.sleep(2)
 
         else:
-            value = db.getHistory(did)
+            value = db.historyDB.getHistory(did)
             if value is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
 

@@ -17,9 +17,11 @@ DB_OTP_BLOB_NAME = b'otp_blob'
 
 gDbDirPath = None   # database directory location has not been set up yet
 dideryDB = None    # database environment has not been set up yet
+historyDB = None
+otpDB = None
 
 
-def setupDbEnv(baseDirPath=None, port=8080):
+def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     """
     Setup the module globals gDbDirPath, and dideryDB using baseDirPath
     if provided otherwise use DATABASE_DIR_PATH
@@ -28,7 +30,7 @@ def setupDbEnv(baseDirPath=None, port=8080):
     :param baseDirPath: string
         directory where the database is located
     """
-    global gDbDirPath, dideryDB
+    global gDbDirPath, dideryDB, historyDB, otpDB
 
     if not baseDirPath:
         baseDirPath = "{}{}".format(DATABASE_DIR_PATH, port)
@@ -56,7 +58,11 @@ def setupDbEnv(baseDirPath=None, port=8080):
     dideryDB.open_db(DB_KEY_HISTORY_NAME)
     dideryDB.open_db(DB_OTP_BLOB_NAME)
 
+    historyDB = BaseHistoryDB()
+    otpDB = BaseBlobDB()
+
     return dideryDB
+
 
 def eventCount():
     """
@@ -68,6 +74,7 @@ def eventCount():
 
     with dideryDB.begin(db=subDb, write=False) as txn:
         return txn.stat(subDb)['entries']
+
 
 def getEvent(did):
     """
@@ -121,6 +128,7 @@ def saveEvent(did, data, sigs):
 
     return certifiable_data
 
+
 def getAllEvents(offset=0, limit=10):
     """
         Get all events in a range between the offset and offset+limit
@@ -163,207 +171,279 @@ def deleteEvent(did):
 
         return status
 
-def historyCount():
-    """
-        Gets a count of the number of entries in the table
 
-        :return: int count
-    """
-    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
+class DB:
+    def __init__(self, namedDB):
+        """
+        :param namedDB: string
+            name of the table to be accessed
+        """
+        self.namedDB = namedDB
 
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        return txn.stat(subDb)['entries']
+    def count(self):
+        """
+            Gets a count of the number of entries in the table
 
+            :return: int count
+        """
+        subDb = dideryDB.open_db(self.namedDB)
 
-def saveHistory(did, data, sigs):
-    """
-        Store a rotation history and signatures
+        with dideryDB.begin(db=subDb, write=False) as txn:
+            return txn.stat(subDb)['entries']
 
-        :param did: string
-            W3C did string
-        :param data: dict
-            A dict containing the rotation history and signatures
+    def save(self, key, data):
+        """
+            Store a key value pair
 
-    """
-    root_vk = data['signers'][0]
-    existing_history = getHistory(did)
+            :param key: string
+                key to identify data
+            :param data: dict
+                A dict of the data to be stored
 
-    existing_history = {} if existing_history is None else existing_history
+        """
+        # TODO check if did length in bytes exceeds lmdb's max key length
+        # TODO register an error in the error DB if it is
+        subDb = dideryDB.open_db(self.namedDB)
 
-    existing_history[root_vk] = {
-        "history": data,
-        "signatures": sigs
-    }
-    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
+        with dideryDB.begin(db=subDb, write=True) as txn:
+            txn.put(
+                key.encode(),
+                json.dumps(data).encode()
+            )
 
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        txn.put(
-            did.encode(),
-            json.dumps(existing_history).encode()
-        )
+    def get(self, key):
+        """
+            Find and return a key value pair
 
-    return certifiable_data
+            :param key: string
+                key to look up
+            :return: dict
+        """
+        subDb = dideryDB.open_db(self.namedDB)
 
+        with dideryDB.begin(db=subDb, write=False) as txn:
+            raw_data = txn.get(key.encode())
 
-def getHistory(did):
-    """
-        Find and return a key rotation history matching the supplied did.
+            if raw_data is None:
+                return None
 
-        :param did: string
-            W3C did identifier for history object
-        :return: dict
-    """
-    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
+            return json.loads(raw_data)
 
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        raw_data = txn.get(did.encode())
+    def getAll(self, offset=0, limit=10):
+        """
+            Get all key value pairs in a range between the offset and offset+limit
 
-        if raw_data is None:
-            return None
+            :param offset: int starting point of the range
+            :param limit: int maximum number of entries to return
+            :return: dict
+        """
+        subDb = dideryDB.open_db(self.namedDB)
+        values = {"data": []}
 
-        return json.loads(raw_data)
+        with dideryDB.begin(db=subDb, write=False) as txn:
+            cursor = txn.cursor()
 
+            count = 0
+            for key, value in cursor:
+                if count >= limit+offset:
+                    break
 
-def getAllHistories(offset=0, limit=10):
-    """
-        Get all rotation histories in a range between the offset and offset+limit
+                if offset < count+1:
+                    values["data"].append(json.loads(value))
 
-        :param offset: int starting point of the range
-        :param limit: int maximum number of entries to return
-        :return: dict
-    """
-    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
-    values = {"data": []}
+                count += 1
 
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        cursor = txn.cursor()
+        return values
 
-        count = 0
-        for key, value in cursor:
-            if count >= limit+offset:
-                break
+    def delete(self, key):
+        """
+            Find and delete a key value pair matching the supplied key.
 
-            if offset < count+1:
-                values["data"].append(json.loads(value))
+            :param key: string
+                key to delete
+            :return: boolean
+        """
+        subDb = dideryDB.open_db(self.namedDB)
 
-            count += 1
+        with dideryDB.begin(db=subDb, write=True) as txn:
+            status = txn.delete(key.encode())
 
-    return values
-
-
-def deleteHistory(did):
-    """
-        Find and delete a key rotation history matching the supplied did.
-
-    :param did: string
-        W3C did identifier for history object
-    :return: boolean
-    """
-    subDb = dideryDB.open_db(DB_KEY_HISTORY_NAME)
-
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        status = txn.delete(did.encode())
-
-        return status
+            return status
 
 
-def otpBlobCount():
-    """
-        Gets a count of the number of entries in the table
+class BaseHistoryDB:
+    def __init__(self, db=None):
+        """
+            :param db: DB for interacting with lmdb
+        """
+        if db is None:
+            self.db = DB(DB_KEY_HISTORY_NAME)
+        else:
+            self.db = db
 
-        :return: int count
-    """
-    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+    def historyCount(self):
+        """
+            Returns the number of entries in the table
 
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        return txn.stat(subDb)['entries']
+            :return: int count
+        """
+        return self.db.count()
+
+    def saveHistory(self, did, data, sigs):
+        """
+            Store a rotation history and signatures
+
+            :param did: string
+                W3C did string
+            :param data: dict
+                A dict containing the rotation history
+            :param sigs: dict
+                A dict containing the rotation history signatures
+
+        """
+        certifiable_data = {
+            "history": data,
+            "signatures": sigs
+        }
+
+        self.db.save(did, certifiable_data)
+
+        return certifiable_data
+
+    def getHistory(self, did):
+        """
+            Find and return a key rotation history matching the supplied did.
+
+            :param did: string
+                W3C did identifier for history object
+            :return: dict
+        """
+        return self.db.get(did)
+
+    def getAllHistories(self, offset=0, limit=10):
+        """
+            Get all rotation histories in a range between the offset and offset+limit
+
+            :param offset: int starting point of the range
+            :param limit: int maximum number of entries to return
+            :return: dict
+        """
+        return self.db.getAll(offset, limit)
+
+    def deleteHistory(self, did):
+        """
+            Find and delete a key rotation history matching the supplied did.
+
+            :param did: string
+                W3C did identifier for history object
+            :return: boolean
+        """
+        return self.db.delete(did)
 
 
-def saveOtpBlob(did, data, sigs):
-    """
-        Store a otp encrypted key and signatures
+class PromiscuousHistoryDB(BaseHistoryDB):
+    def __init__(self, db=None):
+        """
+        :param db: DB for interacting with lmdb
+        """
+        BaseHistoryDB.__init__(self, db)
 
-        :param did: string
-            W3C did string
-        :param data: dict
-            A dict containing the otp encrypted key and signatures
+    def saveHistory(self, did, data, sigs):
+        """
+            Store a rotation history and signatures
 
-    """
-    certifiable_data = {
-        "otp_data": data,
-        "signatures": sigs
-    }
-    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
+            :param did: string
+                W3C did string
+            :param data: dict
+                A dict containing the rotation history
+            :param sigs: dict
+                A dict containing the rotation history signatures
 
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        txn.put(
-            did.encode(),
-            json.dumps(certifiable_data).encode()
-        )
+        """
+        root_vk = data['signers'][0]
+        existing_history = self.getHistory(did)
 
-    return certifiable_data
+        existing_history = {} if existing_history is None else existing_history
 
+        existing_history[root_vk] = {
+            "history": data,
+            "signatures": sigs
+        }
 
-def getOtpBlob(did):
-    """
-        Find and return an otp encrypted key matching the supplied did.
+        self.db.save(did, existing_history)
 
-        :param did: string
-            W3C did identifier for history object
-        :return: dict
-    """
-    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
-
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        raw_data = txn.get(did.encode())
-
-        if raw_data is None:
-            return None
-
-        return json.loads(raw_data)
+        return existing_history
 
 
-def getAllOtpBlobs(offset=0, limit=10):
-    """
+class BaseBlobDB:
+    def __init__(self, db=None):
+        """
+            :param db: DB for interacting with lmdb
+                This is mostly for mocking the db in testing
+        """
+        if db is None:
+            self.db = DB(DB_OTP_BLOB_NAME)
+        else:
+            self.db = db
+
+    def otpBlobCount(self):
+        """
+            Returns the number of entries in the table
+
+            :return: int count
+        """
+        return self.db.count()
+
+    def saveOtpBlob(self, did, data, sigs):
+        """
+            Store a otp encrypted key and signatures
+
+            :param did: string
+                W3C did string
+            :param data: dict
+                A dict containing the otp encrypted keys and signatures
+            :param sigs: dict
+                A dict containing the otp encrypted keys signatures
+
+        """
+        certifiable_data = {
+            "otp_data": data,
+            "signatures": sigs
+        }
+
+        self.db.save(did, certifiable_data)
+
+        return certifiable_data
+
+    def getOtpBlob(self, did):
+        """
+            Find and return an otp encrypted key matching the supplied did.
+
+            :param did: string
+                W3C did identifier for history object
+            :return: dict
+        """
+        return self.db.get(did)
+
+    def getAllOtpBlobs(self, offset=0, limit=10):
+        """
             Get all otp encrypted keys in a range between the offset and offset+limit
 
             :param offset: int starting point of the range
             :param limit: int maximum number of entries to return
             :return: dict
         """
-    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
-    values = {"data": []}
+        return self.db.getAll(offset, limit)
 
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        cursor = txn.cursor()
+    def deleteOtpBlob(self, did):
+        """
+            Find and delete a otp encrypted blob matching the supplied did.
 
-        count = 0
-        for key, value in cursor:
-            if count >= limit + offset:
-                break
-
-            if offset < count + 1:
-                values["data"].append(json.loads(value))
-
-            count += 1
-
-    return values
-
-
-def deleteOtpBlob(did):
-    """
-        Find and delete a otp encrypted blob matching the supplied did.
-
-    :param did: string
-        W3C did identifier for history object
-    :return: boolean
-    """
-    subDb = dideryDB.open_db(DB_OTP_BLOB_NAME)
-
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        status = txn.delete(did.encode())
-
-        return status
+            :param did: string
+                W3C did identifier for history object
+            :return: boolean
+        """
+        return self.db.delete(did)
 
 
 def loadTestData(name, data):

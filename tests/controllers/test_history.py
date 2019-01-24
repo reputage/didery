@@ -1211,7 +1211,7 @@ def testValidGetAll(client):
         "signer": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw==",
         "rotation": "bANC2XMeQS2DGvazrW7n5NpBHgn7Pv9jrmxId0cxcjFjuHE4zi7AK-tsf2Ocim0p-b8Z5Go6TsyaURE0VKgVCw=="
     }
-    db.saveHistory(DID, history1, history1_sigs)
+    db.historyDB.saveHistory(DID, history1, history1_sigs)
 
     history2_did = "did:dad:KAApprffJUn1e9ugNmpM9JBswxJvEU8_XCljDCoxkII="
     history2 = {
@@ -1229,7 +1229,7 @@ def testValidGetAll(client):
         "signer": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw==",
         "rotation": "tR1_GN9E7oTYbAGebDTlliRJLjy5IFEHTjvimgg3g9xHJHp82cEyNMnViUbg_TULdGAdkpfvzT9icujXuC3EDw=="
     }
-    db.saveHistory(history2_did, history2, history2_sigs)
+    db.historyDB.saveHistory(history2_did, history2, history2_sigs)
 
     history3_did = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     history3 = {
@@ -1246,7 +1246,7 @@ def testValidGetAll(client):
         "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
         "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
     }
-    db.saveHistory(history3_did, history3, history3_sigs)
+    db.historyDB.saveHistory(history3_did, history3, history3_sigs)
 
     response = client.simulate_get(HISTORY_BASE_PATH)
     result = json.loads(response.content)

@@ -82,7 +82,7 @@ class HistoryExistsValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        self.req.history = db.getHistory(self.params['did'])
+        self.req.history = db.historyDB.getHistory(self.params['did'])
 
         if self.req.history is None:
             raise falcon.HTTPError(falcon.HTTP_404)
@@ -94,7 +94,7 @@ class HistoryDoesntExistValidator(Validator):
 
     def validate(self):
         did = self.body["id"]
-        if db.getHistory(did) is not None:
+        if db.historyDB.getHistory(did) is not None:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Resource Already Exists',
                                    'Resource with did "{}" already exists. Use PUT request.'.format(did))
@@ -105,7 +105,7 @@ class BlobExistsValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        self.req.otp = db.getOtpBlob(self.params['did'])
+        self.req.otp = db.otpDB.getOtpBlob(self.params['did'])
 
         if self.req.otp is None:
             raise falcon.HTTPError(falcon.HTTP_404)
@@ -118,7 +118,7 @@ class BlobDoesntExistValidator(Validator):
     def validate(self):
         did = self.body['id']
 
-        if db.getHistory(did) is not None:
+        if db.otpDB.getOtpBlob(did) is not None:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Resource Already Exists',
                                    'Resource with did "{}" already exists. Use PUT request.'.format(did))
