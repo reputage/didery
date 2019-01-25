@@ -30,7 +30,7 @@ $ npm install
 $ npm run-script transcrypt
 ```
 
-A common issue with running the software is that your system doesn't have libsodium 16 or greater installed. Run these commands and try again:
+Some common issues with installing and running the software is that your system is missing some dependencies. Run these commands and try again:
 
 Mac
 ```
@@ -44,6 +44,8 @@ $ cd libsodium-1.0.16
 $ ./configure  
 $ make && make check  
 $ sudo make install  
+
+$ sudo apt install gcc python-dev python3-dev libgmp3-dev
 ```
 
 Starting The Server
