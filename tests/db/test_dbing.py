@@ -281,15 +281,13 @@ def testDeleteNonExistentOtpBlob(otpDB):
     assert status is False
 
 
-def testEmptyEventCount():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    count = dbing.eventCount()
+def testEmptyEventCount(eventsDB):
+    count = eventsDB.eventCount()
 
     assert count == 0
 
 
-def testEventCount():
+def testEventCount(eventsDB):
     dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
 
     with dbing.dideryDB.begin(db=dbEvents, write=True) as txn:
@@ -298,14 +296,12 @@ def testEventCount():
 
         txn.put(id, data)
 
-    count = dbing.eventCount()
+    count = eventsDB.eventCount()
 
     assert count == 1
 
 
-def testCreateEventHistory():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testCreateEventHistory(eventsDB):
     data = {
         "id": DID,
         "signer": 0,
@@ -317,7 +313,7 @@ def testCreateEventHistory():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    exp_data = dbing.saveEvent(DID, data, sigs)
+    exp_data = eventsDB.saveEvent(DID, data, sigs)
 
     dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
 
@@ -327,9 +323,7 @@ def testCreateEventHistory():
     assert actual_data == json.dumps(exp_data).encode()
 
 
-def testUpdateEventHistory():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testUpdateEventHistory(eventsDB):
     inception = {
         "id": DID,
         "signer": 0,
@@ -341,7 +335,7 @@ def testUpdateEventHistory():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
 
-    dbing.saveEvent(DID, inception, sigs)
+    eventsDB.saveEvent(DID, inception, sigs)
 
     rotation = {
         "id": DID,
@@ -354,7 +348,7 @@ def testUpdateEventHistory():
     }
     sigs2 = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
 
-    returned_data = dbing.saveEvent(DID, rotation, sigs2)
+    returned_data = eventsDB.saveEvent(DID, rotation, sigs2)
 
     dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
 
@@ -377,9 +371,7 @@ def testUpdateEventHistory():
     assert actual_data == json.dumps(exp_result).encode()
 
 
-def testGetEvent():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
+def testGetEvent(eventsDB):
     data = {
         "id": DID,
         "signer": 0,
@@ -391,9 +383,9 @@ def testGetEvent():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    returned_data = dbing.saveEvent(DID, data, sigs)
+    returned_data = eventsDB.saveEvent(DID, data, sigs)
 
-    actual_data = dbing.getEvent(DID)
+    actual_data = eventsDB.getEvent(DID)
 
     exp_result = [
         {
@@ -407,16 +399,13 @@ def testGetEvent():
     assert returned_data == exp_result
 
 
-def testGetAllEventsOnEmptyDB():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    actual_data = dbing.getAllEvents()
+def testGetAllEventsOnEmptyDB(eventsDB):
+    actual_data = eventsDB.getAllEvents()
 
     assert actual_data == {'data': []}
 
 
-def testGetAllEvents():
-    dbing.setupDbEnv(DB_DIR_PATH)
+def testGetAllEvents(eventsDB):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     data = {
@@ -430,13 +419,13 @@ def testGetAllEvents():
 
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
 
-    dbing.saveEvent(DID, data, sigs)
+    eventsDB.saveEvent(DID, data, sigs)
 
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     sigs2 = [didery.crypto.eddsa.signResource(body, sk)]
     data2 = json.loads(body)
 
-    dbing.saveEvent(did, data2, sigs2)
+    eventsDB.saveEvent(did, data2, sigs2)
 
     exp_data = {
         'data': [[
@@ -451,30 +440,27 @@ def testGetAllEvents():
         ]
     }
 
-    actual_data = dbing.getAllEvents()
+    actual_data = eventsDB.getAllEvents()
 
     assert actual_data == exp_data
 
 
-def testDeleteNonExistentEvent():
-    dbing.setupDbEnv(DB_DIR_PATH)
-
-    status = dbing.deleteEvent(DID)
+def testDeleteNonExistentEvent(eventsDB):
+    status = eventsDB.deleteEvent(DID)
 
     assert status is False
 
 
-def testDeleteEvent():
-    dbing.setupDbEnv(DB_DIR_PATH)
+def testDeleteEvent(eventsDB):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
 
     vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
     data = json.loads(body)
     sigs = [didery.crypto.eddsa.signResource(body, sk)]
 
-    dbing.saveEvent(did, data, sigs)
+    eventsDB.saveEvent(did, data, sigs)
 
-    status = dbing.deleteEvent(did)
+    status = eventsDB.deleteEvent(did)
 
     assert status is True
-    assert dbing.getEvent(did) is None
+    assert eventsDB.getEvent(did) is None

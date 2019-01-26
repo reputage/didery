@@ -19,6 +19,7 @@ gDbDirPath = None   # database directory location has not been set up yet
 dideryDB = None    # database environment has not been set up yet
 historyDB = None
 otpDB = None
+eventsDB = None
 
 
 def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
@@ -30,7 +31,7 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     :param baseDirPath: string
         directory where the database is located
     """
-    global gDbDirPath, dideryDB, historyDB, otpDB
+    global gDbDirPath, dideryDB, historyDB, otpDB, eventsDB
 
     if not baseDirPath:
         baseDirPath = "{}{}".format(DATABASE_DIR_PATH, port)
@@ -60,114 +61,9 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
 
     historyDB = BaseHistoryDB()
     otpDB = BaseBlobDB()
+    eventsDB = BaseEventsDB()
 
     return dideryDB
-
-
-def eventCount():
-    """
-        Gets a count of the number of entries in the table
-
-        :return: int count
-    """
-    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
-
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        return txn.stat(subDb)['entries']
-
-
-def getEvent(did):
-    """
-        Find and return an event history matching the supplied did.
-
-        :param did: string
-            W3C did identifier for history object
-        :return: dict
-    """
-    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
-
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        raw_data = txn.get(did.encode())
-
-        if raw_data is None:
-            return None
-
-        return json.loads(raw_data)
-
-
-def saveEvent(did, data, sigs):
-    """
-        Store an event and signatures
-
-        :param did: string
-            W3C did string
-        :param data: dict
-            A dict containing the rotation history and signatures
-
-    """
-    db_entry = []
-    certifiable_data = {
-        "event": data,
-        "signatures": sigs
-    }
-    db_entry.append(certifiable_data)
-
-    old_data = getEvent(did)
-    if old_data is not None:
-        db_entry.extend(old_data)
-
-    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
-
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        txn.put(
-            did.encode(),
-            json.dumps(db_entry).encode()
-        )
-
-    return db_entry
-
-
-def getAllEvents(offset=0, limit=10):
-    """
-        Get all events in a range between the offset and offset+limit
-
-        :param offset: int starting point of the range
-        :param limit: int maximum number of entries to return
-        :return: dict
-    """
-    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
-    values = {"data": []}
-
-    with dideryDB.begin(db=subDb, write=False) as txn:
-        cursor = txn.cursor()
-
-        count = 0
-        for key, value in cursor:
-            if count >= limit+offset:
-                break
-
-            if offset < count+1:
-                values["data"].append(json.loads(value))
-
-            count += 1
-
-    return values
-
-
-def deleteEvent(did):
-    """
-        Find and delete a key rotation history matching the supplied did.
-
-    :param did: string
-        W3C did identifier for history object
-    :return: boolean
-    """
-    subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
-
-    with dideryDB.begin(db=subDb, write=True) as txn:
-        status = txn.delete(did.encode())
-
-        return status
 
 
 class DB:
@@ -267,6 +163,77 @@ class DB:
             status = txn.delete(key.encode())
 
             return status
+
+
+class BaseEventsDB:
+    def __init__(self, db=None):
+        if db is None:
+            self.db = DB(DB_EVENT_HISTORY_NAME)
+        else:
+            self.db = db
+
+    def eventCount(self):
+        """
+            Gets a count of the number of entries in the table
+
+            :return: int count
+        """
+        return self.db.count()
+
+    def saveEvent(self, did, data, sigs):
+        """
+            Store an event and signatures
+
+            :param did: string
+                W3C DID string
+            :param data: dict
+                A dict containing the rotation history and signatures
+
+        """
+        db_entry = []
+        certifiable_data = {
+            "event": data,
+            "signatures": sigs
+        }
+        db_entry.append(certifiable_data)
+
+        old_data = self.getEvent(did)
+        if old_data is not None:
+            db_entry.extend(old_data)
+
+        self.db.save(did, db_entry)
+
+        return db_entry
+
+    def getEvent(self, did):
+        """
+            Find and return an event history matching the supplied did.
+
+            :param did: string
+                W3C DID identifier for rotation history events
+            :return: dict
+        """
+        return self.db.get(did)
+
+    def getAllEvents(self, offset=0, limit=10):
+        """
+            Get all events in a range between the offset and offset+limit
+
+            :param offset: int starting point of the range
+            :param limit: int maximum number of entries to return
+            :return: dict
+        """
+        return self.db.getAll(offset, limit)
+
+    def deleteEvent(self, did):
+        """
+            Find and delete the rotation events matching the supplied did.
+
+        :param did: string
+            W3C DID identifier for rotation history events
+        :return: boolean
+        """
+        return self.db.delete(did)
 
 
 class BaseHistoryDB:

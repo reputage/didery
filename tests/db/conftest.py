@@ -43,3 +43,9 @@ def historyDB():
 def otpDB():
     dbing.setupDbEnv(DB_DIR_PATH)
     return dbing.otpDB
+
+
+@pytest.fixture
+def eventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.eventsDB
