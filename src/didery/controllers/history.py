@@ -73,7 +73,7 @@ class History:
         """
         result_json = req.body
         sigs = req.signatures
-        did = result_json['id']
+        did = result_json['id'] 
 
         # TODO: review signature validation for any holes
         response_json = db.historyDB.saveHistory(did, result_json, sigs)
