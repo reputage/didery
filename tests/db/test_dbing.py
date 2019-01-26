@@ -279,3 +279,202 @@ def testDeleteNonExistentOtpBlob(otpDB):
     status = otpDB.deleteOtpBlob(DID)
 
     assert status is False
+
+
+def testEmptyEventCount():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    count = dbing.eventCount()
+
+    assert count == 0
+
+
+def testEventCount():
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=True) as txn:
+        data = b'{"id": "did:dad:-OVHx0sv_jJePGB9LBZaWDlrLkxMNlOeHPdHysViK9k=", "signer": 0, "signers": ["-OVHx0sv_jJePGB9LBZaWDlrLkxMNlOeHPdHysViK9k=", "5Bp8Z8_UOWZBtVxffoTVF3QYkE-W-CpKa6VnN27CcN8="]}'
+        id = b'did:dad:Y2CR8pS8z2YvJQN-FH_wprtF1TyA0jTlXC3MrMmaNyY='
+
+        txn.put(id, data)
+
+    count = dbing.eventCount()
+
+    assert count == 1
+
+
+def testCreateEventHistory():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    data = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+
+    exp_data = dbing.saveEvent(DID, data, sigs)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=True) as txn:
+        actual_data = txn.get(DID.encode())
+
+    assert actual_data == json.dumps(exp_data).encode()
+
+
+def testUpdateEventHistory():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    inception = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+    dbing.saveEvent(DID, inception, sigs)
+
+    rotation = {
+        "id": DID,
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    sigs2 = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
+
+    returned_data = dbing.saveEvent(DID, rotation, sigs2)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=True) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        {
+            "event": rotation,
+            "signatures": sigs2
+        },
+        {
+            "event": inception,
+            "signatures": sigs
+        }
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+
+def testGetEvent():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    data = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+
+    returned_data = dbing.saveEvent(DID, data, sigs)
+
+    actual_data = dbing.getEvent(DID)
+
+    exp_result = [
+        {
+            "event": data,
+            "signatures": sigs
+        },
+    ]
+
+    assert actual_data == returned_data
+    assert actual_data == exp_result
+    assert returned_data == exp_result
+
+
+def testGetAllEventsOnEmptyDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    actual_data = dbing.getAllEvents()
+
+    assert actual_data == {'data': []}
+
+
+def testGetAllEvents():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+
+    data = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+
+    dbing.saveEvent(DID, data, sigs)
+
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    sigs2 = [didery.crypto.eddsa.signResource(body, sk)]
+    data2 = json.loads(body)
+
+    dbing.saveEvent(did, data2, sigs2)
+
+    exp_data = {
+        'data': [[
+            {
+                "event": data,
+                "signatures": sigs
+            }],
+            [{
+                "event": data2,
+                "signatures": sigs2
+            }]
+        ]
+    }
+
+    actual_data = dbing.getAllEvents()
+
+    assert actual_data == exp_data
+
+
+def testDeleteNonExistentEvent():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    status = dbing.deleteEvent(DID)
+
+    assert status is False
+
+
+def testDeleteEvent():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    data = json.loads(body)
+    sigs = [didery.crypto.eddsa.signResource(body, sk)]
+
+    dbing.saveEvent(did, data, sigs)
+
+    status = dbing.deleteEvent(did)
+
+    assert status is True
+    assert dbing.getEvent(did) is None

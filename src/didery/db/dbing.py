@@ -114,9 +114,7 @@ def saveEvent(did, data, sigs):
 
     old_data = getEvent(did)
     if old_data is not None:
-        print(old_data)
-        for entry in old_data:
-            db_entry.append(entry)
+        db_entry.extend(old_data)
 
     subDb = dideryDB.open_db(DB_EVENT_HISTORY_NAME)
 
@@ -126,7 +124,7 @@ def saveEvent(did, data, sigs):
             json.dumps(db_entry).encode()
         )
 
-    return certifiable_data
+    return db_entry
 
 
 def getAllEvents(offset=0, limit=10):
@@ -149,7 +147,7 @@ def getAllEvents(offset=0, limit=10):
                 break
 
             if offset < count+1:
-                values["data"].append(value)
+                values["data"].append(json.loads(value))
 
             count += 1
 
