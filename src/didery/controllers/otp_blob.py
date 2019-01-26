@@ -124,7 +124,7 @@ class OtpBlob:
         success = db.otpDB.deleteOtpBlob(did)
 
         if not success:
-            raise falcon.HTTPError(falcon.HTTP_500,
+            raise falcon.HTTPError(falcon.HTTP_409,
                                    'Deletion Error',
                                    'Error while attempting to delete the resource.')
 

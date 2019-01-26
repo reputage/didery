@@ -123,14 +123,15 @@ Although all resource write requests are signed by the client and therefore can 
 The API returns standard HTTP success or error status codes. If an error occurs, extra information about what went wrong will be encoded in the response as JSON. The various HTTP status codes we might return are listed below.
 
 ### HTTP Status codes
-| Code | Title                 | Description                            |
-|------|-----------------------|----------------------------------------|
-| 200  | OK                    | The request was successful.            |
-| 201  | Created               | The resource was successfully created. |
-| 400  | Bad Request           | Bad request                            |
-| 401  | Unauthorized          | Signature(s) verification failed.      |
-| 404  | Not found             | The resource does not exist.           |
-| 50X  | Internal Server Error | An error occurred with our API.        |
+| Code | Title                 | Description                                             |
+|------|-----------------------|---------------------------------------------------------|
+| 200  | OK                    | The request was successful.                             |
+| 201  | Created               | The resource was successfully created.                  |
+| 400  | Bad Request           | Bad request                                             |
+| 401  | Unauthorized          | Signature(s) verification failed.                       |
+| 404  | Not found             | The resource does not exist.                            |
+| 409  | Resource Conflict     | State of the resource doesn't permit request.           |
+| 50X  | Internal Server Error | An error occurred with our API.                         |
 
 ### Error Types
 All errors are returned in the form of JSON with a title and optional description.
@@ -142,7 +143,8 @@ All errors are returned in the form of JSON with a title and optional descriptio
 | Malformed Query String  | Problem with the url query string.                          |   
 | Validation Error        | Error validating the request body or request header values. |   
 | Authorization Error     | Error validating request signatures.                        |   
-| Resource Already Exists | Resource cannot be created twice.                           |   
+| Resource Already Exists | Resource cannot be created twice.                           |
+| Deletion Error          | Error while attempting to delete the resource.              |   
 
 # Key Rotation History 
 This endpoint is meant for storing the rotation history of public keys for a particular did.  It stores the entire rotation history and a signature from both the current private key and the pre rotated private key.  
