@@ -306,6 +306,43 @@ class BaseHistoryDB:
         return self.db.delete(did)
 
 
+class RaceHistoryDB(BaseHistoryDB):
+    def __init__(self, db=None):
+        """
+        :param db: DB for interacting with lmdb
+        """
+        BaseHistoryDB.__init__(self, db)
+
+    def saveHistory(self, did, data, sigs):
+        """
+            Store a rotation history and signatures
+
+            :param did: string
+                W3C did string
+            :param data: dict
+                A dict containing the rotation history
+            :param sigs: dict
+                A dict containing the rotation history signatures
+        """
+        root_vk = data['signers'][0]
+        history = self.getHistory(did)
+
+        update = {
+            "history": data,
+            "signatures": sigs
+        }
+
+        # Make sure existing data is formatted correctly
+        if history is not None:
+            if "history" not in history:
+                history[root_vk] = update
+                update = history
+
+        self.db.save(did, update)
+
+        return history
+
+
 class PromiscuousHistoryDB(BaseHistoryDB):
     def __init__(self, db=None):
         """
@@ -323,21 +360,29 @@ class PromiscuousHistoryDB(BaseHistoryDB):
                 A dict containing the rotation history
             :param sigs: dict
                 A dict containing the rotation history signatures
-
         """
         root_vk = data['signers'][0]
-        existing_history = self.getHistory(did)
+        history = self.getHistory(did)
 
-        existing_history = {} if existing_history is None else existing_history
+        # Make sure existing data is formatted correctly
+        if history is not None:
+            if "history" in history:
+                key = history["history"]["signers"][0]
 
-        existing_history[root_vk] = {
+                history = {
+                    key: history
+                }
+        else:
+            history = {}
+
+        history[root_vk] = {
             "history": data,
             "signatures": sigs
         }
 
-        self.db.save(did, existing_history)
+        self.db.save(did, history)
 
-        return existing_history
+        return history
 
 
 class BaseBlobDB:
