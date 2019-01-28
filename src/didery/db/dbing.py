@@ -26,10 +26,12 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     """
     Setup the module globals gDbDirPath, and dideryDB using baseDirPath
     if provided otherwise use DATABASE_DIR_PATH
-    :param port: int
-        used to differentiate dbs for multiple didery servers running on the same computer
     :param baseDirPath: string
         directory where the database is located
+    :param port: int
+        used to differentiate dbs for multiple didery servers running on the same computer
+    :param mode: string
+        Didery's operating mode
     """
     global gDbDirPath, dideryDB, historyDB, otpDB, eventsDB
 
@@ -59,9 +61,21 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     dideryDB.open_db(DB_KEY_HISTORY_NAME)
     dideryDB.open_db(DB_OTP_BLOB_NAME)
 
-    historyDB = BaseHistoryDB()
+    if mode == "promiscuous":
+        historyDB = PromiscuousHistoryDB()
+    elif mode == "race":
+        historyDB = RaceHistoryDB()
+    else:  # mode == method
+        historyDB = BaseHistoryDB()
+
+    if mode == "promiscuous":
+        eventsDB = PromiscuousEventsDB()
+    elif mode == "race":
+        eventsDB = RaceEventsDB()
+    else:  # mode == method
+        eventsDB = BaseEventsDB()
+
     otpDB = BaseBlobDB()
-    eventsDB = BaseEventsDB()
 
     return dideryDB
 
@@ -188,7 +202,6 @@ class BaseEventsDB:
                 W3C DID string
             :param data: dict
                 A dict containing the rotation history and signatures
-
         """
         db_entry = []
         certifiable_data = {
@@ -234,6 +247,106 @@ class BaseEventsDB:
         :return: boolean
         """
         return self.db.delete(did)
+
+
+class RaceEventsDB(BaseEventsDB):
+    def __init__(self, db=None):
+        """
+        :param db: DB for interacting with lmdb
+        """
+        BaseEventsDB.__init__(self, db)
+
+    def saveEvent(self, did, data, sigs):
+        """
+            Store an event and signatures
+
+            :param did: string
+                W3C DID string
+            :param data: dict
+                A dict containing the rotation history and signatures
+        """
+        db_entry = []
+        root_vk = data['signers'][0]
+        event = self.getEvent(did)
+
+        update = {
+            "event": data,
+            "signatures": sigs
+        }
+
+        # Make sure existing data is formatted correctly
+        if event is not None:
+            if type(event[0]) is list:
+                temp = []
+                for key, item in enumerate(event):
+                    if item[0]["event"]["signers"][0] == root_vk:
+                        temp.append(update)
+                        temp.extend(item)
+                        event[key] = temp
+
+                db_entry = event
+            else:
+                db_entry.append(update)
+                db_entry.extend(event)
+        else:
+            db_entry.append(update)
+
+        self.db.save(did, db_entry)
+
+        return event
+
+
+class PromiscuousEventsDB(BaseEventsDB):
+    def __init__(self, db=None):
+        """
+        :param db: DB for interacting with lmdb
+        """
+        BaseEventsDB.__init__(self, db)
+
+    def saveEvent(self, did, data, sigs):
+        """
+            Store an event and signatures
+
+            :param did: string
+                W3C DID string
+            :param data: dict
+                A dict containing the rotation history and signatures
+        """
+        db_entry = []
+        root_vk = data['signers'][0]
+        event = self.getEvent(did)
+
+        update = {
+            "event": data,
+            "signatures": sigs
+        }
+
+        # Make sure existing data is formatted correctly
+        if event is not None:
+            if type(event[0]) is list:
+                temp = []
+                for key, item in enumerate(event):
+                    if item[0]["event"]["signers"][0] == root_vk:
+                        temp.append(update)
+                        temp.extend(item)
+                        event[key] = temp
+
+                if len(temp) == 0:
+                    event.append([
+                        update
+                    ])
+
+                db_entry = event
+            else:
+                temp = [update]
+                temp.extend(event)
+                db_entry.append(temp)
+        else:
+            db_entry.append([update])
+
+        self.db.save(did, db_entry)
+
+        return event
 
 
 class BaseHistoryDB:

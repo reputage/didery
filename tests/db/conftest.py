@@ -49,3 +49,15 @@ def otpDB():
 def eventsDB():
     dbing.setupDbEnv(DB_DIR_PATH)
     return dbing.eventsDB
+
+
+@pytest.fixture
+def promiscuousEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="promiscuous")
+    return dbing.eventsDB
+
+
+@pytest.fixture
+def raceEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="race")
+    return dbing.eventsDB
