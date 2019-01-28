@@ -293,7 +293,7 @@ class RaceEventsDB(BaseEventsDB):
 
         self.db.save(did, db_entry)
 
-        return event
+        return db_entry
 
 
 class PromiscuousEventsDB(BaseEventsDB):
