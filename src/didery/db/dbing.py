@@ -63,16 +63,15 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
 
     if mode == "promiscuous":
         historyDB = PromiscuousHistoryDB()
-    elif mode == "race":
-        historyDB = RaceHistoryDB()
-    else:  # mode == method
-        historyDB = BaseHistoryDB()
-
-    if mode == "promiscuous":
         eventsDB = PromiscuousEventsDB()
     elif mode == "race":
+        historyDB = RaceHistoryDB()
         eventsDB = RaceEventsDB()
-    else:  # mode == method
+    elif mode == "method":
+        historyDB = BaseHistoryDB()
+        eventsDB = MethodEventsDB()
+    else:
+        historyDB = BaseHistoryDB()
         eventsDB = BaseEventsDB()
 
     otpDB = BaseBlobDB()
@@ -202,13 +201,15 @@ class BaseEventsDB:
                 W3C DID string
             :param data: dict
                 A dict containing the rotation history and signatures
+            :param sigs: dict
+                A dict containing the rotation history signatures
         """
-        db_entry = []
-        certifiable_data = {
-            "event": data,
-            "signatures": sigs
-        }
-        db_entry.append(certifiable_data)
+        db_entry = [
+            {
+                "event": data,
+                "signatures": sigs
+            }
+        ]
 
         old_data = self.getEvent(did)
         if old_data is not None:
@@ -249,6 +250,48 @@ class BaseEventsDB:
         return self.db.delete(did)
 
 
+class MethodEventsDB(BaseEventsDB):
+    def __init__(self, db=None):
+        """
+        :param db: DB for interacting with lmdb
+        """
+        BaseEventsDB.__init__(self, db)
+
+    def saveEvent(self, did, data, sigs):
+        """
+            Store an event and signatures
+
+            :param did: string
+                W3C DID string
+            :param data: dict
+                A dict containing the rotation history and signatures
+            :param sigs: dict
+                A dict containing the rotation history signatures
+        """
+        root_vk = data['signers'][0]
+        event = self.getEvent(did)
+
+        db_entry = [
+            {
+                "event": data,
+                "signatures": sigs
+            }
+        ]
+
+        # Make sure we grab, format, and append existing data
+        if event is not None:
+            if type(event[0]) is list:
+                for key, item in enumerate(event):
+                    if item[0]["event"]["signers"][0] == root_vk:
+                        db_entry.extend(item)
+            else:
+                db_entry.extend(event)
+
+        self.db.save(did, db_entry)
+
+        return db_entry
+
+
 class RaceEventsDB(BaseEventsDB):
     def __init__(self, db=None):
         """
@@ -264,6 +307,8 @@ class RaceEventsDB(BaseEventsDB):
                 W3C DID string
             :param data: dict
                 A dict containing the rotation history and signatures
+            :param sigs: dict
+                A dict containing the rotation history signatures
         """
         db_entry = []
         root_vk = data['signers'][0]
@@ -311,6 +356,8 @@ class PromiscuousEventsDB(BaseEventsDB):
                 W3C DID string
             :param data: dict
                 A dict containing the rotation history and signatures
+            :param sigs: dict
+                A dict containing the rotation history signatures
         """
         db_entry = []
         root_vk = data['signers'][0]

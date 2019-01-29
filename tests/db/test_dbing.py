@@ -664,3 +664,81 @@ def testUpdateRaceEvent(raceEventsDB):
     assert actual_data == json.dumps(returned_data).encode()
     assert returned_data == exp_result
     assert actual_data == json.dumps(exp_result).encode()
+
+
+def testCreateMethodEvent(methodEventsDB):
+    data = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+
+    methodEventsDB.saveEvent(DID, data, sigs)
+
+    exp_data = [
+        {
+            "event": data,
+            "signatures": sigs
+        }
+    ]
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=True) as txn:
+        actual_data = txn.get(DID.encode())
+
+    assert actual_data == json.dumps(exp_data).encode()
+
+
+def testUpdateMethodEvent(methodEventsDB):
+    inception = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+    methodEventsDB.saveEvent(DID, inception, inceptionSigs)
+
+    rotation = {
+        "id": DID,
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    rotationSigs = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK),
+                    didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
+
+    returned_data = methodEventsDB.saveEvent(DID, rotation, rotationSigs)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        {
+            "event": rotation,
+            "signatures": rotationSigs
+        },
+        {
+            "event": inception,
+            "signatures": inceptionSigs
+        }
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()

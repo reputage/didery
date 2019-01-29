@@ -61,3 +61,9 @@ def promiscuousEventsDB():
 def raceEventsDB():
     dbing.setupDbEnv(DB_DIR_PATH, mode="race")
     return dbing.eventsDB
+
+
+@pytest.fixture
+def methodEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="method")
+    return dbing.eventsDB
