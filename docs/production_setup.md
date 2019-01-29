@@ -29,7 +29,7 @@ Production Environment Setup
     change the port values for each.
     ```
     [watcher:didery]
-    cmd = /usr/local/bin/dideryd -p 8000
+    cmd = /usr/local/bin/dideryd -P 8000
     numprocesses = 1
     ```
     Save and quit.
