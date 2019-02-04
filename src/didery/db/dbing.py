@@ -33,7 +33,7 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     :param mode: string
         Didery's operating mode
     """
-    global gDbDirPath, dideryDB, historyDB, otpDB, eventsDB
+    global gDbDirPath, dideryDB
 
     if not baseDirPath:
         baseDirPath = "{}{}".format(DATABASE_DIR_PATH, port)
@@ -61,6 +61,14 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
     dideryDB.open_db(DB_KEY_HISTORY_NAME)
     dideryDB.open_db(DB_OTP_BLOB_NAME)
 
+    createDBWrappers(mode=mode)
+
+    return dideryDB
+
+
+def createDBWrappers(mode="method"):
+    global historyDB, otpDB, eventsDB
+
     if mode == "promiscuous":
         historyDB = PromiscuousHistoryDB()
         eventsDB = PromiscuousEventsDB()
@@ -75,8 +83,6 @@ def setupDbEnv(baseDirPath=None, port=8080, mode="method"):
         eventsDB = BaseEventsDB()
 
     otpDB = BaseBlobDB()
-
-    return dideryDB
 
 
 class DB:
@@ -385,15 +391,21 @@ class PromiscuousEventsDB(BaseEventsDB):
 
                 db_entry = event
             else:
-                temp = [update]
-                temp.extend(event)
-                db_entry.append(temp)
+                if event[0]["event"]["signers"][0] == root_vk:
+                    temp = [update]
+                    temp.extend(event)
+                    db_entry.append(temp)
+                else:
+                    db_entry.append(event)
+                    db_entry.append([
+                        update
+                    ])
         else:
             db_entry.append([update])
 
         self.db.save(did, db_entry)
 
-        return event
+        return db_entry
 
 
 class BaseHistoryDB:
@@ -614,7 +626,3 @@ class BaseBlobDB:
             :return: boolean
         """
         return self.db.delete(did)
-
-
-def loadTestData(name, data):
-    pass

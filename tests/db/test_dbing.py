@@ -589,6 +589,146 @@ def testUpdatePromiscuousEvent(promiscuousEventsDB):
     assert actual_data == json.dumps(exp_result).encode()
 
 
+def testUpdatePromiscuousEventModeSwitch():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    inception = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+    dbing.eventsDB.saveEvent(DID, inception, inceptionSigs)
+
+    dbing.createDBWrappers(mode="promiscuous")
+
+    rotation = {
+        "id": DID,
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    rotationSigs = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
+
+    returned_data = dbing.eventsDB.saveEvent(DID, rotation, rotationSigs)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        [
+            {
+                "event": rotation,
+                "signatures": rotationSigs
+            },
+            {
+                "event": inception,
+                "signatures": inceptionSigs
+            }
+        ]
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+
+def testUpdateWithHackedEventPromiscuousModeSwitch():
+    dbing.setupDbEnv(DB_DIR_PATH)
+
+    inception = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+    dbing.eventsDB.saveEvent(DID, inception, inceptionSigs)
+
+    rotation = {
+        "id": DID,
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    rotationSigs = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
+
+    returned_data = dbing.eventsDB.saveEvent(DID, rotation, rotationSigs)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        {
+            "event": rotation,
+            "signatures": rotationSigs
+        },
+        {
+            "event": inception,
+            "signatures": inceptionSigs
+        }
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+    # Try updating events with hacked DID
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    inception2 = json.loads(body)
+    inception2["id"] = DID
+    inception2Sigs = [didery.crypto.eddsa.signResource(json.dumps(inception2).encode(), sk)]
+
+    dbing.createDBWrappers(mode="promiscuous")
+    returned_data = dbing.eventsDB.saveEvent(DID, inception2, inception2Sigs)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        [
+            {
+                "event": rotation,
+                "signatures": rotationSigs
+            },
+            {
+                "event": inception,
+                "signatures": inceptionSigs
+            }
+        ],
+        [
+            {
+                "event": inception2,
+                "signatures": inception2Sigs
+            }
+        ]
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+
 def testCreateRaceEvent(raceEventsDB):
     data = {
         "id": DID,
@@ -742,3 +882,107 @@ def testUpdateMethodEvent(methodEventsDB):
     assert actual_data == json.dumps(returned_data).encode()
     assert returned_data == exp_result
     assert actual_data == json.dumps(exp_result).encode()
+
+
+def testUpdatePromiscuousEventInMethodMode():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="promiscuous")
+    
+    inception = {
+        "id": DID,
+        "signer": 0,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+
+    inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+    dbing.eventsDB.saveEvent(DID, inception, inceptionSigs)
+
+    # Try updating events with hacked DID
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    inception2 = json.loads(body)
+    inception2["id"] = DID
+    inception2Sigs = [didery.crypto.eddsa.signResource(json.dumps(inception2).encode(), sk)]
+
+    returned_data = dbing.eventsDB.saveEvent(DID, inception2, inception2Sigs)
+
+    dbEvents = dbing.dideryDB.open_db(dbing.DB_EVENT_HISTORY_NAME)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        [
+            {
+                "event": inception,
+                "signatures": inceptionSigs
+            }
+        ],
+        [
+            {
+                "event": inception2,
+                "signatures": inception2Sigs
+            }
+        ]
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+    # Try updating events with hacked DID
+    rotation = {
+        "id": DID,
+        "signer": 1,
+        "signers": [
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        ]
+    }
+    rotationSigs = [didery.crypto.eddsa.signResource(json.dumps(rotation).encode(), SK)]
+
+    dbing.createDBWrappers(mode="method")
+    returned_data = dbing.eventsDB.saveEvent(DID, rotation, rotationSigs)
+
+    with dbing.dideryDB.begin(db=dbEvents, write=False) as txn:
+        actual_data = txn.get(DID.encode())
+
+    exp_result = [
+        {
+            "event": rotation,
+            "signatures": rotationSigs
+        },
+        {
+            "event": inception,
+            "signatures": inceptionSigs
+        }
+    ]
+
+    assert actual_data == json.dumps(returned_data).encode()
+    assert returned_data == exp_result
+    assert actual_data == json.dumps(exp_result).encode()
+
+
+def testBaseHistoryDBInit():
+    db = dbing.DB(dbing.DB_KEY_HISTORY_NAME)
+    histroryDB = dbing.BaseHistoryDB(db)
+
+    assert type(histroryDB) == dbing.BaseHistoryDB
+
+
+def testBaseEventsDBInit():
+    db = dbing.DB(dbing.DB_EVENT_HISTORY_NAME)
+    eventsDB = dbing.BaseEventsDB(db)
+
+    assert type(eventsDB) == dbing.BaseEventsDB
+
+
+def testBaseBlobDBInit():
+    db = dbing.DB(dbing.DB_OTP_BLOB_NAME)
+    blobDB = dbing.BaseBlobDB(db)
+
+    assert type(blobDB) == dbing.BaseBlobDB
