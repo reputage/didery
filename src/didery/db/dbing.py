@@ -211,15 +211,17 @@ class BaseEventsDB:
                 A dict containing the rotation history signatures
         """
         db_entry = [
-            {
-                "event": data,
-                "signatures": sigs
-            }
+            [
+                {
+                    "event": data,
+                    "signatures": sigs
+                },
+            ]
         ]
 
         old_data = self.getEvent(did)
         if old_data is not None:
-            db_entry.extend(old_data)
+            db_entry[0].extend(old_data)
 
         self.db.save(did, db_entry)
 
@@ -278,20 +280,19 @@ class MethodEventsDB(BaseEventsDB):
         event = self.getEvent(did)
 
         db_entry = [
-            {
-                "event": data,
-                "signatures": sigs
-            }
+            [
+                {
+                    "event": data,
+                    "signatures": sigs
+                },
+            ]
         ]
 
         # Make sure we grab, format, and append existing data
         if event is not None:
-            if type(event[0]) is list:
-                for key, item in enumerate(event):
-                    if item[0]["event"]["signers"][0] == root_vk:
-                        db_entry.extend(item)
-            else:
-                db_entry.extend(event)
+            for key, item in enumerate(event):
+                if item[0]["event"]["signers"][0] == root_vk:
+                    db_entry[0].extend(item)
 
         self.db.save(did, db_entry)
 
@@ -317,7 +318,6 @@ class RaceEventsDB(BaseEventsDB):
                 A dict containing the rotation history signatures
         """
         db_entry = []
-        root_vk = data['signers'][0]
         event = self.getEvent(did)
 
         update = {
@@ -327,20 +327,13 @@ class RaceEventsDB(BaseEventsDB):
 
         # Make sure existing data is formatted correctly
         if event is not None:
-            if type(event[0]) is list:
-                temp = []
-                for key, item in enumerate(event):
-                    if item[0]["event"]["signers"][0] == root_vk:
-                        temp.append(update)
-                        temp.extend(item)
-                        event[key] = temp
+            temp = [update]
+            temp.extend(event[0])
+            event[0] = temp
 
-                db_entry = event
-            else:
-                db_entry.append(update)
-                db_entry.extend(event)
+            db_entry = event
         else:
-            db_entry.append(update)
+            db_entry.append([update])
 
         self.db.save(did, db_entry)
 
@@ -356,7 +349,7 @@ class PromiscuousEventsDB(BaseEventsDB):
 
     def saveEvent(self, did, data, sigs):
         """
-            Store an event and signatures
+            Store an event and signatures. Most recently updated event history will be the first in the list
 
             :param did: string
                 W3C DID string
@@ -374,32 +367,21 @@ class PromiscuousEventsDB(BaseEventsDB):
             "signatures": sigs
         }
 
-        # Make sure existing data is formatted correctly
         if event is not None:
-            if type(event[0]) is list:
-                temp = []
-                for key, item in enumerate(event):
-                    if item[0]["event"]["signers"][0] == root_vk:
-                        temp.append(update)
-                        temp.extend(item)
-                        event[key] = temp
-
-                if len(temp) == 0:
-                    event.append([
-                        update
-                    ])
-
-                db_entry = event
-            else:
-                if event[0]["event"]["signers"][0] == root_vk:
-                    temp = [update]
-                    temp.extend(event)
-                    db_entry.append(temp)
+            temp1 = []
+            temp2 = []
+            for key, item in enumerate(event):
+                if item[0]["event"]["signers"][0] == root_vk:
+                    temp1.append(update)
+                    temp1.extend(item)
                 else:
-                    db_entry.append(event)
-                    db_entry.append([
-                        update
-                    ])
+                    temp2.append(item)
+
+            if len(temp1) == 0:
+                temp1.append(update)
+
+            db_entry.append(temp1)
+            db_entry.extend(temp2)
         else:
             db_entry.append([update])
 
