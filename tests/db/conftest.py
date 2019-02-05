@@ -34,15 +34,33 @@ def setupTeardown():
 
 
 @pytest.fixture
+def otpDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.otpDB
+
+
+@pytest.fixture
 def historyDB():
     dbing.setupDbEnv(DB_DIR_PATH)
     return dbing.historyDB
 
 
 @pytest.fixture
-def otpDB():
-    dbing.setupDbEnv(DB_DIR_PATH)
-    return dbing.otpDB
+def promiscuousHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="promiscuous")
+    return dbing.historyDB
+
+
+@pytest.fixture
+def raceHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="race")
+    return dbing.historyDB
+
+
+@pytest.fixture
+def methodHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="method")
+    return dbing.historyDB
 
 
 @pytest.fixture

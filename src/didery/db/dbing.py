@@ -5,6 +5,8 @@ try:
 except ImportError:
     import json
 
+from ..models.models import ValidatedHistoryModel, EventsModel
+
 
 MAX_DB_COUNT = 8
 
@@ -219,10 +221,6 @@ class BaseEventsDB:
             ]
         ]
 
-        old_data = self.getEvent(did)
-        if old_data is not None:
-            db_entry[0].extend(old_data)
-
         self.db.save(did, db_entry)
 
         return db_entry
@@ -362,28 +360,24 @@ class PromiscuousEventsDB(BaseEventsDB):
         root_vk = data['signers'][0]
         event = self.getEvent(did)
 
-        update = {
-            "event": data,
-            "signatures": sigs
-        }
+        update = [
+            {
+                "event": data,
+                "signatures": sigs
+            }
+        ]
+
+        otherEvents = []
 
         if event is not None:
-            temp1 = []
-            temp2 = []
             for key, item in enumerate(event):
                 if item[0]["event"]["signers"][0] == root_vk:
-                    temp1.append(update)
-                    temp1.extend(item)
+                    update.extend(item)
                 else:
-                    temp2.append(item)
+                    otherEvents.append(item)
 
-            if len(temp1) == 0:
-                temp1.append(update)
-
-            db_entry.append(temp1)
-            db_entry.extend(temp2)
-        else:
-            db_entry.append([update])
+        db_entry.append(update)
+        db_entry.extend(otherEvents)
 
         self.db.save(did, db_entry)
 
@@ -420,10 +414,12 @@ class BaseHistoryDB:
                 A dict containing the rotation history signatures
 
         """
-        certifiable_data = {
-            "history": data,
-            "signatures": sigs
-        }
+        certifiable_data = [
+            {
+                "history": data,
+                "signatures": sigs
+            }
+        ]
 
         self.db.save(did, certifiable_data)
 
@@ -437,7 +433,7 @@ class BaseHistoryDB:
                 W3C did identifier for history object
             :return: dict
         """
-        return self.db.get(did)
+        return ValidatedHistoryModel(self.db.get(did))
 
     def getAllHistories(self, offset=0, limit=10):
         """
@@ -478,23 +474,23 @@ class RaceHistoryDB(BaseHistoryDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
-        root_vk = data['signers'][0]
         history = self.getHistory(did)
 
-        update = {
-            "history": data,
-            "signatures": sigs
-        }
+        update = [
+            {
+                "history": data,
+                "signatures": sigs
+            }
+        ]
 
         # Make sure existing data is formatted correctly
         if history is not None:
-            if "history" not in history:
-                history[root_vk] = update
-                update = history
+            history[0] = update[0]
+            update = history
 
         self.db.save(did, update)
 
-        return history
+        return update
 
 
 class PromiscuousHistoryDB(BaseHistoryDB):
@@ -516,27 +512,23 @@ class PromiscuousHistoryDB(BaseHistoryDB):
                 A dict containing the rotation history signatures
         """
         root_vk = data['signers'][0]
-        history = self.getHistory(did)
+        histories = self.getHistory(did)
 
-        # Make sure existing data is formatted correctly
-        if history is not None:
-            if "history" in history:
-                key = history["history"]["signers"][0]
-
-                history = {
-                    key: history
-                }
-        else:
-            history = {}
-
-        history[root_vk] = {
+        update = {
             "history": data,
             "signatures": sigs
         }
+        db_entry = [update]
 
-        self.db.save(did, history)
+        # Make sure existing data is formatted correctly
+        if histories is not None:
+            for key, history in enumerate(histories):
+                if history["history"]["signers"][0] != root_vk:
+                    db_entry.append(history)
 
-        return history
+        self.db.save(did, db_entry)
+
+        return db_entry
 
 
 class BaseBlobDB:
