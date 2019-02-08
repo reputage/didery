@@ -93,7 +93,7 @@ def testGetHistory(historyDB):
 
     actual_data = historyDB.getHistory(DID)
 
-    assert actual_data == exp_data
+    assert actual_data.data == exp_data
 
 
 def testGetNonExistentHistory(historyDB):

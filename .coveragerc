@@ -1,0 +1,12 @@
+[run]
+omit =
+    src/didery/static/*
+
+[report]
+exclude_lines =
+    except ImportError:
+        import json
+
+    pass
+
+    except Exception as ex:

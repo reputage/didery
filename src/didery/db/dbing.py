@@ -433,7 +433,8 @@ class BaseHistoryDB:
                 W3C did identifier for history object
             :return: dict
         """
-        return ValidatedHistoryModel(self.db.get(did))
+        json = self.db.get(did)
+        return None if json is None else ValidatedHistoryModel(json)
 
     def getAllHistories(self, offset=0, limit=10):
         """
@@ -485,8 +486,8 @@ class RaceHistoryDB(BaseHistoryDB):
 
         # Make sure existing data is formatted correctly
         if history is not None:
-            history[0] = update[0]
-            update = history
+            history.update(0, update[0])
+            update = history.data
 
         self.db.save(did, update)
 
@@ -522,7 +523,7 @@ class PromiscuousHistoryDB(BaseHistoryDB):
 
         # Make sure existing data is formatted correctly
         if histories is not None:
-            for key, history in enumerate(histories):
+            for key, history in enumerate(histories.data):
                 if history["history"]["signers"][0] != root_vk:
                     db_entry.append(history)
 

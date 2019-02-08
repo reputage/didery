@@ -71,7 +71,7 @@ def setupBasicHistory(client):
                                                            eddsa.signResource(body, sk))
     }
 
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+    response = client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     return vk, sk, did, body
 
@@ -114,22 +114,24 @@ def testKeyRevocation(client):
             signature)
     }
 
-    exp_result = {
-        "history": {
-            "id": did,
-            "changed": "2000-01-01T00:00:01+00:00",
-            "signer": 2,
-            "signers": [
-                vk,
-                vk,
-                None
-            ]
-        },
-        "signatures": {
-            "signer": signature,
-            "rotation": signature
+    exp_result = [
+        {
+            "history": {
+                "id": did,
+                "changed": "2000-01-01T00:00:01+00:00",
+                "signer": 2,
+                "signers": [
+                    vk,
+                    vk,
+                    None
+                ]
+            },
+            "signatures": {
+                "signer": signature,
+                "rotation": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -387,12 +389,14 @@ def testValidPost(client):
         "Signature": 'signer="{0}"'.format(signature)
     }
 
-    exp_result = {
-        "history": json.loads(body.decode()),
-        "signatures": {
-            "signer": signature
+    exp_result = [
+        {
+            "history": json.loads(body.decode()),
+            "signatures": {
+                "signer": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_post,
                   HISTORY_BASE_PATH,
@@ -1103,22 +1107,24 @@ def testValidPut(client):
             eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk))
     }
 
-    exp_result = {
-        "history": {
-            "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-            "changed": "2000-01-01T00:00:01+00:00",
-            "signer": 1,
-            "signers": [
-                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
-                "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
-            ]
-        },
-        "signatures": {
-            "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
-            "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
+    exp_result = [
+        {
+            "history": {
+                "id": "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                "changed": "2000-01-01T00:00:01+00:00",
+                "signer": 1,
+                "signers": [
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+                ]
+            },
+            "signatures": {
+                "signer": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw==",
+                "rotation": "bu-HIoIp2ZtBqsZtURP_q6rm8WPuDQGtN6maXbDHZbVHJ-QfGpwvXkE-fmi7XymvQJnS9tZXFQ5MPos5u09HDw=="
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -1253,18 +1259,24 @@ def testValidGetAll(client):
 
     exp_result = {
         "data": [
-            {
-                "history": history2,
-                "signatures": history2_sigs
-            },
-            {
-                "history": history1,
-                "signatures": history1_sigs
-            },
-            {
-                "history": history3,
-                "signatures": history3_sigs
-            }
+            [
+                {
+                    "history": history2,
+                    "signatures": history2_sigs
+                }
+            ],
+            [
+                {
+                    "history": history1,
+                    "signatures": history1_sigs
+                }
+            ],
+            [
+                {
+                    "history": history3,
+                    "signatures": history3_sigs
+                }
+            ],
         ]
     }
 
@@ -1303,28 +1315,22 @@ def testValidGetOne(client):
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
         "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
     ]
+    sig = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK)
     headers = {
-        "Signature": 'signer="{0}"'.format(
-            eddsa.signResource(json.dumps(body, ensure_ascii=False).encode(), SK))
+        "Signature": 'signer="{0}"'.format(sig)
     }
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, headers=headers, exp_status=falcon.HTTP_201)
 
     response = client.simulate_get(GET_ONE_URL)
 
-    exp_result = {
-        "history": {
-            "id": "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-            "changed": "2000-01-01T00:00:00+00:00",
-            "signer": 0,
-            "signers": [
-                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
-            ]
-        },
-        "signatures": {
-            "signer": "xYbxaQtHsrispyZnd_3qf9xqBCXwgBq9pDnFP_5M2v-d-tNarUJeIY1wMeUcDTm808jG0kTwiXu9WApdao8FAA=="
+    exp_result = [
+        {
+            "history": body,
+            "signatures": {
+                "signer": sig
+            }
         }
-    }
+    ]
 
     assert response.status == falcon.HTTP_200
     assert json.loads(response.content) == exp_result
@@ -1577,8 +1583,8 @@ def testValidDelete(client):
     resp_content = json.loads(response.content)
 
     assert response.status == falcon.HTTP_200
-    assert resp_content["deleted"]["history"] == json.loads(body)
-    assert resp_content["deleted"]["signatures"]["signer"] == signature
+    assert resp_content["deleted"][0]["history"] == json.loads(body)
+    assert resp_content["deleted"][0]["signatures"]["signer"] == signature
 
 
 def testValidEcdsaPost(client):
@@ -1591,13 +1597,15 @@ def testValidEcdsaPost(client):
         "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
     }
 
-    exp_result = {
-        "history": json.loads(body.decode()),
-        "signatures": {
-            "name": cryptoScheme,
-            "signer": signature
+    exp_result = [
+        {
+            "history": json.loads(body.decode()),
+            "signatures": {
+                "name": cryptoScheme,
+                "signer": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_post,
                   HISTORY_BASE_PATH,
@@ -1617,13 +1625,15 @@ def testValidSecp256k1Post(client):
         "Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, signature)
     }
 
-    exp_result = {
-        "history": json.loads(body.decode()),
-        "signatures": {
-            "name": cryptoScheme,
-            "signer": signature
+    exp_result = [
+        {
+            "history": json.loads(body.decode()),
+            "signatures": {
+                "name": cryptoScheme,
+                "signer": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_post,
                   HISTORY_BASE_PATH,
@@ -1712,14 +1722,16 @@ def testValidEcdsaPut(client):
             signature)
     }
 
-    exp_result = {
-        "history": body,
-        "signatures": {
-            "name": cryptoScheme,
-            "signer": signature,
-            "rotation": signature
+    exp_result = [
+        {
+            "history": body,
+            "signatures": {
+                "name": cryptoScheme,
+                "signer": signature,
+                "rotation": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -1754,14 +1766,16 @@ def testValidSecp256k1Put(client):
             signature)
     }
 
-    exp_result = {
-        "history": body,
-        "signatures": {
-            "name": cryptoScheme,
-            "signer": signature,
-            "rotation": signature
+    exp_result = [
+        {
+            "history": body,
+            "signatures": {
+                "name": cryptoScheme,
+                "signer": signature,
+                "rotation": signature
+            }
         }
-    }
+    ]
 
     verifyRequest(client.simulate_put,
                   "{0}/{1}".format(HISTORY_BASE_PATH, did),
@@ -1874,8 +1888,8 @@ def testValidEcdsaDelete(client):
     resp_content = json.loads(response.content)
 
     assert response.status == falcon.HTTP_200
-    assert resp_content["deleted"]["history"] == json.loads(body)
-    assert resp_content["deleted"]["signatures"]["signer"] == signature
+    assert resp_content["deleted"][0]["history"] == json.loads(body)
+    assert resp_content["deleted"][0]["signatures"]["signer"] == signature
 
 
 def testValidSecp256k1Delete(client):
@@ -1899,5 +1913,5 @@ def testValidSecp256k1Delete(client):
     resp_content = json.loads(response.content)
 
     assert response.status == falcon.HTTP_200
-    assert resp_content["deleted"]["history"] == json.loads(body)
-    assert resp_content["deleted"]["signatures"]["signer"] == signature
+    assert resp_content["deleted"][0]["history"] == json.loads(body)
+    assert resp_content["deleted"][0]["signatures"]["signer"] == signature

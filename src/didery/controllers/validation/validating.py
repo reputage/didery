@@ -83,6 +83,8 @@ class HistoryExistsValidator(Validator):
 
     def validate(self):
         self.req.history = db.historyDB.getHistory(self.params['did'])
+        if self.req.history is not None:
+            self.req.history.index = 0
 
         if self.req.history is None:
             raise falcon.HTTPError(falcon.HTTP_404)
@@ -476,10 +478,10 @@ class DeletionSigValidator(Validator):
     def validate(self):
         HistoryExistsValidator(self.req, self.params).validate()
 
-        index = int(self.req.history['history']['signer'])
-        vk = self.req.history['history']['signers'][index]
+        index = int(self.req.history.signer)
+        vk = self.req.history.signers[index]
         if vk is None:  # Key was revoked use old key
-            vk = self.req.history['history']['signers'][index - 1]
+            vk = self.req.history.signers[index - 1]
 
         sigs = self.req.signatures
 

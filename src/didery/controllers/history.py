@@ -10,6 +10,7 @@ except ImportError:
 from ..help import helping
 from ..db import dbing as db
 from ..controllers.validation import factory
+from ..models.models import BasicHistoryModel
 
 
 def validate(req, resp, resource, params):
@@ -53,6 +54,7 @@ class History:
             body = db.historyDB.getHistory(did)
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
+            body = body.data
         else:
             if offset >= count:
                 resp.body = json.dumps({}, ensure_ascii=False)
@@ -71,13 +73,13 @@ class History:
         :param req: Request object
         :param resp: Response object
         """
-        result_json = req.body
+        request_json = BasicHistoryModel(req.body)
         sigs = req.signatures
-        did = result_json['id']
+        did = request_json.id
 
         # TODO: review signature validation for any holes
-        response_json = db.historyDB.saveHistory(did, result_json, sigs)
-        db.eventsDB.saveEvent(did, result_json, sigs)
+        response_json = db.historyDB.saveHistory(did, request_json.data, sigs)
+        db.eventsDB.saveEvent(did, request_json.data, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
         resp.status = falcon.HTTP_201
@@ -90,7 +92,7 @@ class History:
             :param resp: Response object
             :param did: decentralized identifier
         """
-        result_json = req.body
+        request_data = BasicHistoryModel(req.body)
         sigs = req.signatures
 
         resource = db.historyDB.getHistory(did)
@@ -98,9 +100,11 @@ class History:
         if resource is None:
             raise falcon.HTTPError(falcon.HTTP_404)
 
+        resource.selected = request_data.signers[0]
+
         # make sure time in changed field is greater than existing changed field
-        last_changed = arrow.get(resource['history']['changed'])
-        new_change = arrow.get(result_json['changed'])
+        last_changed = resource.parsedChanged
+        new_change = request_data.parsedChanged
 
         if last_changed >= new_change:
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -108,8 +112,8 @@ class History:
                                    '"changed" field not later than previous update.')
 
         # validate that previously rotated keys are not changed with this request
-        current = resource['history']['signers']
-        update = result_json['signers']
+        current = resource.signers
+        update = request_data.signers
 
         if len(update) <= len(current):
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -123,15 +127,15 @@ class History:
                                        'signers field missing previously verified keys.')
 
         # without these checks a hacker can skip past the validated signatures and insert their own keys
-        if resource['history']['signer'] + 1 != result_json['signer']:
-            if result_json['signers'][result_json['signer']] is not None:
+        if resource.signer + 1 != request_data.signer:
+            if request_data.signers[request_data.signer] is not None:
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Validation Error',
                                        'signer field must be one greater than previous.')
 
         # TODO: review signature validation for any holes
-        response_json = db.historyDB.saveHistory(did, result_json, sigs)
-        db.eventsDB.saveEvent(did, result_json, sigs)
+        response_json = db.historyDB.saveHistory(did, request_data.data, sigs)
+        db.eventsDB.saveEvent(did, request_data.data, sigs)
 
         resp.body = json.dumps(response_json, ensure_ascii=False)
 
@@ -153,7 +157,7 @@ class History:
                                    'Deletion Error',
                                    'Error while attempting to delete the resource.')
 
-        resp.body = json.dumps({"deleted": resource}, ensure_ascii=False)
+        resp.body = json.dumps({"deleted": resource.data}, ensure_ascii=False)
 
 
 class HistoryStream:
