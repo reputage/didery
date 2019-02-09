@@ -1180,6 +1180,29 @@ def testGetAllInvalidQueryValue(client):
     assert json.loads(response.content) == exp_result
 
 
+def testGetAllNegativeQueryValue(client):
+    # Test that query params values are ints
+    response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=-1&limit=10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a positive number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+    response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=0&limit=-10")
+
+    exp_result = {
+        "title": "Malformed Query String",
+        "description": "url query string value must be a positive number."
+    }
+
+    assert response.status == falcon.HTTP_400
+    assert json.loads(response.content) == exp_result
+
+
 def testGetAllEmptyQueryValue(client):
     response = client.simulate_get(HISTORY_BASE_PATH, query_string="offset=10&limit=")
 

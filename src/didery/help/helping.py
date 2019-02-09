@@ -176,6 +176,11 @@ def qStringValidation(query):
                                'Malformed Query String',
                                'url query string value must be a number.')
 
+    if val < 0:
+        raise falcon.HTTPError(falcon.HTTP_400,
+                               'Malformed Query String',
+                               'url query string value must be a positive number.')
+
     return key, val
 
 
