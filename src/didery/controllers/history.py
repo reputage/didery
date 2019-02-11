@@ -95,44 +95,6 @@ class History:
         request_data = BasicHistoryModel(req.body)
         sigs = req.signatures
 
-        resource = db.historyDB.getHistory(did)
-
-        if resource is None:
-            raise falcon.HTTPError(falcon.HTTP_404)
-
-        resource.selected = request_data.signers[0]
-
-        # make sure time in changed field is greater than existing changed field
-        last_changed = resource.parsedChanged
-        new_change = request_data.parsedChanged
-
-        if last_changed >= new_change:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   '"changed" field not later than previous update.')
-
-        # validate that previously rotated keys are not changed with this request
-        current = resource.signers
-        update = request_data.signers
-
-        if len(update) <= len(current):
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'signers field is missing keys.')
-
-        for key, val in enumerate(current):
-            if update[key] != val:
-                raise falcon.HTTPError(falcon.HTTP_400,
-                                       'Validation Error',
-                                       'signers field missing previously verified keys.')
-
-        # without these checks a hacker can skip past the validated signatures and insert their own keys
-        if resource.signer + 1 != request_data.signer:
-            if request_data.signers[request_data.signer] is not None:
-                raise falcon.HTTPError(falcon.HTTP_400,
-                                       'Validation Error',
-                                       'signer field must be one greater than previous.')
-
         # TODO: review signature validation for any holes
         response_json = db.historyDB.saveHistory(did, request_data.data, sigs)
         db.eventsDB.saveEvent(did, request_data.data, sigs)

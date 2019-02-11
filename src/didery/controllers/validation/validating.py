@@ -11,6 +11,7 @@ from didery.crypto import factory as cryptoFactory
 from didery import didering
 from didery.help import helping
 from didery.db import dbing as db
+from didery.models.models import BasicHistoryModel
 
 
 class Validator:
@@ -83,11 +84,29 @@ class HistoryExistsValidator(Validator):
 
     def validate(self):
         self.req.history = db.historyDB.getHistory(self.params['did'])
-        if self.req.history is not None:
-            self.req.history.index = 0
 
         if self.req.history is None:
             raise falcon.HTTPError(falcon.HTTP_404)
+
+
+class DeleteIdenticalSigsValidator(Validator):
+    # Signatures cannot match the existing data
+    # A Hacker can simply do a GET and then resend the data as a DELETE request.
+    # If this happened everything would validate and the hacker would delete someones history
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        sigs = self.req.signatures
+        history = db.historyDB.getHistory(self.params['did'])
+        history.index = 0
+
+        if history is not None:
+            if history.signatures == sigs:
+                raise falcon.HTTPError(falcon.HTTP_400,
+                                       'Authorization Error',
+                                       'Request signatures match existing signatures for {}. '
+                                       'Please choose different data to sign.'.format(self.params['did']))
 
 
 class HistoryDoesntExistValidator(Validator):
@@ -205,6 +224,25 @@ class ChangedIsISODatetimeValidator(Validator):
                                    'ISO datetime could not be parsed.')
 
 
+class ChangedLaterThanPreviousValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+        self.request_data = BasicHistoryModel(req.body)
+        self.db_data = None
+
+    def validate(self):
+        self.db_data = db.historyDB.getHistory(self.params['did'])
+        self.db_data.selected = self.request_data.signers[0]
+        last_changed = self.db_data.parsedChanged
+        new_change = self.request_data.parsedChanged
+
+        if last_changed >= new_change:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   '"changed" field not later than previous update.')
+
+
 class NoEmptyKeysValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -227,6 +265,33 @@ class SignersNotNoneValidator(Validator):
                 raise falcon.HTTPError(falcon.HTTP_400,
                                        'Validation Error',
                                        'signers keys cannot be null unless revoking a key.')
+
+
+class SignersNotChangedValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+        self.request_data = BasicHistoryModel(req.body)
+        self.db_data = None
+
+    def validate(self):
+        self.db_data = db.historyDB.getHistory(self.params['did'])
+        self.db_data.selected = self.request_data.signers[0]
+
+        # validate that previously rotated keys are not changed with this request
+        current = self.db_data.signers
+        update = self.request_data.signers
+
+        if len(update) <= len(current):
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'signers field is missing keys.')
+
+        for key, val in enumerate(current):
+            if update[key] != val:
+                raise falcon.HTTPError(falcon.HTTP_400,
+                                       'Validation Error',
+                                       'signers field missing previously verified keys.')
 
 
 class SigExistsValidator(Validator):
@@ -432,6 +497,46 @@ class InceptionSigValidator(Validator):
         sigIsValid.validate()
 
 
+class SignerIncrementValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+        self.request_data = BasicHistoryModel(req.body)
+        self.db_data = None
+
+    def validate(self):
+        self.db_data = db.historyDB.getHistory(self.params['did'])
+        self.db_data.selected = self.request_data.signers[0]
+
+        # without these checks a hacker can skip past the validated signatures and insert their own keys
+        if self.db_data.signer + 1 != self.request_data.signer:
+            if self.request_data.signers[self.request_data.signer] is not None:
+                raise falcon.HTTPError(falcon.HTTP_400,
+                                       'Validation Error',
+                                       'signer field must be one greater than previous.')
+            else:  # This patches a security exploit
+                sigs = self.req.signatures
+                signerIsValid = SignatureValidator(
+                    self.req,
+                    self.params,
+                    self.db_data.signers[self.db_data.signer],
+                    sigs,
+                    sigs.get("signer"),
+                    "signer"
+                )
+                rotationIsValid = SignatureValidator(
+                    self.req,
+                    self.params,
+                    self.db_data.signers[self.db_data.signer + 1],
+                    sigs,
+                    sigs.get("rotation"),
+                    "rotation"
+                )
+
+                rotationIsValid.validate()
+                signerIsValid.validate()
+
+
 class RotationSigValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -441,6 +546,7 @@ class RotationSigValidator(Validator):
         hasSignature = HasSignatureValidator(self.req, self.params, sigs)
         signerExists = SigExistsValidator(self.req, self.params, sigs, "signer")
         rotationExists = SigExistsValidator(self.req, self.params, sigs, "rotation")
+        historyExists = HistoryExistsValidator(self.req, self.params)
 
         if self.body["signers"][int(self.body["signer"])] is None:
             index = self.body['signer'] - 1
@@ -469,6 +575,7 @@ class RotationSigValidator(Validator):
         rotationExists.validate()
         rotationIsValid.validate()
         signerIsValid.validate()
+        historyExists.validate()
 
 
 class DeletionSigValidator(Validator):
@@ -477,6 +584,7 @@ class DeletionSigValidator(Validator):
 
     def validate(self):
         HistoryExistsValidator(self.req, self.params).validate()
+        self.req.history.index = 0
 
         index = int(self.req.history.signer)
         vk = self.req.history.signers[index]

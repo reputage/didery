@@ -48,7 +48,10 @@ def historyFactory(mode, req, params):
             validation.URLDidMatchesIdValidator(req, params),
             validation.SignersNotNoneValidator(req, params),
             validation.DIDFormatValidator(req, params),
-            validation.RotationSigValidator(req, params)
+            validation.RotationSigValidator(req, params),
+            validation.ChangedLaterThanPreviousValidator(req, params),
+            validation.SignersNotChangedValidator(req, params),
+            validation.SignerIncrementValidator(req, params),  # Patches Security Exploit
         ]
     elif req.method == "DELETE" or req.method == "delete":
         validators = [
@@ -58,6 +61,7 @@ def historyFactory(mode, req, params):
             validation.IdNotEmptyValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
             validation.DeletionSigValidator(req, params),
+            validation.DeleteIdenticalSigsValidator(req, params),  # Patches Security Exploit
         ]
     else:
         # TODO add error logging here

@@ -59,11 +59,11 @@ putData = {
        }
 
 
-def setupBasicHistory(client):
+def setupBasicHistory(client, numSigners=2):
     # Setup
     # seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=numSigners)
     vk = h.bytesToStr64u(vk)
 
     headers = {
@@ -92,7 +92,7 @@ def setupRevokedHistory(client):
             signature)
     }
 
-    client.simulate_put(HISTORY_BASE_PATH, body=json.dumps(body).encode(), headers=headers)
+    client.simulate_put("{}/{}".format(HISTORY_BASE_PATH, did), body=json.dumps(body).encode(), headers=headers)
 
     return vk, sk, did, body
 
@@ -121,6 +121,54 @@ def testKeyRevocation(client):
                 "changed": "2000-01-01T00:00:01+00:00",
                 "signer": 2,
                 "signers": [
+                    vk,
+                    vk,
+                    None
+                ]
+            },
+            "signatures": {
+                "signer": signature,
+                "rotation": signature
+            }
+        }
+    ]
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_200)
+
+
+def testKeyRevocationExtendedSigners(client):
+    vk, sk, did, body = setupBasicHistory(client, numSigners=6)
+
+    # Test Key Revocation
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 6
+    body['signers'].append(None)
+
+    signature = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(
+            signature,
+            signature)
+    }
+
+    exp_result = [
+        {
+            "history": {
+                "id": did,
+                "changed": "2000-01-01T00:00:01+00:00",
+                "signer": 6,
+                "signers": [
+                    vk,
+                    vk,
+                    vk,
+                    vk,
                     vk,
                     vk,
                     None
