@@ -83,31 +83,35 @@ For simplicity didery handles key revocation by rotating to the null key.  This 
 ##### Existing Data
 Suppose the didery servers already have this data.
 ```
-{
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-    "changed": "2000-01-01T00:00:00+00:00",
-    "signer": 0,
-    "signers": 
-    [
-        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
-    ]
-}
+[
+    {
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "changed": "2000-01-01T00:00:00+00:00",
+        "signer": 0,
+        "signers": 
+        [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+        ]
+    }
+]
 ```
 ##### Rotation Event Data
 In order to revoke a key a PUT request would be sent with data that looked something like this:
 ```
-{
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-    "changed": "2000-01-01T00:00:01+00:00",
-    "signer": 2,
-    "signers": 
-    [
-        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-        null
-    ]
-}
+[
+    {
+        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+        "changed": "2000-01-01T00:00:01+00:00",
+        "signer": 2,
+        "signers": 
+        [
+            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+            null
+        ]
+    }
+]
 ```
 ### Signatures
 Accompanying the PUT request should be a normal signature header as if you were rotating to the pre-rotated key "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=".
@@ -191,20 +195,22 @@ Content-Type: application/json; charset=UTF-8
 Date: Mon, 30 Apr 2018 23:03:01 GMT
 Server: Ioflo WSGI Server
 
-{
-    "history": {
-        "changed": "2000-01-01T00:00:00+00:00",
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "signer": "0",
-        "signers": [
-            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+[
+    {
+        "history": {
+            "changed": "2000-01-01T00:00:00+00:00",
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "signer": "0",
+            "signers": [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+            ]
+        },
+        "signatures": [
+            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
         ]
-    },
-    "signatures": [
-        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
-    ]
-}
+    }
+]
 ```
 
 # Rotation Event (PUT)
@@ -250,23 +256,25 @@ Content-Type: application/json; charset=UTF-8
 Date: Mon, 30 Apr 2018 23:03:01 GMT
 Server: Ioflo WSGI Server
 
-{
-    "history": {
-        "changed": "2000-01-01T00:00:00+00:00",
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "signer": "1",
-        "signers": [
-            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+[
+    {
+        "history": {
+            "changed": "2000-01-01T00:00:00+00:00",
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "signer": "1",
+            "signers": [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+            ]
+        },
+        "signatures":
+        [
+            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
         ]
-    },
-    "signatures":
-    [
-        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-    ]
-}
+    }
+]
 ```
 	
 # Get Rotation History (GET)
@@ -291,27 +299,28 @@ Content-Type: application/json; charset=UTF-8
 Date: Mon, 30 Apr 2018 23:11:20 GMT
 Server: Ioflo WSGI Server
 
-    
-{
-    "history":
+[
     {
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "changed": "2000-01-01T00:00:00+00:00",
-        "signer": 2,
-        "signers": 
+        "history":
+        {
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "changed": "2000-01-01T00:00:00+00:00",
+            "signer": 2,
+            "signers": 
+            [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            ]
+        },
+        "signatures":
         [
-            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
         ]
-    },
-    "signatures":
-    [
-        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-    ]
-}
+    }
+]
 ```
 
 # Get All Rotation Histories (GET)
@@ -337,45 +346,49 @@ Server: Ioflo WSGI Server
     
 {
     "data": [
-        {
-            "history":
+        [
             {
-                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "changed": "2000-01-01T00:00:00+00:00",
-                "signer": 2,
-                "signers": 
+                "history":
+                {
+                    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "changed": "2000-01-01T00:00:00+00:00",
+                    "signer": 2,
+                    "signers": 
+                    [
+                        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                    ]
+                },
+                "signatures":
                 [
-                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                    "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                    "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
                 ]
-            },
-            "signatures":
-            [
-                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-            ]
-        },
-        {
-            "history":
+            }
+        ],
+        [
             {
-                "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                "changed": "2000-01-01T00:00:00+00:00",
-                "signer": 1,
-                "signers": 
+                "history":
+                {
+                    "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                    "changed": "2000-01-01T00:00:00+00:00",
+                    "signer": 1,
+                    "signers": 
+                    [
+                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+                    ]
+                },
+                "signatures":
                 [
-                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
+                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
                 ]
-            },
-            "signatures":
-            [
-                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
-                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-            ]
-        }
+            }
+        ]
     ]
 }
 ```
@@ -410,26 +423,25 @@ Date: Mon, 30 Apr 2018 23:27:27 GMT
 Server: Ioflo WSGI Server
     
 {
-    "deleted": {
-        "history":
+    "deleted": [ 
         {
-            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "changed": "2000-01-01T00:00:00+00:00",
-            "signer": 2,
-            "signers": 
-            [
-                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+            "history": {
+                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "changed": "2000-01-01T00:00:00+00:00",
+                "signer": 2,
+                "signers": [
+                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                    "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                ]
+            },
+            "signatures": [
+                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
             ]
-        },
-        "signatures":
-        [
-            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-        ]
-    }
+        }
+    ]
 }
 
 ```
