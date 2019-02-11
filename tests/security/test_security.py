@@ -360,3 +360,37 @@ def testHackedDeletion(client):
                   headers,
                   exp_result=exp_result,
                   exp_status=falcon.HTTP_400)
+
+
+def testHackedOTPDeletion(client):
+    SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
+    VK = b"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+    DID = "did:dad:NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+
+    data = {
+        "id": DID,
+        "blob": "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCgo9yjuKHHNJZF"
+                "i0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw",
+        "changed": "2000-01-01T00:00:00+00:00"
+    }
+
+    body = json.dumps(data, ensure_ascii=False).encode()
+    signature = eddsa.signResource(body, SK)
+    headers = {
+        "Signature": 'signer="{0}"'.format(signature)
+    }
+
+    client.simulate_post(BLOB_BASE_PATH, body=body, headers=headers)
+
+    exp_result = {
+        "title": "Authorization Error",
+        "description": "Request signatures match existing signatures for {}. "
+                       "Please choose different data to sign.".format(DID)
+    }
+
+    verifyRequest(client.simulate_delete,
+                  "{}/{}".format(BLOB_BASE_PATH, DID),
+                  data,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_400)

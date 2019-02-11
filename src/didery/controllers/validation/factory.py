@@ -61,7 +61,7 @@ def historyFactory(mode, req, params):
             validation.IdNotEmptyValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
             validation.DeletionSigValidator(req, params),
-            validation.DeleteIdenticalSigsValidator(req, params),  # Patches Security Exploit
+            validation.HistoryDeleteIdenticalSigsValidator(req, params),  # Patches Security Exploit
         ]
     else:
         # TODO add error logging here
@@ -128,6 +128,7 @@ def blobFactory(mode, req, params):
             validation.URLDidMatchesIdValidator(req, params),
             validation.DIDFormatValidator(req, params),
             validation.DeleteBlobSigValidator(req, params),
+            validation.OTPDeleteIdenticalSigsValidator(req, params)
         ]
     else:
         # TODO add error logging here
