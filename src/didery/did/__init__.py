@@ -1,7 +1,7 @@
 """
-controllers package
+DID package
 
-rest endpoints
+DID helpers
 
 """
 from __future__ import generator_stop

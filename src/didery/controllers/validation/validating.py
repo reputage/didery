@@ -1,14 +1,15 @@
 import falcon
 import arrow
+import didery.did.didering
 
 try:
     import simplejson as json
 except ImportError:
     import json
 
-from didery.did.didering import Did
 from didery.crypto import factory as cryptoFactory
 from didery import didering
+from didery.did.methods.dad import Dad
 from didery.help import helping
 from didery.db import dbing as db
 from didery.models.models import BasicHistoryModel
@@ -333,7 +334,7 @@ class DIDFormatValidator(Validator):
 
     def validate(self):
         try:
-            Did(self.body['id'])
+            didery.did.didering.Did(self.body['id'])
         except ValueError as ex:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
@@ -345,7 +346,7 @@ class DADValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        did = Did(self.body['id'])
+        did = Dad(self.body['id'])
 
         if did.method != 'dad':
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -462,10 +463,16 @@ class DidHijackingValidator(Validator):
 
     def validate(self):
         self.didFormatValidator.validate()
+        did_class = didery.did.didering.getDIDModel(self.body['id'])
 
-        did = Did(self.body['id'])
+        if did_class is None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   'Validation Error',
+                                   'Unknown DID method. Could not validate data.')
 
-        if did.pubkey != self.body['signers'][0]:
+        did = did_class(self.body['id'])
+
+        if did.vk != self.body['signers'][0]:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'The DIDs key must match the first key in the signers field.')
@@ -633,14 +640,14 @@ class BlobSigValidator(Validator):
         Validator.__init__(self, req, params)
 
     def validate(self):
-        did = Did(self.body['id'])
+        did = Dad(self.body['id'])
         sigs = self.req.signatures
         hasSignature = HasSignatureValidator(self.req, self.params, sigs)
         sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
         sigIsValid = SignatureValidator(
             self.req,
             self.params,
-            did.pubkey,
+            did.vk,
             sigs,
             sigs.get("signer"),
             "signer"
@@ -658,14 +665,14 @@ class DeleteBlobSigValidator(Validator):
     def validate(self):
         BlobExistsValidator(self.req, self.params).validate()
 
-        did = Did(self.body['id'])
+        did = Dad(self.body['id'])
         sigs = self.req.signatures
         hasSignature = HasSignatureValidator(self.req, self.params, sigs)
         sigExists = SigExistsValidator(self.req, self.params, sigs, "signer")
         sigIsValid = SignatureValidator(
             self.req,
             self.params,
-            did.pubkey,
+            did.vk,
             sigs,
             sigs.get("signer"),
             "signer"

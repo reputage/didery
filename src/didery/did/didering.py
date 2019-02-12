@@ -1,4 +1,5 @@
 import re
+import importlib
 
 """
 did-reference      = did [ "?" did-query ] [ "/" did-path ] [ "#" did-fragment ]
@@ -18,7 +19,7 @@ class Did:
         self.scheme = None
         self.method = None
         self.idString = None
-        self.pubkey = None
+        self.vk = None
         self.query = None
         self.path = None
         self.fragment = None
@@ -35,7 +36,6 @@ class Did:
         if matches:
             self.scheme, self.method, self.idString, self.query, self.path, self.fragment = matches.groups()
             self.__did = "{}:{}:{}".format(self.scheme, self.method, self.idString)
-            self.pubkey = self.idString
         else:
             raise ValueError("Could not parse DID.")
 
@@ -97,3 +97,30 @@ class Did:
 
         return self.__did
 
+    def match_vk(self, vk):
+        return vk == self.vk
+
+
+def getDIDModel(did_reference):
+    scheme, method, idstring = did_reference.split(":", 2)
+    method = method.strip()
+    package = 'didery.did.methods.' + method
+    class_name = method.capitalize()
+
+    try:
+        module = importlib.import_module(package)
+    except ModuleNotFoundError as er:
+        return None
+    except Exception as ex:
+        # TODO add error logging here
+        return None
+
+    try:
+        did_class = getattr(module, class_name)
+    except AttributeError as er:
+        return None
+    except Exception as ex:
+        # TODO add error logging here
+        return None
+
+    return did_class
