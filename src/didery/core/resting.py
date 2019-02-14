@@ -41,7 +41,7 @@ def dideryServerOpen(self):
         do didery server open at enter
     """
     port = int(self.port.value)
-    dbing.setupDbEnv(self.db.value, self.port.value)
+    dbing.setupDbEnv(self.db.value, self.port.value, mode=self.mode.value)
 
     app = falcon.API(middleware=[routing.CORSMiddleware()])
     routing.loadEndPoints(app, store=self.store, mode=self.mode.value)

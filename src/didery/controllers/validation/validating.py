@@ -33,6 +33,17 @@ class Validator:
         pass
 
 
+class CompositeValidator(Validator):
+    def __init__(self, req, params, validators):
+        Validator.__init__(self, req, params)
+
+        self.validators = validators
+
+    def validate(self):
+        for validator in self.validators:
+            validator.validate()
+
+
 class RequiredFieldsValidator(Validator):
     def __init__(self, req, params, required):
         Validator.__init__(self, req, params)
@@ -681,14 +692,3 @@ class DeleteBlobSigValidator(Validator):
         hasSignature.validate()
         sigExists.validate()
         sigIsValid.validate()
-
-
-class CompositeValidator(Validator):
-    def __init__(self, req, params, validators):
-        Validator.__init__(self, req, params)
-
-        self.validators = validators
-
-    def validate(self):
-        for validator in self.validators:
-            validator.validate()

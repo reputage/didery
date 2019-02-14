@@ -8,6 +8,7 @@
 import didery.crypto.eddsa as eddsa
 import didery.crypto.ecdsa as ecdsa
 import falcon
+import pytest
 import libnacl
 import arrow
 
@@ -1986,3 +1987,112 @@ def testValidSecp256k1Delete(client):
     assert response.status == falcon.HTTP_200
     assert resp_content["deleted"][0]["history"] == json.loads(body)
     assert resp_content["deleted"][0]["signatures"]["signer"] == signature
+
+
+class TestPromiscuousMode:
+    @pytest.fixture(autouse=True)
+    def setupTearDown(self):
+        """
+
+        Pytest runs this function before every test when autouse=True
+        Without autouse=True you would have to add a setupTeardown parameter
+        to each test function
+
+        """
+        # setup
+        dbPath = h.setupTmpBaseDir()
+        db.setupDbEnv(dbPath, mode="promiscuous")
+
+        yield dbPath  # this allows the test to run
+
+        # teardown
+        h.cleanupTmpBaseDir(dbPath)
+
+    def testPromiscuousDuplicateHistoryPost(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        verifyRequest(promiscuous_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      json.loads(body.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_201)
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk2 = h.bytesToStr64u(vk2)
+
+        body2 = json.loads(body2.decode())
+        body2["id"] = did
+
+        signature2 = eddsa.signResource(json.dumps(body2).encode(), sk2)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        exp_result = [
+            {
+                "history": body2,
+                "signatures": {
+                    "signer": signature2
+                }
+            },
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        verifyRequest(promiscuous_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      body2,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_201)
+
+    def testValidPromiscuousHistoryPost(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        verifyRequest(promiscuous_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      json.loads(body.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_201)

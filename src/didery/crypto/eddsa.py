@@ -130,11 +130,11 @@ def generate64uKeys(seed=None):
     return bytesToStr64u(vk), bytesToStr64u(sk)
 
 
-def genDidHistory(seed=None, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3):
+def genDidHistory(seed=None, changed="2000-01-01T00:00:00+00:00", signer=0, numSigners=3, method="dad"):
     # seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk = generateByteKeys(seed)
 
-    did = makeDid(vk)
+    did = makeDid(vk, method)
     body = {
         "id": did,
         "changed": changed,
