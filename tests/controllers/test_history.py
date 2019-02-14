@@ -2008,9 +2008,9 @@ class TestPromiscuousMode:
         # teardown
         h.cleanupTmpBaseDir(dbPath)
 
-    def testPromiscuousDuplicateHistoryPost(self, promiscuous_client):
+    def testValidPromiscuousHistoryPost(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
 
         signature = eddsa.signResource(body, sk)
@@ -2034,6 +2034,19 @@ class TestPromiscuousMode:
                       headers=headers,
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_201)
+
+    def testPromiscuousDuplicateHistoryPost(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
 
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
@@ -2070,7 +2083,7 @@ class TestPromiscuousMode:
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_201)
 
-    def testValidPromiscuousHistoryPost(self, promiscuous_client):
+    def testValidPromiscuousHistoryPut(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
@@ -2081,18 +2094,99 @@ class TestPromiscuousMode:
             "Signature": 'signer="{0}"'.format(signature)
         }
 
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+
+        body = json.loads(body)
+        body['changed'] = "2000-01-01T00:00:01+00:00"
+        body['signer'] = 1
+        body['signers'].append(vk)
+        body = json.dumps(body).encode()
+
+        signer = eddsa.signResource(body, sk)
+        rotation = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"; rotation="{1}"'.format(signer, rotation)
+        }
+
         exp_result = [
             {
                 "history": json.loads(body.decode()),
                 "signatures": {
-                    "signer": signature
+                    "signer": signer,
+                    "rotation": rotation
                 }
             }
         ]
 
-        verifyRequest(promiscuous_client.simulate_post,
-                      HISTORY_BASE_PATH,
+        verifyRequest(promiscuous_client.simulate_put,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
                       json.loads(body.decode()),
                       headers=headers,
                       exp_result=exp_result,
-                      exp_status=falcon.HTTP_201)
+                      exp_status=falcon.HTTP_200)
+
+    def testPromiscuousDuplicateHistoryPut(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk2 = h.bytesToStr64u(vk2)
+
+        body2 = json.loads(body2.decode())
+        body2["id"] = did
+        body2 = json.dumps(body2).encode()
+
+        signature2 = eddsa.signResource(body2, sk2)
+
+        headers2 = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body2, headers=headers2)
+
+        body = json.loads(body)
+        body['changed'] = "2000-01-01T00:00:01+00:00"
+        body['signer'] = 1
+        body['signers'].append(vk)
+        body = json.dumps(body).encode()
+
+        signer = eddsa.signResource(body, sk)
+        rotation = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"; rotation="{1}"'.format(signer, rotation)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signer,
+                    "rotation": rotation
+                }
+            },
+            {
+                "history": json.loads(body2.decode()),
+                "signatures": {
+                    "signer": signature2
+                }
+            }
+        ]
+
+        verifyRequest(promiscuous_client.simulate_put,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      json.loads(body.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
