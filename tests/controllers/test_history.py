@@ -1989,7 +1989,7 @@ def testValidSecp256k1Delete(client):
     assert resp_content["deleted"][0]["signatures"]["signer"] == signature
 
 
-class TestPromiscuousMode:
+class TestHistoryPromiscuousMode:
     @pytest.fixture(autouse=True)
     def setupTearDown(self):
         """
@@ -2007,6 +2007,112 @@ class TestPromiscuousMode:
 
         # teardown
         h.cleanupTmpBaseDir(dbPath)
+
+    def testValidPromiscuousHistoryGet(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+
+        response = promiscuous_client.simulate_get("{}/{}".format(HISTORY_BASE_PATH, did))
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        assert response.status == falcon.HTTP_200
+        assert json.loads(response.content) == exp_result
+
+    def testValidPromiscuousHistoryGetAll(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk2 = h.bytesToStr64u(vk2)
+
+        signature2 = eddsa.signResource(body2, sk2)
+
+        headers2 = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body2, headers=headers2)
+
+        body3 = json.loads(body2.decode())
+        body3["id"] = did
+        body3 = json.dumps(body3).encode()
+
+        signature3 = eddsa.signResource(body3, sk2)
+
+        headers3 = {
+            "Signature": 'signer="{0}"'.format(signature3)
+        }
+
+        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body3, headers=headers3)
+
+        response = promiscuous_client.simulate_get(HISTORY_BASE_PATH)
+
+        exp_result = {
+            "data": [
+                [
+                    {
+                        "history": json.loads(body2.decode()),
+                        "signatures": {
+                            "signer": signature2
+                        }
+                    }
+                ],
+                [
+                    {
+                        "history": json.loads(body3.decode()),
+                        "signatures": {
+                            "signer": signature3
+                        }
+                    },
+                    {
+                        "history": json.loads(body.decode()),
+                        "signatures": {
+                            "signer": signature
+                        }
+                    }
+                ],
+            ]
+        }
+
+        response_data = json.loads(response.content)
+        assert response.status == falcon.HTTP_200
+        assert len(response_data['data']) == 2
+        # response_data order is unreliable
+        # make sure that each history exists only once in response
+        for result in exp_result['data']:
+            matches = 0
+            for data in response_data['data']:
+                if data == result:
+                    matches += 1
+
+            assert matches == 1
 
     def testValidPromiscuousHistoryPost(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
