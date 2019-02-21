@@ -2008,7 +2008,7 @@ class TestHistoryPromiscuousMode:
         # teardown
         h.cleanupTmpBaseDir(dbPath)
 
-    def testValidPromiscuousHistoryGet(self, promiscuous_client):
+    def testValidGet(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
@@ -2019,7 +2019,8 @@ class TestHistoryPromiscuousMode:
             "Signature": 'signer="{0}"'.format(signature)
         }
 
-        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        response = promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
 
         response = promiscuous_client.simulate_get("{}/{}".format(HISTORY_BASE_PATH, did))
 
@@ -2035,7 +2036,7 @@ class TestHistoryPromiscuousMode:
         assert response.status == falcon.HTTP_200
         assert json.loads(response.content) == exp_result
 
-    def testValidPromiscuousHistoryGetAll(self, promiscuous_client):
+    def testValidGetAll(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
@@ -2114,7 +2115,7 @@ class TestHistoryPromiscuousMode:
 
             assert matches == 1
 
-    def testValidPromiscuousHistoryPost(self, promiscuous_client):
+    def testValidPost(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
@@ -2141,7 +2142,7 @@ class TestHistoryPromiscuousMode:
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_201)
 
-    def testPromiscuousDuplicateHistoryPost(self, promiscuous_client):
+    def testDuplicatePost(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk = h.bytesToStr64u(vk)
@@ -2189,7 +2190,7 @@ class TestHistoryPromiscuousMode:
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_201)
 
-    def testValidPromiscuousHistoryPut(self, promiscuous_client):
+    def testValidPut(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
         vk = h.bytesToStr64u(vk)
@@ -2232,7 +2233,7 @@ class TestHistoryPromiscuousMode:
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_200)
 
-    def testPromiscuousDuplicateHistoryPut(self, promiscuous_client):
+    def testDuplicatePut(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk = h.bytesToStr64u(vk)
@@ -2291,6 +2292,227 @@ class TestHistoryPromiscuousMode:
         ]
 
         verifyRequest(promiscuous_client.simulate_put,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      json.loads(body.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+
+class TestHistoryRaceMode:
+    @pytest.fixture(autouse=True)
+    def setupTearDown(self):
+        """
+
+        Pytest runs this function before every test when autouse=True
+        Without autouse=True you would have to add a setupTeardown parameter
+        to each test function
+
+        """
+        # setup
+        dbPath = h.setupTmpBaseDir()
+        db.setupDbEnv(dbPath, mode="race")
+
+        yield dbPath  # this allows the test to run
+
+        # teardown
+        h.cleanupTmpBaseDir(dbPath)
+
+    def testValidGet(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        response = race_client.simulate_get("{}/{}".format(HISTORY_BASE_PATH, did))
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        assert response.status == falcon.HTTP_200
+        assert json.loads(response.content) == exp_result
+
+    def testValidGetAll(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk2 = h.bytesToStr64u(vk2)
+
+        signature2 = eddsa.signResource(body2, sk2)
+
+        headers2 = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body2, headers=headers2)
+        assert response.status == falcon.HTTP_201
+
+        response = race_client.simulate_get(HISTORY_BASE_PATH)
+
+        exp_result = {
+            "data": [
+                [
+                    {
+                        "history": json.loads(body2.decode()),
+                        "signatures": {
+                            "signer": signature2
+                        }
+                    }
+                ],
+                [
+                    {
+                        "history": json.loads(body.decode()),
+                        "signatures": {
+                            "signer": signature
+                        }
+                    }
+                ],
+            ]
+        }
+
+        response_data = json.loads(response.content)
+        assert response.status == falcon.HTTP_200
+        assert len(response_data['data']) == 2
+        # response_data order is unreliable
+        # make sure that each history exists only once in response
+        for result in exp_result['data']:
+            matches = 0
+            for data in response_data['data']:
+                if data == result:
+                    matches += 1
+
+            assert matches == 1
+
+    def testValidPost(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signature
+                }
+            }
+        ]
+
+        verifyRequest(race_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      json.loads(body.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_201)
+
+    def testDuplicatePost(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk2 = h.bytesToStr64u(vk2)
+
+        body2 = json.loads(body2.decode())
+        body2["id"] = did
+
+        signature2 = eddsa.signResource(json.dumps(body2).encode(), sk2)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        exp_result = {
+            "title": "Resource Already Exists",
+            "description": "Resource with did \"{}\" already exists. Use PUT request.".format(did)
+        }
+
+        verifyRequest(race_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      body2,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_400)
+
+    def testValidPut(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        body = json.loads(body)
+        body['changed'] = "2000-01-01T00:00:01+00:00"
+        body['signer'] = 1
+        body['signers'].append(vk)
+        body = json.dumps(body).encode()
+
+        signer = eddsa.signResource(body, sk)
+        rotation = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"; rotation="{1}"'.format(signer, rotation)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(body.decode()),
+                "signatures": {
+                    "signer": signer,
+                    "rotation": rotation
+                }
+            }
+        ]
+
+        verifyRequest(race_client.simulate_put,
                       "{}/{}".format(HISTORY_BASE_PATH, did),
                       json.loads(body.decode()),
                       headers=headers,
