@@ -2,7 +2,7 @@ import re
 import importlib
 
 """
-did-reference      = did [ "?" did-query ] [ "/" did-path ] [ "#" did-fragment ]
+did-reference      = did [ "/" did-path ] [ "?" did-query ] [ "#" did-fragment ]
 did                = "did:" method ":" specific-idstring
 method             = 1*methodchar
 methodchar         = %x61-7A / DIGIT
@@ -10,6 +10,12 @@ specific-idstring  = idstring *( ":" idstring )
 idstring           = 1*idchar
 idchar             = ALPHA / DIGIT / "." / "-"
 """
+
+"""
+The [ "/" did-path ] [ "?" did-query ] [ "#" did-fragment ] part of the regex below were pulled from RFC3986 Appendix B
+found here https://tools.ietf.org/html/rfc3986#appendix-B 
+"""
+DID_RE = re.compile(r"""^((did):([a-z\d]+):([:\w.\-=]+))([^?#]*)(?:\?([^#]*))?(?:#(.*))?""")
 
 
 class Did:
@@ -31,11 +37,9 @@ class Did:
         Parses and returns keystr from did
         raises ValueError if fails parsing
         """
-        did_pattern = "(did):([a-z\d]+):([:\w\.\-=]+)(?:\?([\w\-=&]+))?(?:\/([\w\-\/]+))?(?:\#([\w]+))?"
-        matches = re.match(did_pattern, self.__did_reference)
+        matches = DID_RE.match(self.__did_reference)
         if matches:
-            self.scheme, self.method, self.idString, self.query, self.path, self.fragment = matches.groups()
-            self.__did = "{}:{}:{}".format(self.scheme, self.method, self.idString)
+            self.__did, self.scheme, self.method, self.idString, self.path, self.query, self.fragment = matches.groups()
         else:
             raise ValueError("Could not parse DID.")
 
@@ -78,11 +82,11 @@ class Did:
     @property
     def did_reference(self):
         reference = ""
+        if self.path:
+            reference += "{}".format(self.path)
+
         if self.query:
             reference += "?{}".format(self.query)
-
-        if self.path:
-            reference += "/{}".format(self.path)
 
         if self.fragment:
             reference += "#{}".format(self.fragment)
@@ -98,10 +102,27 @@ class Did:
         return self.__did
 
     def match_vk(self, vk):
-        return vk == self.vk
+        """
+        Validates that the did's id string was derived from vk.
+        This function is meant to be overridden by subclasses.
+
+        :param vk: verifcation/public key string
+
+        Returns: boolean
+        """
+        return vk == self.idString
 
 
 def getDIDModel(did_reference):
+    """
+    Takes a did string and returns a subclass of Did based on the did method or None if no subclass exists.
+
+    :param did_reference: complete did string ie:
+        "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue&type=tshirt/customers/1234#test_did"
+
+    Returns: Did subclass or None if no subclass exists for the did method
+
+    """
     scheme, method, idstring = did_reference.split(":", 2)
     method = method.strip()
     package = 'didery.did.methods.' + method

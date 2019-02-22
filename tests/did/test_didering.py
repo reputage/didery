@@ -1,6 +1,8 @@
 import pytest
+import didery
 
 from didery.did import didering
+from didery.did.methods import dad
 
 
 def didAssertions(did_reference,
@@ -35,13 +37,13 @@ def didAssertions(did_reference,
 
 
 def testBasicDid():
-    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue/customers/1234#test_did"
+    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=/customers/1234?color=blue#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = "color=blue"
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -61,7 +63,7 @@ def testMissingQueryDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = None
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -81,7 +83,7 @@ def testMissingPathDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = "color=blue"
-    exp_path = None
+    exp_path = ""
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -95,13 +97,13 @@ def testMissingPathDid():
 
 
 def testMissingFragmentDid():
-    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue/customers/1234"
+    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=/customers/1234?color=blue"
     did = didering.Did(did_reference)
     exp_scheme = "did"
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = "color=blue"
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = None
 
     didAssertions(did_reference,
@@ -122,7 +124,7 @@ def testDIDOnlyDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = None
-    exp_path = None
+    exp_path = ""
     exp_fragment = None
 
     didAssertions(did_reference,
@@ -142,7 +144,7 @@ def testFragmentOnlyDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = None
-    exp_path = None
+    exp_path = ""
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -162,7 +164,7 @@ def testQueryOnlyDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = "color=blue"
-    exp_path = None
+    exp_path = ""
     exp_fragment = None
 
     didAssertions(did_reference,
@@ -182,7 +184,7 @@ def testPathOnlyDid():
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = None
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = None
 
     didAssertions(did_reference,
@@ -202,7 +204,7 @@ def testComplexIdstringWithoutReferenceDid():
     exp_method = "ala"
     exp_idstring = "quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb"
     exp_query = None
-    exp_path = None
+    exp_path = ""
     exp_fragment = None
 
     didAssertions(did_reference,
@@ -216,13 +218,13 @@ def testComplexIdstringWithoutReferenceDid():
 
 
 def testComplexIdstringWithReferenceDid():
-    did_reference = "did:ala:quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb?color=blue/customers/1234#test_did"
+    did_reference = "did:ala:quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb/customers/1234?color=blue#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
     exp_method = "ala"
     exp_idstring = "quor:testnet1:QmeeasCZ9bjLbXhwFd7Fidz6CBziJQJpcUueBJ7d7csxhb"
     exp_query = "color=blue"
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -236,13 +238,13 @@ def testComplexIdstringWithReferenceDid():
 
 
 def testComplexQueryDid():
-    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue&type=tshirt/customers/1234#test_did"
+    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=/customers/1234?color=blue&type=tshirt#test_did"
     did = didering.Did(did_reference)
     exp_scheme = "did"
     exp_method = "dad"
     exp_idstring = "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
     exp_query = "color=blue&type=tshirt"
-    exp_path = "customers/1234"
+    exp_path = "/customers/1234"
     exp_fragment = "test_did"
 
     didAssertions(did_reference,
@@ -262,4 +264,19 @@ def testEmptyDid():
         did = didering.Did(did_reference)
         assert ex.value == "Invalid DID value"
 
+
+def testGetDIDModel():
+    did_reference = "did:dad:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue&type=tshirt/customers/1234#test_did"
+
+    did = didering.getDIDModel(did_reference)
+
+    assert did is not None
+
+
+def testGetNonExistentDIDModel():
+    did_reference = "did:fake:iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=?color=blue&type=tshirt/customers/1234#test_did"
+
+    did = didering.getDIDModel(did_reference)
+
+    assert did is None
 
