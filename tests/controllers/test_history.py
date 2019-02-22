@@ -2038,7 +2038,7 @@ class TestHistoryPromiscuousMode:
 
     def testValidGetAll(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk = h.bytesToStr64u(vk)
 
         signature = eddsa.signResource(body, sk)
@@ -2050,7 +2050,7 @@ class TestHistoryPromiscuousMode:
         promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
 
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk2 = h.bytesToStr64u(vk2)
 
         signature2 = eddsa.signResource(body2, sk2)

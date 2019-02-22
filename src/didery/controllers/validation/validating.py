@@ -466,7 +466,7 @@ class SignatureValidator(Validator):
                                    'Could not validate the request signature for ' + self.sigName + ' field. {}.'.format(ex))
 
 
-class DidHijackingValidator(Validator):
+class DidMethodExistsValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
 
@@ -481,9 +481,20 @@ class DidHijackingValidator(Validator):
                                    'Validation Error',
                                    'Unknown DID method. Could not validate data.')
 
+
+class DidHijackingValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+        self.didFormatValidator = DIDFormatValidator(req, params)
+
+    def validate(self):
+        self.didFormatValidator.validate()
+        did_class = didery.did.didering.getDIDModel(self.body['id'])
+
         did = did_class(self.body['id'])
 
-        if did.vk != self.body['signers'][0]:
+        if not did.match_vk(self.body['signers'][0]):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'The DIDs key must match the first key in the signers field.')
@@ -510,6 +521,23 @@ class URLDidMatchesIdValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'Url did must match id field did.')
+
+
+class CascadingValidationValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+        self.didFormatValidator = DIDFormatValidator(req, params)
+        self.Hijacked = DidHijackingValidator(req, params)
+
+    def validate(self):
+        self.didFormatValidator.validate()
+        did_class = didery.did.didering.getDIDModel(self.body['id'])
+
+        if did_class is None:
+            return
+
+        self.Hijacked.validate()
 
 
 class InceptionSigValidator(Validator):

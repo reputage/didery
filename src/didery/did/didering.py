@@ -108,7 +108,7 @@ class Did:
 
         :param vk: verifcation/public key string
 
-        Returns: boolean
+        Returns: boolean returns true if idstring is derived from vk
         """
         return vk == self.idString
 

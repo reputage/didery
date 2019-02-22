@@ -264,7 +264,7 @@ class TestEventsPromiscuousMode:
 
     def testGetHacked(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk = h.bytesToStr64u(vk)
 
         signature = eddsa.signResource(body, sk)
@@ -486,7 +486,7 @@ class TestEventsPromiscuousMode:
 
     def testGetAllHacked(self, promiscuous_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk = h.bytesToStr64u(vk)
 
         signature = eddsa.signResource(body, sk)
@@ -518,7 +518,7 @@ class TestEventsPromiscuousMode:
         assert response.status == falcon.HTTP_201
 
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-        vk3, sk3, did3, body3 = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk3, sk3, did3, body3 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
         vk3 = h.bytesToStr64u(vk3)
 
         signature3 = eddsa.signResource(body3, sk3)

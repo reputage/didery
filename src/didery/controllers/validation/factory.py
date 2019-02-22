@@ -69,11 +69,14 @@ def historyFactory(mode, req, params):
 
     if mode == "race":
         if req.method == "POST" or req.method == "post":
+            validators.append(validation.CascadingValidationValidator(req, params))
             validators.append(validation.HistoryDoesntExistValidator(req, params))
     elif mode == "promiscuous":
-        pass  # Currently no additional validators
+        if req.method == "POST" or req.method == "post":
+            validators.append(validation.CascadingValidationValidator(req, params))
     elif mode == "method":
         if req.method == "POST" or req.method == "post":
+            validators.append(validation.DidMethodExistsValidator(req, params))
             validators.append(validation.DidHijackingValidator(req, params))
             validators.append(validation.HistoryDoesntExistValidator(req, params))
 
