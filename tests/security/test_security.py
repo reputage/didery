@@ -109,7 +109,7 @@ def testPostDIDAndPublicKeyMatch(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "The DIDs key must match the first key in the signers field."
+        "description": "The first key in the signers field does not belong to this DID."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)

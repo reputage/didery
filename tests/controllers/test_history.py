@@ -566,7 +566,7 @@ def testPostDIDAndPublicKeyMatch(client):
 
     exp_result = {
         "title": "Validation Error",
-        "description": "The DIDs key must match the first key in the signers field."
+        "description": "The first key in the signers field does not belong to this DID."
     }
 
     verifyRequest(client.simulate_post, HISTORY_BASE_PATH, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
@@ -2153,7 +2153,8 @@ class TestHistoryPromiscuousMode:
             "Signature": 'signer="{0}"'.format(signature)
         }
 
-        promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        response = promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
 
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
@@ -2297,6 +2298,45 @@ class TestHistoryPromiscuousMode:
                       headers=headers,
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_200)
+
+    def testCascadingValidation(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="dad")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="dad")
+        vk2 = h.bytesToStr64u(vk2)
+
+        body2 = json.loads(body2.decode())
+        body2["id"] = did
+
+        signature2 = eddsa.signResource(json.dumps(body2).encode(), sk2)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        exp_result = {
+            "title": "Validation Error",
+            "description": "The first key in the signers field does not belong to this DID."
+        }
+
+        verifyRequest(promiscuous_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      body2,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_400)
 
 
 class TestHistoryRaceMode:
@@ -2518,3 +2558,42 @@ class TestHistoryRaceMode:
                       headers=headers,
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_200)
+
+    def testCascadingValidation(self, promiscuous_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="dad")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(body, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk2, sk2, did2, body2 = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="dad")
+        vk2 = h.bytesToStr64u(vk2)
+
+        body2 = json.loads(body2.decode())
+        body2["id"] = did
+
+        signature2 = eddsa.signResource(json.dumps(body2).encode(), sk2)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature2)
+        }
+
+        exp_result = {
+            "title": "Validation Error",
+            "description": "The first key in the signers field does not belong to this DID."
+        }
+
+        verifyRequest(promiscuous_client.simulate_post,
+                      HISTORY_BASE_PATH,
+                      body2,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_400)

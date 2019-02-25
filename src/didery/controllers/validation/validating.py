@@ -497,7 +497,7 @@ class DidHijackingValidator(Validator):
         if not did.match_vk(self.body['signers'][0]):
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
-                                   'The DIDs key must match the first key in the signers field.')
+                                   'The first key in the signers field does not belong to this DID.')
 
 
 class DidInURLValidator(Validator):
