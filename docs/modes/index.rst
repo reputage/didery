@@ -1,0 +1,8 @@
+##########
+Modes
+##########
+
+.. toctree::
+   :titlesonly:
+
+   modes
