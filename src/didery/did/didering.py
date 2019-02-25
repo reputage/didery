@@ -34,7 +34,7 @@ class Did:
 
     def _extractDidParts(self):
         """
-        Parses and returns keystr from did
+        Parses and saves DID parts from self.__did_reference
         raises ValueError if fails parsing
         """
         matches = DID_RE.match(self.__did_reference)
@@ -44,34 +44,6 @@ class Did:
             raise ValueError("Could not parse DID.")
 
         return self
-
-        # try:  # correct did format  pre:method:idstring?query/path#fragment
-        #     if "?" in did_reference:
-        #         self.__did, remainder = did_reference.split("?", 1)
-        #         if "/" in remainder:
-        #             self.query, remainder = remainder.split("/", 1)
-        #             if "#" in remainder:
-        #                 self.path, self.fragment = remainder.split("#", 1)
-        #             else:
-        #                 self.path = remainder
-        #         elif "#" in remainder:
-        #             self.query, self.fragment = remainder.split("#", 1)
-        #         else:
-        #             self.query = remainder
-        #     elif "/" in did_reference:
-        #         self.__did, remainder = did_reference.split("/", 1)
-        #         if "#" in remainder:
-        #             self.path, self.fragment = remainder.split("#", 1)
-        #         else:
-        #             self.path = remainder
-        #     elif "#" in did_reference:
-        #         self.__did, self.fragment = did_reference.split("#", 1)
-        #     else:
-        #         self.__did = did_reference
-        #
-        #     self.scheme, self.method, self.idString = self.__did.split(":", 2)
-        # except ValueError as ex:
-        #     raise ValueError("Invalid DID value")
 
     def _validate(self):
         if not self.__did_reference.startswith("did"):
