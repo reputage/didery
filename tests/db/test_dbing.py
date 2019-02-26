@@ -6,7 +6,7 @@ except ImportError:
     import json
 
 from didery.db import dbing
-from didery.help import helping as help
+from tests.testing_utils.mocks.db.dbing import DBMock
 
 
 DB_DIR_PATH = "/tmp/db_setup_test"
@@ -1677,3 +1677,252 @@ def testBaseEventsDBSaveNew():
 
     assert actual_data == json.dumps(exp_data).encode()
     assert returned_data == exp_data
+
+
+class DBMockDidAssertions(DBMock):
+    def __init__(self, db_data=None):
+        if db_data is None:
+            db_data = {}
+
+        DBMock.__init__(self, db_data)
+
+    def save(self, key, data):
+        assert key == DID
+
+    def get(self, key):
+        assert key == DID
+        return None
+
+    def delete(self, key):
+        assert key == DID
+        return False
+
+
+class TestDidScrubbing:
+    def testBaseEventsDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseEventsDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveEvent(did, inception, inceptionSigs)
+
+    def testMethodEventsDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.MethodEventsDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveEvent(did, inception, inceptionSigs)
+
+    def testPromiscuousEventsDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.PromiscuousEventsDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveEvent(did, inception, inceptionSigs)
+
+    def testRaceEventsDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.RaceEventsDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveEvent(did, inception, inceptionSigs)
+
+    def testBaseEventsDBGet(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before Searching for it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseEventsDB(db=DBMockDidAssertions())
+
+        db.getEvent(did)
+
+    def testBaseEventsDBDelete(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before deleting it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseEventsDB(db=DBMockDidAssertions())
+
+        db.deleteEvent(did)
+
+    def testBaseHistoryDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseHistoryDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveHistory(did, inception, inceptionSigs)
+
+    def testPromiscuousHistoryDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.PromiscuousHistoryDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveHistory(did, inception, inceptionSigs)
+
+    def testRaceHistoryDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.RaceHistoryDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveHistory(did, inception, inceptionSigs)
+
+    def testBaseHistoryDBGet(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before Searching for it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseHistoryDB(db=DBMockDidAssertions())
+
+        db.getHistory(did)
+
+    def testBaseHistoryDBDelete(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before deleting it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseHistoryDB(db=DBMockDidAssertions())
+
+        db.deleteHistory(did)
+
+    def testBaseOtpDBSave(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before saving
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseBlobDB(db=DBMockDidAssertions())
+
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
+
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        db.saveOtpBlob(did, inception, inceptionSigs)
+
+    def testBaseOtpDBGet(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before Searching for it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseBlobDB(db=DBMockDidAssertions())
+
+        db.getOtpBlob(did)
+
+    def testBaseOtpDBDelete(self):
+        """
+        Test that a DID is scrubbed of path, query, and fragment before deleting it
+        """
+        did = DID + "/some/path?query=true#fragment"
+
+        db = dbing.BaseBlobDB(db=DBMockDidAssertions())
+
+        db.deleteOtpBlob(did)

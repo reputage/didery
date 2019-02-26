@@ -6,6 +6,7 @@ except ImportError:
     import json
 
 from ..models.models import ValidatedHistoryModel, EventsModel
+from ..did.didering import Did
 
 
 MAX_DB_COUNT = 8
@@ -212,6 +213,7 @@ class BaseEventsDB:
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         db_entry = [
             [
                 {
@@ -233,6 +235,7 @@ class BaseEventsDB:
                 W3C DID identifier for rotation history events
             :return: dict
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         return self.db.get(did)
 
     def getAllEvents(self, offset=0, limit=10):
@@ -253,6 +256,7 @@ class BaseEventsDB:
             W3C DID identifier for rotation history events
         :return: boolean
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         return self.db.delete(did)
 
 
@@ -274,6 +278,7 @@ class MethodEventsDB(BaseEventsDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         root_vk = data['signers'][0]
         event = self.getEvent(did)
 
@@ -315,6 +320,7 @@ class RaceEventsDB(BaseEventsDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         db_entry = []
         event = self.getEvent(did)
 
@@ -356,6 +362,7 @@ class PromiscuousEventsDB(BaseEventsDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         db_entry = []
         root_vk = data['signers'][0]
         event = self.getEvent(did)
@@ -414,6 +421,7 @@ class BaseHistoryDB:
                 A dict containing the rotation history signatures
 
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         certifiable_data = [
             {
                 "history": data,
@@ -433,6 +441,7 @@ class BaseHistoryDB:
                 W3C did identifier for history object
             :return: dict
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         json = self.db.get(did)
         return None if json is None else ValidatedHistoryModel(json)
 
@@ -454,6 +463,7 @@ class BaseHistoryDB:
                 W3C did identifier for history object
             :return: boolean
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         return self.db.delete(did)
 
 
@@ -475,6 +485,7 @@ class RaceHistoryDB(BaseHistoryDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         history = self.getHistory(did)
 
         update = [
@@ -512,6 +523,7 @@ class PromiscuousHistoryDB(BaseHistoryDB):
             :param sigs: dict
                 A dict containing the rotation history signatures
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         root_vk = data['signers'][0]
         histories = self.getHistory(did)
 
@@ -563,6 +575,7 @@ class BaseBlobDB:
                 A dict containing the otp encrypted keys signatures
 
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         certifiable_data = {
             "otp_data": data,
             "signatures": sigs
@@ -580,6 +593,7 @@ class BaseBlobDB:
                 W3C did identifier for history object
             :return: dict
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         return self.db.get(did)
 
     def getAllOtpBlobs(self, offset=0, limit=10):
@@ -600,4 +614,5 @@ class BaseBlobDB:
                 W3C did identifier for history object
             :return: boolean
         """
+        did = Did(did).did  # remove path, query, and fragment from did
         return self.db.delete(did)
