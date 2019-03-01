@@ -10,6 +10,7 @@ except ImportError:
 from didery.crypto import factory as cryptoFactory
 from didery import didering
 from didery.did.methods.dad import Dad
+from didery.did.didering import Did
 from didery.help import helping
 from didery.db import dbing as db
 from didery.models.models import BasicHistoryModel
@@ -192,37 +193,17 @@ class SignersIsListOrArrayValidator(Validator):
                                    'signers field must be a list or array.')
 
 
-class IdNotEmptyValidator(Validator):
-    def __init__(self, req, params):
+class FieldNotEmptyValidator(Validator):
+    def __init__(self, req, params, field):
         Validator.__init__(self, req, params)
 
-    def validate(self):
-        if self.body['id'] == "":
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'id field cannot be empty.')
-
-
-class ChangedFieldNotEmptyValidator(Validator):
-    def __init__(self, req, params):
-        Validator.__init__(self, req, params)
+        self.field = field
 
     def validate(self):
-        if self.body['changed'] == "":
+        if len(self.body[self.field]) == 0:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
-                                   'changed field cannot be empty.')
-
-
-class BlobFieldNotEmptyValidator(Validator):
-    def __init__(self, req, params):
-        Validator.__init__(self, req, params)
-
-    def validate(self):
-        if self.body['blob'] == "":
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'blob field cannot be empty.')
+                                   '{} field cannot be empty.'.format(self.field))
 
 
 class SignerIsIntValidator(Validator):
@@ -415,17 +396,6 @@ class SignersKeysNotNoneValidator(Validator):
                                        'signers keys cannot be null on inception.')
 
 
-class SignersNotEmptyValidator(Validator):
-    def __init__(self, req, params):
-        Validator.__init__(self, req, params)
-
-    def validate(self):
-        if len(self.body["signers"]) == 0:
-            raise falcon.HTTPError(falcon.HTTP_400,
-                                   'Validation Error',
-                                   'signers field cannot be empty.')
-
-
 class SignerIsZeroValidator(Validator):
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
@@ -512,12 +482,18 @@ class DidInURLValidator(Validator):
 
 
 class URLDidMatchesIdValidator(Validator):
+    """
+    This validator is to stop a security exploit that allows a hacker
+    to place their own DID in the request body but put their targets DID in the
+    request url.  Only the Scheme, Method, and Idstring are
+    needed to verify the DID's match.
+    """
     def __init__(self, req, params):
         Validator.__init__(self, req, params)
 
     def validate(self):
         # Prevent did data from being clobbered
-        if self.params['did'] != self.body['id']:
+        if Did(self.params['did']).did != Did(self.body['id']).did:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
                                    'Url did must match id field did.')

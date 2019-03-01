@@ -11,6 +11,7 @@ import falcon
 import pytest
 import libnacl
 import arrow
+import urllib.parse
 
 import tests.testing_utils.utils
 
@@ -664,6 +665,61 @@ def testPutUrlDIDAndIdDIDMatch(client):
     }
 
     verifyRequest(client.simulate_put, PUT_URL, body, exp_result=exp_result, exp_status=falcon.HTTP_400)
+
+
+def testPutUrlDIDAndIdDIDDifferentReferences(client):
+    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
+
+    # Test Valid rotation event
+    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    body = json.loads(body)
+    body["id"] = did + "/some/path?query=true#fragment"
+    body = json.dumps(body).encode()
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
+                                                           eddsa.signResource(body, sk))
+    }
+
+    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
+
+    body = json.loads(body)
+    body['changed'] = "2000-01-01T00:00:01+00:00"
+    body['signer'] = 1
+    body['signers'].append(body['signers'][0])
+
+    signer = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+    rotation = eddsa.signResource(json.dumps(body, ensure_ascii=False).encode('utf-8'), sk)
+
+    headers = {
+        "Signature": 'signer="{0}"; rotation="{1}"'.format(signer, rotation)
+    }
+
+    exp_result = [
+        {
+            "history": {
+                "id": did + "/some/path?query=true#fragment",
+                "changed": "2000-01-01T00:00:01+00:00",
+                "signer": 1,
+                "signers": [
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY=",
+                    "iy67FstqFl_a5e-sni6yAWoj60-1E2RtzmMGjrjHaSY="
+                ]
+            },
+            "signatures": {
+                "signer": signer,
+                "rotation": rotation
+            }
+        }
+    ]
+
+    verifyRequest(client.simulate_put,
+                  "{0}/{1}".format(HISTORY_BASE_PATH, did),
+                  body,
+                  headers,
+                  exp_result=exp_result,
+                  exp_status=falcon.HTTP_200)
 
 
 def testPutEmptySignatureHeader(client):
@@ -1438,6 +1494,7 @@ def testGetOneNonExistent(client):
 def testDeleteUrlMissingDid(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
 
     # Test missing url did
     headers = {
@@ -1446,7 +1503,7 @@ def testDeleteUrlMissingDid(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(HISTORY_BASE_PATH, body=data, headers=headers)
@@ -1461,6 +1518,7 @@ def testDeleteUrlMissingDid(client):
 def testDeleteNoSignatureHeader(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
@@ -1469,7 +1527,7 @@ def testDeleteNoSignatureHeader(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
 
     response = client.simulate_delete(url, body=data)
 
@@ -1484,6 +1542,7 @@ def testDeleteEmptySignatureHeader(client):
     # Test empty Signature header
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
@@ -1492,7 +1551,7 @@ def testDeleteEmptySignatureHeader(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": ""}
 
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -1508,6 +1567,7 @@ def testDeleteBadSignatureHeader(client):
     # Test bad Signature header tag
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
@@ -1516,7 +1576,7 @@ def testDeleteBadSignatureHeader(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'rotation="{0}"'.format(eddsa.signResource(data, sk))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -1528,36 +1588,13 @@ def testDeleteBadSignatureHeader(client):
     assert resp_content["description"] == 'Signature header missing signature for "signer".'
 
 
-def testDeleteMismatchedDids(client):
-    # Test mismatched dids
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, DID)
-    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
-
-    headers = {
-        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
-    }
-
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
-
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
-
-    response = client.simulate_delete(url, body=data, headers=headers)
-
-    resp_content = json.loads(response.content)
-
-    assert response.status == falcon.HTTP_400
-    assert resp_content["title"] == "Validation Error"
-    assert resp_content["description"] == "Url did must match id field did."
-
-
 def testDeleteNonExistentResource(client):
     # Test delete non existent resource
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
 
     client.simulate_delete(url, body=data, headers=headers)
@@ -1570,6 +1607,7 @@ def testDeleteInvalidSignature(client):
     # Test invalid signature
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     headers = {
@@ -1578,7 +1616,7 @@ def testDeleteInvalidSignature(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, SK))}
 
     response = client.simulate_delete(url, body=data, headers=headers)
@@ -1610,35 +1648,13 @@ def testDeleteMissingRequiredFields(client):
 
     assert response.status == falcon.HTTP_400
     assert resp_content["title"] == "Missing Required Field"
-    assert resp_content["description"] == "Request must contain id field."
-
-
-def testDeleteIdNotEmpty(client):
-    seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
-    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
-
-    headers = {
-        "Signature": 'signer="{0}"'.format(eddsa.signResource(body, sk))
-    }
-
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
-
-    data = json.dumps({"id": ""}, ensure_ascii=False).encode()
-    headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
-
-    response = client.simulate_delete(url, body=data, headers=headers)
-
-    resp_content = json.loads(response.content)
-
-    assert response.status == falcon.HTTP_400
-    assert resp_content["title"] == "Validation Error"
-    assert resp_content["description"] == "id field cannot be empty."
+    assert resp_content["description"] == "Request must contain vk field."
 
 
 def testValidDelete(client):
     seed = b'\x92[\xcb\xf4\xee5+\xcf\xd4b*%/\xabw8\xd4d\xa2\xf8\xad\xa7U\x19,\xcfS\x12\xa6l\xba"'
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
 
     signature = eddsa.signResource(body, sk)
@@ -1648,7 +1664,7 @@ def testValidDelete(client):
 
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -1944,6 +1960,7 @@ def testValidEcdsaDelete(client):
 
     # Test Valid rotation event
     vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+    vk = h.bytesToStr64u(vk)
     signature = ecdsa.signResource(body, sk)
 
     headers = {
@@ -1953,7 +1970,7 @@ def testValidEcdsaDelete(client):
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
@@ -1969,6 +1986,7 @@ def testValidSecp256k1Delete(client):
 
     # Test Valid rotation event
     vk, sk, did, body = ecdsa.genDidHistory(numSigners=2)
+    vk = h.bytesToStr64u(vk)
     signature = ecdsa.signResource(body, sk)
 
     headers = {
@@ -1978,7 +1996,7 @@ def testValidSecp256k1Delete(client):
     client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
 
     url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
-    data = json.dumps({"id": did}, ensure_ascii=False).encode()
+    data = json.dumps({"vk": vk}, ensure_ascii=False).encode()
     headers = {"Signature": 'name="{0}"; signer="{1}"'.format(cryptoScheme, ecdsa.signResource(data, sk))}
     response = client.simulate_delete(url, body=data, headers=headers)
 
