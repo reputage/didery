@@ -60,7 +60,6 @@ def historyFactory(mode, req, params):
             validation.DidInURLValidator(req, params),
             validation.FieldNotEmptyValidator(req, params, "vk"),
             validation.DeletionSigValidator(req, params),
-            validation.HistoryDeleteIdenticalSigsValidator(req, params),  # Patches Security Exploit
         ]
     else:
         # TODO add error logging here

@@ -102,26 +102,6 @@ class HistoryExistsValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_404)
 
 
-class HistoryDeleteIdenticalSigsValidator(Validator):
-    # Signatures cannot match the existing data
-    # A Hacker can simply do a GET and then resend the data as a DELETE request.
-    # If this happened everything would validate and the hacker would delete someones history
-    def __init__(self, req, params):
-        Validator.__init__(self, req, params)
-
-    def validate(self):
-        sigs = self.req.signatures
-        history = db.historyDB.getHistory(self.params['did'])
-        history.index = 0
-
-        if history is not None:
-            if history.signatures == sigs:
-                raise falcon.HTTPError(falcon.HTTP_400,
-                                       'Authorization Error',
-                                       'Request signatures match existing signatures for {}. '
-                                       'Please choose different data to sign.'.format(self.params['did']))
-
-
 class OTPDeleteIdenticalSigsValidator(Validator):
     # Signatures cannot match the existing data
     # A Hacker can simply do a GET and then resend the data as a DELETE request.
@@ -135,7 +115,7 @@ class OTPDeleteIdenticalSigsValidator(Validator):
 
         if otp is not None:
             if otp['signatures'] == sigs:
-                raise falcon.HTTPError(falcon.HTTP_400,
+                raise falcon.HTTPError(falcon.HTTP_401,
                                        'Authorization Error',
                                        'Request signatures match existing signatures for {}. '
                                        'Please choose different data to sign.'.format(self.params['did']))

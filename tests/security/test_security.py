@@ -333,35 +333,6 @@ def testHackerRevokation(client):
                   exp_status=falcon.HTTP_401)
 
 
-def testHackedDeletion(client):
-    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
-    vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
-    url = "{0}/{1}".format(HISTORY_BASE_PATH, did)
-    vk = h.bytesToStr64u(vk)
-
-    headers = {
-        "Signature": 'signer="{0}"; rotation="{1}"'.format(eddsa.signResource(body, sk),
-                                                           eddsa.signResource(body, sk))
-    }
-
-    # send inception event
-    client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)  # Add did to database
-
-    exp_result = {
-        "title": "Authorization Error",
-        "description": "Request signatures match existing signatures for {}. "
-                       "Please choose different data to sign.".format(did)
-    }
-
-    body = json.loads(body)
-    verifyRequest(client.simulate_delete,
-                  url,
-                  body,
-                  headers,
-                  exp_result=exp_result,
-                  exp_status=falcon.HTTP_400)
-
-
 def testHackedOTPDeletion(client):
     SK = b"\xb3\xd0\xbdL]\xcc\x08\x90\xa5\xbd\xc6\xa1 '\x82\x9c\x18\xecf\xa6x\xe2]Ux\xa5c\x0f\xe2\x86*\xa04\xe7\xfaf\x08o\x18\xd6\xc5s\xfc+\xdc \xb4\xb4\xa6G\xcfZ\x96\x01\x1e%\x0f\x96\x8c\xfa-3J<"
     VK = b"NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
@@ -393,4 +364,4 @@ def testHackedOTPDeletion(client):
                   data,
                   headers,
                   exp_result=exp_result,
-                  exp_status=falcon.HTTP_400)
+                  exp_status=falcon.HTTP_401)
