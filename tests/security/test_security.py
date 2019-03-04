@@ -289,7 +289,7 @@ def testPutUnchangedSignerField(client):
                   exp_status=falcon.HTTP_400)
 
 
-def testHackerRevokation(client):
+def testHackerRevocation(client):
     # Make sure that a hacker can't revoke someone elses keys.
     seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
     vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2)
