@@ -10,6 +10,10 @@ systemd
 Production Environment Setup
 =====
 1. SSH into server
+    ```
+    linux
+    ssh -i ~/.ssh/path_to_key_file root@ip_address
+    ```
 
 2. Install Circus
     ```
@@ -69,3 +73,7 @@ Production Environment Setup
     ```
     sudo reboot
     ```
+
+Tools
+=====
+lmdb has a number of cli tools for managing databases [here](http://www.lmdb.tech/doc/tools.html).
