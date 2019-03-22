@@ -110,16 +110,19 @@ class History:
             :param did: decentralized identifier
         """
         resource = req.history
+        vk = req.body["vk"]
 
-        success = db.historyDB.deleteHistory(did)
+        success = db.historyDB.deleteHistory(did, vk)
         db.eventsDB.deleteEvent(did)
 
-        if not success:
+        if success is None:
             raise falcon.HTTPError(falcon.HTTP_409,
                                    'Deletion Error',
                                    'Error while attempting to delete the resource.')
 
-        resp.body = json.dumps({"deleted": resource.data}, ensure_ascii=False)
+        success = success if isinstance(success, list) else [success]
+
+        resp.body = json.dumps({"deleted": success}, ensure_ascii=False)
 
 
 class HistoryStream:

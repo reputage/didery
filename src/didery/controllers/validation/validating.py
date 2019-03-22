@@ -605,12 +605,13 @@ class DeletionSigValidator(Validator):
 
     def validate(self):
         HistoryExistsValidator(self.req, self.params).validate()
-        self.req.history.index = 0
+        history_to_delete = self.req.history
+        history_to_delete.selected = self.req.body["vk"]
 
-        index = int(self.req.history.signer)
-        vk = self.req.history.signers[index]
+        index = int(history_to_delete.signer)
+        vk = history_to_delete.signers[index]
         if vk is None:  # Key was revoked use old key
-            vk = self.req.history.signers[index - 1]
+            vk = history_to_delete.signers[index - 1]
 
         sigs = self.req.signatures
 

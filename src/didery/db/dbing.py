@@ -455,16 +455,38 @@ class BaseHistoryDB:
         """
         return self.db.getAll(offset, limit)
 
-    def deleteHistory(self, did):
+    def deleteHistory(self, did, vk=None):
         """
             Find and delete a key rotation history matching the supplied did.
 
             :param did: string
                 W3C did identifier for history object
+            :param vk: string
+                public key of data to be deleted
             :return: boolean
         """
         did = Did(did).did  # remove path, query, and fragment from did
-        return self.db.delete(did)
+        data = self.getHistory(did)
+
+        if data is None:
+            return None
+
+        length = len(data.data)
+
+        if length == 1:
+            success = self.db.delete(did)
+            return data.data if success else None
+
+        index = data.find(vk)
+
+        if index is None:
+            return None
+
+        removed = data.data.pop(index)
+
+        self.db.save(did, data.data)
+
+        return removed
 
 
 class RaceHistoryDB(BaseHistoryDB):

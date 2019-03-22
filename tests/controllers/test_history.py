@@ -21,6 +21,8 @@ except ImportError:
     import json
 
 from copy import deepcopy
+from falcon import testing
+from ioflo.base import storing
 
 from didery.routing import *
 from didery.help import helping as h
@@ -2358,6 +2360,39 @@ class TestHistoryPromiscuousMode:
 
 
 class TestHistoryRaceMode:
+    @pytest.fixture(scope="class")
+    def testApp(self):
+        """
+
+        setup falcon and load REST endpoints
+
+        """
+
+        def app(mode="method"):
+            store = storing.Store(stamp=0.0)
+            testApp = falcon.API()
+            loadEndPoints(testApp, store=store, mode=mode)
+            db.createDBWrappers(mode)
+            return testApp
+
+        return app
+
+    @pytest.fixture(scope="class")
+    def race_client(self, testApp):
+        """
+
+        This function utilizes the testApp() fixture above
+
+        Pytest runs this function once per module
+
+        testing.TestClient() is optional
+        It allows you to avoid passing your app object into every
+        simulate_xxx() function call
+
+        """
+
+        return testing.TestClient(testApp("race"))
+
     @pytest.fixture(autouse=True)
     def setupTearDown(self):
         """
@@ -2577,7 +2612,7 @@ class TestHistoryRaceMode:
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_200)
 
-    def testCascadingValidation(self, promiscuous_client):
+    def testCascadingValidation(self, race_client):
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
         vk, sk, did, body = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="dad")
         vk = h.bytesToStr64u(vk)
@@ -2588,7 +2623,7 @@ class TestHistoryRaceMode:
             "Signature": 'signer="{0}"'.format(signature)
         }
 
-        response = promiscuous_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=body, headers=headers)
         assert response.status == falcon.HTTP_201
 
         seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
@@ -2609,9 +2644,162 @@ class TestHistoryRaceMode:
             "description": "The first key in the signers field does not belong to this DID."
         }
 
-        verifyRequest(promiscuous_client.simulate_post,
+        verifyRequest(race_client.simulate_post,
                       HISTORY_BASE_PATH,
                       body2,
                       headers=headers,
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_400)
+
+    def testValidDelete(self, race_client):
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = race_client.simulate_post(HISTORY_BASE_PATH, body=history, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        body = {"vk": vk}
+        headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))}
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": json.loads(history),
+                    "signatures": {"signer": signature}
+                }
+            ]
+        }
+
+        verifyRequest(race_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+    def testDeletePromiscuous(self, testApp):
+        # 1. setup with promiscuous mode
+        # 2. add valid history and hacked history
+        # 3. switch to race mode
+        # 4. try a valid delete
+        client = testing.TestClient(testApp("promiscuous"))
+
+        # Insert valid history
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=history, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        # Insert hacked history
+        hseed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(hseed, signer=0, numSigners=2, method="fake")
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+        hhistory = json.dumps(hhistory).encode()
+
+        hsignature = eddsa.signResource(hhistory, hsk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(hsignature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=hhistory, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        client = testing.TestClient(testApp("race"))
+
+        body = {"vk": hvk}
+        headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), hsk))}
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": json.loads(hhistory),
+                    "signatures": {"signer": hsignature}
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+    def testDeleteInvalidPromiscuous(self, testApp):
+        # 1. setup with promiscuous mode
+        # 2. add valid history and hacked history
+        # 3. switch to race mode
+        # 4. try an invalid delete
+        client = testing.TestClient(testApp("promiscuous"))
+
+        # Insert valid history
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=history, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        # Insert hacked history
+        hseed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(hseed, signer=0, numSigners=2, method="fake")
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+        hhistory = json.dumps(hhistory).encode()
+
+        hsignature = eddsa.signResource(hhistory, hsk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(hsignature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=hhistory, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        client = testing.TestClient(testApp("race"))
+
+        body = {"vk": vk}
+        headers = {"Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))}
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": json.loads(history),
+                    "signatures": {"signer": signature}
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)

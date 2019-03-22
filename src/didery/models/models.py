@@ -118,7 +118,7 @@ class ValidatedHistoryModel(DataModel):
         index = None
 
         if self.data is None:
-            return
+            return None
 
         for key, value in enumerate(self.data):
             if value is not None and value['history']['signers'][0] == vk:

@@ -172,18 +172,19 @@ def testDeleteHistory(historyDB):
     data = json.loads(body)
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), sk)]
 
-    historyDB.saveHistory(did, data, sigs)
+    saved_data = historyDB.saveHistory(did, data, sigs)
 
-    status = historyDB.deleteHistory(did)
+    result = historyDB.deleteHistory(did)
 
-    assert status is True
+    assert result is not False
+    assert result == saved_data
     assert historyDB.getHistory(did) is None
 
 
 def testDeleteNonExistentHistory(historyDB):
-    status = historyDB.deleteHistory(DID)
+    result = historyDB.deleteHistory(DID)
 
-    assert status is False
+    assert result is None
 
 
 def testEmptyOtpCount(otpDB):
@@ -1691,11 +1692,14 @@ class DBMockDidAssertions(DBMock):
 
     def get(self, key):
         assert key == DID
-        return None
+        if key in self.db_data:
+            return self.db_data[key]
+        else:
+            return None
 
     def delete(self, key):
         assert key == DID
-        return False
+        return True
 
 
 class TestDidScrubbing:
@@ -1882,9 +1886,30 @@ class TestDidScrubbing:
         """
         did = DID + "/some/path?query=true#fragment"
 
-        db = dbing.BaseHistoryDB(db=DBMockDidAssertions())
+        inception = {
+            "id": DID,
+            "signer": 0,
+            "signers": [
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
+                "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            ]
+        }
 
-        db.deleteHistory(did)
+        inceptionSigs = [didery.crypto.eddsa.signResource(json.dumps(inception).encode(), SK)]
+
+        history = {
+            "history": inception,
+            "signatures": {
+                "signer": inceptionSigs
+            }
+        }
+
+        db = dbing.BaseHistoryDB(db=DBMockDidAssertions({DID: [history]}))
+
+        result = db.deleteHistory(did, "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=")
+
+        assert result is not False
+        assert result == [history]
 
     def testBaseOtpDBSave(self):
         """
