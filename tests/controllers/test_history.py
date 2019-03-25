@@ -2045,6 +2045,77 @@ class TestHistoryMethodMode:
         # teardown
         h.cleanupTmpBaseDir(dbPath)
 
+    def testPostPromiscuous(self, testApp):
+        # 1. setup with promiscuous mode
+        # 2. add valid history and hacked history
+        # 3. switch to race mode
+        # 4. try a valid delete
+        client = testing.TestClient(testApp("promiscuous"))
+
+        # Insert valid history
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2, method="fake")
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(signature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=history, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        # Insert hacked history
+        hseed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(hseed, signer=0, numSigners=2, method="fake")
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+        hhistory = json.dumps(hhistory).encode()
+
+        hsignature = eddsa.signResource(hhistory, hsk)
+
+        headers = {
+            "Signature": 'signer="{0}"'.format(hsignature)
+        }
+
+        response = client.simulate_post(HISTORY_BASE_PATH, body=hhistory, headers=headers)
+        assert response.status == falcon.HTTP_201
+
+        client = testing.TestClient(testApp("method"))
+
+        history = json.loads(history)
+        history['changed'] = "2000-01-01T00:00:01+00:00"
+        history['signer'] = 1
+        history['signers'].append(vk)
+        history = json.dumps(history).encode()
+
+        signer = eddsa.signResource(history, sk)
+        rotation = eddsa.signResource(history, sk)
+
+        headers = {
+            "Signature": 'signer="{0}"; rotation="{1}"'.format(signer, rotation)
+        }
+
+        exp_result = [
+            {
+                "history": json.loads(history.decode()),
+                "signatures": {
+                    "signer": signer,
+                    "rotation": rotation
+                }
+            }
+        ]
+
+        verifyRequest(client.simulate_put,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      json.loads(history.decode()),
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
     def testDeletePromiscuous(self, testApp):
         # 1. setup with promiscuous mode
         # 2. add valid history and hacked history
