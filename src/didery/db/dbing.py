@@ -473,7 +473,7 @@ class BaseHistoryDB:
 
         length = len(data.data)
 
-        if length == 1:
+        if length == 1 or vk is None:
             success = self.db.delete(did)
             return data.data if success else None
 

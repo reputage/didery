@@ -109,8 +109,10 @@ class History:
             :param resp: Response object
             :param did: decentralized identifier
         """
-        resource = req.history
         vk = req.body["vk"]
+
+        if self.mode == "method":
+            vk = None  # Delete all data
 
         success = db.historyDB.deleteHistory(did, vk)
         db.eventsDB.deleteEvent(did)
