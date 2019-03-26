@@ -5,7 +5,7 @@ try:
 except ImportError:
     import json
 
-from ..models.models import ValidatedHistoryModel, EventsModel
+from ..models.models import ValidatedHistoryModel, ValidatedEventsModel
 from ..did.didering import Did
 
 
@@ -236,7 +236,8 @@ class BaseEventsDB:
             :return: dict
         """
         did = Did(did).did  # remove path, query, and fragment from did
-        return self.db.get(did)
+        json = self.db.get(did)
+        return None if json is None else ValidatedEventsModel(json)
 
     def getAllEvents(self, offset=0, limit=10):
         """
@@ -248,16 +249,41 @@ class BaseEventsDB:
         """
         return self.db.getAll(offset, limit)
 
-    def deleteEvent(self, did):
+    def deleteEvent(self, did, vk=None):
         """
             Find and delete the rotation events matching the supplied did.
 
         :param did: string
             W3C DID identifier for rotation history events
+        :param vk: string
+            public key in data to be deleted
         :return: boolean
         """
         did = Did(did).did  # remove path, query, and fragment from did
-        return self.db.delete(did)
+        data = self.getEvent(did)
+
+        if data is None:
+            return None
+
+        length = len(data.data)
+
+        if length == 1 or vk is None:
+            success = self.db.delete(did)
+            return data.toList() if success else None
+
+        index = data.find(vk)
+
+        if index is None:
+            return None
+
+        removed = data.data.pop(index)
+
+        self.db.save(did, data.toDict())
+
+        for key, event in enumerate(removed):
+            removed[key] = event.data
+
+        return removed
 
 
 class MethodEventsDB(BaseEventsDB):
@@ -293,7 +319,7 @@ class MethodEventsDB(BaseEventsDB):
 
         # Make sure we grab, format, and append existing data
         if event is not None:
-            for key, item in enumerate(event):
+            for key, item in enumerate(event.toList()):
                 if item[0]["event"]["signers"][0] == root_vk:
                     db_entry[0].extend(item)
 
@@ -331,6 +357,7 @@ class RaceEventsDB(BaseEventsDB):
 
         # Make sure existing data is formatted correctly
         if event is not None:
+            event = event.toList()
             temp = [update]
             temp.extend(event[0])
             event[0] = temp
@@ -377,7 +404,7 @@ class PromiscuousEventsDB(BaseEventsDB):
         otherEvents = []
 
         if event is not None:
-            for key, item in enumerate(event):
+            for key, item in enumerate(event.toList()):
                 if item[0]["event"]["signers"][0] == root_vk:
                     update.extend(item)
                 else:

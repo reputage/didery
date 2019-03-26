@@ -7,7 +7,7 @@ except ImportError:
 
 import didery.crypto.eddsa
 
-from didery.models.models import ValidatedHistoryModel, EventsModel, BasicHistoryModel, DataModel
+from didery.models.models import ValidatedHistoryModel, ValidatedEventsModel, BasicHistoryModel, DataModel
 from didery.help import helping as h
 
 
@@ -312,13 +312,14 @@ def testValidateHistoryModelUpdateNone():
 
 
 def testEventsModel():
+    vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
     data = {
         "id": DID,
         "signer": 0,
         "changed": "2000-01-01T00:00:01+00:00",
         "signers": [
-            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw=",
-            "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+            vk,
+            vk
         ]
     }
     sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
@@ -328,16 +329,22 @@ def testEventsModel():
     }
     test_data = [
         [
+            event,
+            event
+        ],
+        [
             event
         ]
     ]
 
-    test_model = EventsModel(test_data)
+    test_model = ValidatedEventsModel(test_data)
 
     assert test_model.data == test_data
+    assert test_model.vk is None
     assert test_model.mode == "method"
 
-    test_model = EventsModel(test_data, "race")
+    test_model = ValidatedEventsModel(test_data, vk=vk, mode="race")
 
     assert test_model.data == test_data
+    assert test_model.vk == vk
     assert test_model.mode == "race"

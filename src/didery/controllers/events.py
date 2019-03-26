@@ -36,8 +36,11 @@ class Event:
 
         if did is not None:
             body = db.eventsDB.getEvent(did)
+
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
+
+            body = body.toList()
         else:
             # if offset >= count:
                 # resp.body = json.dumps({}, ensure_ascii=False)

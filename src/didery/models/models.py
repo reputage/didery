@@ -5,6 +5,8 @@ try:
 except ImportError:
     import json
 
+from copy import deepcopy
+
 
 class DataModel:
     def __init__(self, data):
@@ -58,38 +60,39 @@ class BasicHistoryModel(DataModel):
 
 
 class ValidatedHistoryModel(DataModel):
-    def __init__(self, data, vk=None, mode="method"):
+    def __init__(self, data, vk=None, mode="method", data_type="history"):
         DataModel.__init__(self, data)
         self.mode = mode
         self.vk = None
         self.index = None
+        self.data_type = data_type
 
         if vk is not None:
             self.selected = vk
 
     @property
     def id(self):
-        return self.data[self.index]['history']['id']
+        return self.data[self.index][self.data_type]['id']
 
     @property
     def changed(self):
-        return self.data[self.index]['history']['changed']
+        return self.data[self.index][self.data_type]['changed']
 
     @property
     def parsedChanged(self):
-        return arrow.get(self.data[self.index]['history']['changed'])
+        return arrow.get(self.data[self.index][self.data_type]['changed'])
 
     @property
     def signer(self):
-        return self.data[self.index]['history']['signer']
+        return self.data[self.index][self.data_type]['signer']
 
     @property
     def signers(self):
-        return self.data[self.index]['history']['signers']
+        return self.data[self.index][self.data_type]['signers']
 
     @property
     def history(self):
-        return self.data[self.index]['history']
+        return self.data[self.index][self.data_type]
 
     @property
     def signatures(self):
@@ -115,20 +118,78 @@ class ValidatedHistoryModel(DataModel):
             self.selected = self.vk
 
     def find(self, vk):
-        index = None
+        if self.data is not None:
+            for key, value in enumerate(self.data):
+                if value is None:
+                    continue
 
-        if self.data is None:
-            return None
+                initial_vk = value[self.data_type]['signers'][0]
 
-        for key, value in enumerate(self.data):
-            if value is not None and value['history']['signers'][0] == vk:
-                index = key
-                break
+                if initial_vk == vk:
+                    return key
 
-        return index
+        return None
 
 
-class EventsModel(DataModel):
-    def __init__(self, data, mode="method"):
-        DataModel.__init__(self, data)
+class ValidatedEventsModel(DataModel):
+    def __init__(self, data, vk=None, mode="method"):
         self.mode = mode
+        self.vk = vk
+        self.index = None
+
+        data = self.__convert(data)
+
+        DataModel.__init__(self, data)
+
+    def __convert(self, data):
+        for rkey, rotations in enumerate(data):
+            for ekey, event in enumerate(rotations):
+                data[rkey][ekey] = ValidatedHistoryModel(event, data_type="event")
+
+        return data
+
+    def find(self, vk):
+        """
+
+        Args:
+            vk: a rotation histories public key
+
+        Returns: index
+
+        """
+        if self.data is not None:
+            for key, history in enumerate(self.data):
+                initial_vk = history[0].data['event']['signers'][0]
+
+                if initial_vk == vk:
+                    return key
+
+        return None
+
+    def toDict(self):
+        data = deepcopy(self.data)
+
+        for rkey, rotations in enumerate(data):
+            for ekey, event in enumerate(rotations):
+                data[rkey][ekey] = event.data
+
+        return data
+
+    def toList(self):
+        return self.toDict()
+
+    def toJson(self):
+        data = self.toDict()
+
+        return json.dumps(data)
+
+    def toBytes(self):
+        return self.toJson().encode()
+
+    def fromJson(self, data):
+        data = json.loads(data)
+
+        self.data = self.__convert(data)
+
+    def fromBytes(self, data):
+        self.fromJson(data.decode())

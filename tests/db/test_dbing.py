@@ -1,3 +1,4 @@
+import libnacl
 import didery.crypto.eddsa
 
 try:
@@ -5,7 +6,9 @@ try:
 except ImportError:
     import json
 
+from copy import deepcopy
 from didery.db import dbing
+from didery.help import helping as h
 from tests.testing_utils.mocks.db.dbing import DBMock
 
 
@@ -420,7 +423,7 @@ def testGetEvent(eventsDB):
 
     returned_data = eventsDB.saveEvent(DID, data, sigs)
 
-    actual_data = eventsDB.getEvent(DID)
+    actual_data = eventsDB.getEvent(DID).toList()
 
     exp_result = [
         [
@@ -493,7 +496,7 @@ def testGetAllEvents(eventsDB):
 def testDeleteNonExistentEvent(eventsDB):
     status = eventsDB.deleteEvent(DID)
 
-    assert status is False
+    assert status is None
 
 
 def testDeleteEvent(eventsDB):
@@ -503,12 +506,120 @@ def testDeleteEvent(eventsDB):
     data = json.loads(body)
     sigs = [didery.crypto.eddsa.signResource(body, sk)]
 
-    eventsDB.saveEvent(did, data, sigs)
+    exp_data = eventsDB.saveEvent(did, data, sigs)
 
-    status = eventsDB.deleteEvent(did)
+    result = eventsDB.deleteEvent(did)
 
-    assert status is True
+    assert result == exp_data
     assert eventsDB.getEvent(did) is None
+
+
+def testDeletePromiscuousEvent(promiscuousEventsDB):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
+    data = json.loads(body)
+    sigs = [didery.crypto.eddsa.signResource(body, sk)]
+    event1 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    hvk, hsk, hdid, hbody = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    hdata = json.loads(hbody)
+    hdata["id"] = did
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(hdata).encode(), hsk)]
+
+    event2 = {
+        "event": deepcopy(hdata),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, hdata, sigs)
+
+    data["signer"] = 1
+    data["signers"].append(vk)
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data), hsk)]
+
+    event3 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    exp_data = [
+        [
+            event3,
+            event1
+        ],
+        [
+            event2
+        ]
+    ]
+
+    result = promiscuousEventsDB.deleteEvent(did)
+
+    assert result == exp_data
+    assert promiscuousEventsDB.getEvent(did) is None
+
+
+def testDeleteEventWithVk(promiscuousEventsDB):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
+    data = json.loads(body)
+    sigs = [didery.crypto.eddsa.signResource(body, sk)]
+    event1 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    hvk, hsk, hdid, hbody = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    hvk = h.bytesToStr64u(hvk)
+    hdata = json.loads(hbody)
+    hdata["id"] = did
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(hdata).encode(), hsk)]
+
+    event2 = {
+        "event": deepcopy(hdata),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, hdata, sigs)
+
+    data["signer"] = 1
+    data["signers"].append(vk)
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data), hsk)]
+
+    event3 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    exp_data = [
+        event3,
+        event1
+    ]
+
+    result = promiscuousEventsDB.deleteEvent(did, vk)
+
+    assert result == exp_data
+
+    remaining = promiscuousEventsDB.getEvent(did).toList()
+
+    assert [event2] in remaining
+    assert exp_data not in remaining
 
 
 def testCreatePromiscuousEvent(promiscuousEventsDB):
