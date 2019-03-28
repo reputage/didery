@@ -269,7 +269,7 @@ class BaseEventsDB:
 
         if length == 1 or vk is None:
             success = self.db.delete(did)
-            return data.toList() if success else None
+            return data.to_list() if success else None
 
         index = data.find(vk)
 
@@ -278,7 +278,7 @@ class BaseEventsDB:
 
         removed = data.data.pop(index)
 
-        self.db.save(did, data.toDict())
+        self.db.save(did, data.to_dict())
 
         for key, event in enumerate(removed):
             removed[key] = event.data
@@ -319,7 +319,7 @@ class MethodEventsDB(BaseEventsDB):
 
         # Make sure we grab, format, and append existing data
         if event is not None:
-            for key, item in enumerate(event.toList()):
+            for key, item in enumerate(event.to_list()):
                 if item[0]["event"]["signers"][0] == root_vk:
                     db_entry[0].extend(item)
 
@@ -357,7 +357,7 @@ class RaceEventsDB(BaseEventsDB):
 
         # Make sure existing data is formatted correctly
         if event is not None:
-            event = event.toList()
+            event = event.to_list()
             temp = [update]
             temp.extend(event[0])
             event[0] = temp
@@ -404,7 +404,7 @@ class PromiscuousEventsDB(BaseEventsDB):
         otherEvents = []
 
         if event is not None:
-            for key, item in enumerate(event.toList()):
+            for key, item in enumerate(event.to_list()):
                 if item[0]["event"]["signers"][0] == root_vk:
                     update.extend(item)
                 else:

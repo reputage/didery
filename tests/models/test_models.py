@@ -311,40 +311,382 @@ def testValidateHistoryModelUpdateNone():
     assert test_model.data == [None]
 
 
-def testEventsModel():
-    vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
-    data = {
-        "id": DID,
-        "signer": 0,
-        "changed": "2000-01-01T00:00:01+00:00",
-        "signers": [
-            vk,
-            vk
+class TestEventsModel:
+
+    def test_model_creation(self):
+        vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk,
+                vk
+            ]
+        }
+        sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+        event_data = {
+            "event": data,
+            "signatures": sigs,
+        }
+        test_data = [
+            [
+                event_data,
+                event_data
+            ],
+            [
+                event_data
+            ]
         ]
-    }
-    sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
-    event = {
-        "event": data,
-        "signatures": sigs,
-    }
-    test_data = [
-        [
-            event,
-            event
-        ],
-        [
-            event
+
+        test_model = ValidatedEventsModel(test_data)
+
+        for events in test_model.data:
+            for event in events:
+                assert event.data == event_data
+
+    def test_find(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        vk2 = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+        data2 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk2,
+                vk2
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        sigs2 = [didery.crypto.eddsa.signResource(json.dumps(data2).encode(), SK)]
+        event1 = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        event2 = {
+            "event": data2,
+            "signatures": sigs2,
+        }
+        test_data = [
+            [
+                event1,
+                event1
+            ],
+            [
+                event2
+            ]
         ]
-    ]
 
-    test_model = ValidatedEventsModel(test_data)
+        test_model = ValidatedEventsModel(test_data)
+        index = test_model.find(vk1)
 
-    assert test_model.data == test_data
-    assert test_model.vk is None
-    assert test_model.mode == "method"
+        assert index == 0
 
-    test_model = ValidatedEventsModel(test_data, vk=vk, mode="race")
+        test_model = ValidatedEventsModel(test_data)
+        index = test_model.find(vk2)
 
-    assert test_model.data == test_data
-    assert test_model.vk == vk
-    assert test_model.mode == "race"
+        assert index == 1
+
+    def test_find_non_existent(self):
+        vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk,
+                vk
+            ]
+        }
+        sigs = [didery.crypto.eddsa.signResource(json.dumps(data).encode(), SK)]
+        event = {
+            "event": data,
+            "signatures": sigs,
+        }
+
+        bad_vk = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+
+        test_data = [
+            [
+                event,
+                event
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(test_data)
+        index = test_model.find(bad_vk)
+
+        assert index is None
+
+    def test_find_empty_data(self):
+        test_data = []
+        vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+
+        test_model = ValidatedEventsModel(test_data)
+        index = test_model.find(vk)
+
+        assert index is None
+
+        test_model = ValidatedEventsModel(None)
+        index = test_model.find(vk)
+
+        assert index is None
+
+    def test_to_dict(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        vk2 = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+        data2 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk2,
+                vk2
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        sigs2 = [didery.crypto.eddsa.signResource(json.dumps(data2).encode(), SK)]
+        event1 = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        event2 = {
+            "event": data2,
+            "signatures": sigs2,
+        }
+        test_data = [
+            [
+                event1,
+                event1
+            ],
+            [
+                event2
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(test_data)
+        data = test_model.to_dict()
+
+        assert data == test_data
+
+    def test_to_list(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        vk2 = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+        data2 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk2,
+                vk2
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        sigs2 = [didery.crypto.eddsa.signResource(json.dumps(data2).encode(), SK)]
+        event1 = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        event2 = {
+            "event": data2,
+            "signatures": sigs2,
+        }
+        test_data = [
+            [
+                event1,
+                event1
+            ],
+            [
+                event2
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(test_data)
+        data = test_model.to_list()
+
+        assert data == test_data
+
+    def test_to_json(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        vk2 = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+        data2 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk2,
+                vk2
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        sigs2 = [didery.crypto.eddsa.signResource(json.dumps(data2).encode(), SK)]
+        event1 = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        event2 = {
+            "event": data2,
+            "signatures": sigs2,
+        }
+        test_data = [
+            [
+                event1,
+                event1
+            ],
+            [
+                event2
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(test_data)
+        data = test_model.toJson()
+
+        assert data == json.dumps(test_data)
+
+    def test_to_bytes(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        vk2 = "45NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zS="
+        data2 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk2,
+                vk2
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        sigs2 = [didery.crypto.eddsa.signResource(json.dumps(data2).encode(), SK)]
+        event1 = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        event2 = {
+            "event": data2,
+            "signatures": sigs2,
+        }
+        test_data = [
+            [
+                event1,
+                event1
+            ],
+            [
+                event2
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(test_data)
+        data = test_model.toBytes()
+
+        assert data == json.dumps(test_data).encode()
+
+    def test_from_json(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        event_data = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        test_data = [
+            [
+                event_data,
+                event_data
+            ],
+            [
+                event_data
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(None)
+        test_model.fromJson(json.dumps(test_data))
+
+        for events in test_model.data:
+            for event in events:
+                assert event.data == event_data
+
+    def test_from_bytes(self):
+        vk1 = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+        data1 = {
+            "id": DID,
+            "signer": 0,
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signers": [
+                vk1,
+                vk1
+            ]
+        }
+        sigs1 = [didery.crypto.eddsa.signResource(json.dumps(data1).encode(), SK)]
+        event_data = {
+            "event": data1,
+            "signatures": sigs1,
+        }
+        test_data = [
+            [
+                event_data,
+                event_data
+            ],
+            [
+                event_data
+            ]
+        ]
+
+        test_model = ValidatedEventsModel(None)
+        test_model.fromBytes(json.dumps(test_data).encode())
+
+        for events in test_model.data:
+            for event in events:
+                assert event.data == event_data

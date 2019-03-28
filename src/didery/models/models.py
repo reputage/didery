@@ -5,8 +5,6 @@ try:
 except ImportError:
     import json
 
-from copy import deepcopy
-
 
 class DataModel:
     def __init__(self, data):
@@ -132,21 +130,20 @@ class ValidatedHistoryModel(DataModel):
 
 
 class ValidatedEventsModel(DataModel):
-    def __init__(self, data, vk=None, mode="method"):
-        self.mode = mode
-        self.vk = vk
-        self.index = None
-
-        data = self.__convert(data)
+    def __init__(self, data):
+        if data is not None:
+            data = self.__convert(data)
 
         DataModel.__init__(self, data)
 
     def __convert(self, data):
+        converted = []
         for rkey, rotations in enumerate(data):
-            for ekey, event in enumerate(rotations):
-                data[rkey][ekey] = ValidatedHistoryModel(event, data_type="event")
+            converted.append([])
+            for event in rotations:
+                converted[rkey].append(ValidatedHistoryModel(event, data_type="event"))
 
-        return data
+        return converted
 
     def find(self, vk):
         """
@@ -166,20 +163,20 @@ class ValidatedEventsModel(DataModel):
 
         return None
 
-    def toDict(self):
-        data = deepcopy(self.data)
-
-        for rkey, rotations in enumerate(data):
-            for ekey, event in enumerate(rotations):
-                data[rkey][ekey] = event.data
+    def to_dict(self):
+        data = []
+        for rkey, rotations in enumerate(self.data):
+            data.append([])
+            for event in rotations:
+                data[rkey].append(event.data)
 
         return data
 
-    def toList(self):
-        return self.toDict()
+    def to_list(self):
+        return self.to_dict()
 
     def toJson(self):
-        data = self.toDict()
+        data = self.to_dict()
 
         return json.dumps(data)
 

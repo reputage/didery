@@ -423,7 +423,7 @@ def testGetEvent(eventsDB):
 
     returned_data = eventsDB.saveEvent(DID, data, sigs)
 
-    actual_data = eventsDB.getEvent(DID).toList()
+    actual_data = eventsDB.getEvent(DID).to_list()
 
     exp_result = [
         [
@@ -616,7 +616,7 @@ def testDeleteEventWithVk(promiscuousEventsDB):
 
     assert result == exp_data
 
-    remaining = promiscuousEventsDB.getEvent(did).toList()
+    remaining = promiscuousEventsDB.getEvent(did).to_list()
 
     assert [event2] in remaining
     assert exp_data not in remaining
