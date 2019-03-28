@@ -622,6 +622,89 @@ def testDeleteEventWithVk(promiscuousEventsDB):
     assert exp_data not in remaining
 
 
+def testDeleteHackedEventWithVk(promiscuousEventsDB):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
+    data = json.loads(body)
+    sigs = [didery.crypto.eddsa.signResource(body, sk)]
+    event1 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    hvk, hsk, hdid, hbody = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    hvk = h.bytesToStr64u(hvk)
+    hdata = json.loads(hbody)
+    hdata["id"] = did
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(hdata).encode(), hsk)]
+
+    event2 = {
+        "event": deepcopy(hdata),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, hdata, sigs)
+
+    data["signer"] = 1
+    data["signers"].append(vk)
+
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data), hsk)]
+
+    event3 = {
+        "event": deepcopy(data),
+        "signatures": sigs
+    }
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    exp_data = [
+        event2
+    ]
+
+    result = promiscuousEventsDB.deleteEvent(did, hvk)
+
+    assert result == exp_data
+
+    remaining = promiscuousEventsDB.getEvent(did).to_list()
+
+    assert [event3, event1] in remaining
+    assert exp_data not in remaining
+
+
+def testDeleteEventWithVKNoMatch(promiscuousEventsDB):
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    vk, sk, did, body = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    vk = h.bytesToStr64u(vk)
+    data = json.loads(body)
+    sigs = [didery.crypto.eddsa.signResource(body, sk)]
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+    hvk, hsk, hdid, hbody = didery.crypto.eddsa.genDidHistory(seed, signer=0, numSigners=2)
+    hdata = json.loads(hbody)
+    hdata["id"] = did
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(hdata).encode(), hsk)]
+
+    promiscuousEventsDB.saveEvent(did, hdata, sigs)
+
+    data["signer"] = 1
+    data["signers"].append(vk)
+    sigs = [didery.crypto.eddsa.signResource(json.dumps(data), hsk)]
+
+    promiscuousEventsDB.saveEvent(did, data, sigs)
+
+    bad_vk = "NOf6ZghvGNbFc_wr3CC0tKZHz1qWAR4lD5aM-i0zSjw="
+
+    result = promiscuousEventsDB.deleteEvent(did, bad_vk)
+
+    assert result is None
+
+
 def testCreatePromiscuousEvent(promiscuousEventsDB):
     data = {
         "id": DID,
