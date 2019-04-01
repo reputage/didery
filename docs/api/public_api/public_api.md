@@ -394,9 +394,13 @@ Server: Ioflo WSGI Server
 ```
 
 # Delete Rotation History (DELETE)
-To comply with GDPR a delete history option is provided.  In order to prevent bad actors from deleting the database a signature using the current signing key pair is required to delete the history. Each request must include the histories did in the body.
+To comply with GDPR a delete history option is provided.  In order to prevent unauthorized deletion a signature using 
+the current signing key pair is required to delete the history. In order to function with Didery's multiple operating 
+modes the original public key of the target history must be included in the body of the request.
 
-__id__ - [string] decentralized identifier [(DID)](https://w3c-ccg.github.io/did-spec/) *Required*
+Sending a DELETE request will delete both the current rotation and a DID's entire rotation history.
+
+__vk__ - [string] The first public key associated with a rotation history *Required*
 
 ##### Request   
 ```
@@ -408,9 +412,10 @@ Content-Length: 246
 Content-Type: application/json
 Host: localhost:8000
 User-Agent: HTTPie/0.9.9
+Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==";
     
 {
-    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+    "vk": "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
 }
 ```
 
