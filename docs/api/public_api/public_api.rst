@@ -547,6 +547,9 @@ history must be included in the body of the request.
 Sending a DELETE request will delete both the current rotation and a
 DID's entire rotation history.
 
+For an explanation of how Didery's running modes affect the
+functionality of a DELETE request see the modes documentation.
+
 **vk** - [string] The first public key associated with a rotation
 history *Required*
 
