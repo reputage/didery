@@ -3025,3 +3025,795 @@ class TestHistoryRaceMode:
                       headers=headers,
                       exp_result=exp_result,
                       exp_status=falcon.HTTP_200)
+
+
+class TestEventsDeletionMethodMode:
+    @pytest.fixture(scope="class")
+    def testApp(self):
+        """
+
+        setup falcon and load REST endpoints
+
+        """
+
+        def app(mode="method"):
+            store = storing.Store(stamp=0.0)
+            testApp = falcon.API()
+            loadEndPoints(testApp, store=store, mode=mode)
+            db.createDBWrappers(mode)
+            return testApp
+
+        return app
+
+    @pytest.fixture(scope="class")
+    def client(self, testApp):
+        """
+
+        This function utilizes the testApp() fixture above
+
+        Pytest runs this function once per module
+
+        testing.TestClient() is optional
+        It allows you to avoid passing your app object into every
+        simulate_xxx() function call
+
+        """
+
+        return testing.TestClient(testApp("method"))
+
+    @pytest.fixture
+    def dbs(self):
+        def get_dbs(mode):
+            db.createDBWrappers(mode)
+            return db.historyDB, db.eventsDB
+
+        return get_dbs
+
+    @pytest.fixture(autouse=True)
+    def setupTearDown(self):
+        """
+
+        Pytest runs this function before every test when autouse=True
+        Without autouse=True you would have to add a setupTeardown parameter
+        to each test function
+
+        """
+        # setup
+        db_path = h.setupTmpBaseDir()
+        db.setupDbEnv(db_path, mode="method")
+
+        yield db_path  # this allows the test to run
+
+        # teardown
+        h.cleanupTmpBaseDir(db_path)
+
+    def test_events_deletion(self, client, dbs):
+        # setup
+        history_db, events_db = dbs("method")
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        assert events_db.getEvent(did) is None
+        assert history_db.getHistory(did) is None
+
+    def test_promiscuous_events_deletion(self, client, dbs):
+        # setup
+        history_db, events_db = dbs("promiscuous")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # hacked did
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+
+        hsignature = eddsa.signResource(json.dumps(hhistory).encode(), hsk)
+        hsignatures = {"signer": hsignature}
+
+        history_db.saveHistory(did, hhistory, hsignatures)
+        events_db.saveEvent(did, hhistory, hsignatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("method")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": hhistory,
+                    "signatures": {
+                        "signer": hsignature
+                    }
+                },
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        assert events_db.getEvent(did) is None
+        assert history_db.getHistory(did) is None
+
+    def test_race_events_deletion(self, client, dbs):
+        # setup
+        history_db, events_db = dbs("race")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("method")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        assert events_db.getEvent(did) is None
+        assert history_db.getHistory(did) is None
+
+
+class TestEventsDeletionPromiscuousMode:
+    @pytest.fixture(scope="class")
+    def testApp(self):
+        """
+
+        setup falcon and load REST endpoints
+
+        """
+
+        def app(mode="method"):
+            store = storing.Store(stamp=0.0)
+            testApp = falcon.API()
+            loadEndPoints(testApp, store=store, mode=mode)
+            db.createDBWrappers(mode)
+            return testApp
+
+        return app
+
+    @pytest.fixture(scope="class")
+    def promiscuous_client(self, testApp):
+        """
+
+        This function utilizes the testApp() fixture above
+
+        Pytest runs this function once per module
+
+        testing.TestClient() is optional
+        It allows you to avoid passing your app object into every
+        simulate_xxx() function call
+
+        """
+
+        return testing.TestClient(testApp("promiscuous"))
+
+    @pytest.fixture
+    def dbs(self):
+        def get_dbs(mode):
+            db.createDBWrappers(mode)
+            return db.historyDB, db.eventsDB
+
+        return get_dbs
+
+    @pytest.fixture(autouse=True)
+    def setupTearDown(self):
+        """
+
+        Pytest runs this function before every test when autouse=True
+        Without autouse=True you would have to add a setupTeardown parameter
+        to each test function
+
+        """
+        # setup
+        db_path = h.setupTmpBaseDir()
+        db.setupDbEnv(db_path, mode="promiscuous")
+
+        yield db_path  # this allows the test to run
+
+        # teardown
+        h.cleanupTmpBaseDir(db_path)
+
+    def test_events_deletion(self, promiscuous_client, dbs):
+        # setup
+        history_db, events_db = dbs("promiscuous")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # hacked did
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+
+        hsignature = eddsa.signResource(json.dumps(hhistory).encode(), hsk)
+        hsignatures = {"signer": hsignature}
+
+        history_db.saveHistory(did, hhistory, hsignatures)
+        events_db.saveEvent(did, hhistory, hsignatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(promiscuous_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+        exp_events = [
+            [
+                {
+                    "event": hhistory,
+                    "signatures": hsignatures,
+                }
+            ]
+        ]
+
+        assert remaining_events is not None
+        assert remaining_history is not None
+
+        assert exp_events == remaining_events.to_list()
+
+    def test_method_events_deletion(self, promiscuous_client, dbs):
+        # setup
+        history_db, events_db = dbs("method")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("promiscuous")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(promiscuous_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+
+        assert remaining_events is None
+        assert remaining_history is None
+
+    def test_race_events_deletion(self, promiscuous_client, dbs):
+        # setup
+        history_db, events_db = dbs("race")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("promiscuous")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(promiscuous_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+
+        assert remaining_events is None
+        assert remaining_history is None
+
+
+class TestEventsDeletionRaceMode:
+    @pytest.fixture(scope="class")
+    def testApp(self):
+        """
+
+        setup falcon and load REST endpoints
+
+        """
+
+        def app(mode="method"):
+            store = storing.Store(stamp=0.0)
+            testApp = falcon.API()
+            loadEndPoints(testApp, store=store, mode=mode)
+            db.createDBWrappers(mode)
+            return testApp
+
+        return app
+
+    @pytest.fixture(scope="class")
+    def race_client(self, testApp):
+        """
+
+        This function utilizes the testApp() fixture above
+
+        Pytest runs this function once per module
+
+        testing.TestClient() is optional
+        It allows you to avoid passing your app object into every
+        simulate_xxx() function call
+
+        """
+
+        return testing.TestClient(testApp("race"))
+
+    @pytest.fixture
+    def dbs(self):
+        def get_dbs(mode):
+            db.createDBWrappers(mode)
+            return db.historyDB, db.eventsDB
+
+        return get_dbs
+
+    @pytest.fixture(autouse=True)
+    def setupTearDown(self):
+        """
+
+        Pytest runs this function before every test when autouse=True
+        Without autouse=True you would have to add a setupTeardown parameter
+        to each test function
+
+        """
+        # setup
+        db_path = h.setupTmpBaseDir()
+        db.setupDbEnv(db_path, mode="race")
+
+        yield db_path  # this allows the test to run
+
+        # teardown
+        h.cleanupTmpBaseDir(db_path)
+
+    def test_events_deletion(self, race_client, dbs):
+        # setup
+        history_db, events_db = dbs("race")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(race_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+
+        assert remaining_events is None
+        assert remaining_history is None
+
+    def test_promiscuous_events_deletion(self, race_client, dbs):
+        # setup
+        history_db, events_db = dbs("promiscuous")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # hacked did
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+
+        hsignature = eddsa.signResource(json.dumps(hhistory).encode(), hsk)
+        hsignatures = {"signer": hsignature}
+
+        history_db.saveHistory(did, hhistory, hsignatures)
+        events_db.saveEvent(did, hhistory, hsignatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("race")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(race_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+        exp_events = [
+            [
+                {
+                    "event": hhistory,
+                    "signatures": hsignatures,
+                }
+            ]
+        ]
+
+        assert remaining_events is not None
+        assert remaining_history is not None
+
+        assert exp_events == remaining_events.to_list()
+
+    def test_method_events_deletion(self, race_client, dbs):
+        # setup
+        history_db, events_db = dbs("method")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("race")
+
+        body = {"vk": vk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), sk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": history,
+                    "signatures": {
+                        "signer": signature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(race_client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        remaining_events = events_db.getEvent(did)
+        remaining_history = history_db.getHistory(did)
+
+        assert remaining_events is None
+        assert remaining_history is None

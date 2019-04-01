@@ -115,7 +115,7 @@ class History:
             vk = None  # Delete all data
 
         success = db.historyDB.deleteHistory(did, vk)
-        db.eventsDB.deleteEvent(did)
+        db.eventsDB.deleteEvent(did, vk)
 
         if success is None:
             raise falcon.HTTPError(falcon.HTTP_409,
