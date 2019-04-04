@@ -4,10 +4,10 @@ high throughput. In order to attain these goals we implemented different running
 
 When working with DID's there is an inherent security flaw that requires that you validate that the clients public key 
 belongs to the DID you've received.  The normal method for doing this would be to look up the DID Document and compare 
-public keys. Because Didery is meant to be a backbone infrastructure piece it needs to be fast and have a high throughput.  
+public keys. Because Didery is meant to be a backbone infrastructure piece it needs to be fast and have high throughput.  
 If Didery has to look up the DID Document for every request it significantly slows down the service.
 
-The only other way to validate a public key is to resolve the idstring to it's corresponding public key.  This requires 
+The only other way to validate a public key is to resolve a DID's idstring to it's corresponding public key.  This requires 
 having and maintaining an implementation for every DID method.  This is problematic because the DID spec has not been 
 finalized, there is no limit to the number of DID methods, and the methods are constantly changing. 
 
@@ -24,9 +24,9 @@ If no resolver exists the request will be rejected with a http 400 error. If a r
 the first key in the signers field matches the key used in the DID's idstring. 
 
 ## Promiscuous Mode
-This mode has cascading permissions. If a POST request contains a supported DID method Didery will default back to 
+This mode has cascading permissions. If a POST request's DID contains a supported DID method Didery will default back to 
 method mode and validate the idstring and public key for that request. For all other POST requests if the signature 
-validates a new history will be created.
+validates a new history will be created and connected to that requests DID.
 
 The purpose of this mode is to allow any DID method to be accepted while also allowing a consumer of the service to 
 detect if someone has tried to hack a DID.  However there is a limitation to detecting hacking. If only one history has 
@@ -56,10 +56,12 @@ will be deleted. If no history was uploaded by the requester the request will be
 
 ## Promiscuous Mode
 Promiscuous mode allows multiple histories per DID. When DELETE requests are received a history is looked up using 
-the DID and the public key included in the request. If no history is found an error is returned.  If a history exists 
-signatures are validated against the histories current signing key.  Only histories that contain the key sent in the 
-DELETE request will be deleted.
+the DID and the public key included in the request. If no history is found an error is returned.  If a history exists
+the requests signatures are validated against the histories current signing key.  Only histories that contain the key 
+sent in the DELETE request will be deleted. In this mode there is no way for one person to delete all histories 
+connected to a single DID.
 
 ## Race Mode
 The owner of a specific history can delete their history just like in promiscuous mode. If a server was first
-run in promiscuous mode and then switched to race mode, only the owner of a specific history can delete it.
+run in promiscuous mode and then switched to race mode, only the owner of a specific history can delete it. In this mode 
+there is no way for one person to delete all histories connected to a single DID.
