@@ -71,8 +71,10 @@ Options:
                                   Verbosity level.
   --path DIRECTORY                Path to the database folder. Defaults to
                                   /var/didery/db.
+  -m, --method                    Run Didery in method mode.
+  -P, --promiscuous               Run Didery in promiscuous mode.
+  -r, --race                      Run Didery in race mode.
   --help                          Show this message and exit.
-
 ```
 
 You can manage the backend from your browser by going to:

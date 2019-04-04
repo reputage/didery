@@ -57,19 +57,22 @@ from didery.db.dbing import DATABASE_DIR_PATH
 )
 @click.option(
     '--method',
-    'mode',
-    flag_value='method'
+    '-m',
+    flag_value='method',
+    default=True,
+    help="Run Didery in method mode."
 )
 @click.option(
     '--promiscuous',
-    'mode',
+    '-P',
     flag_value='promiscuous',
-    default=True
+    help="Run Didery in promiscuous mode."
 )
 @click.option(
     '--race',
-    'mode',
-    flag_value='race'
+    '-r',
+    flag_value='race',
+    help="Run Didery in race mode."
 )
 def main(port, version, verbose, path, mode):
     if version:
