@@ -1,6 +1,6 @@
 # Signature Header
 
-didery service requests or responses may require a custom *Signature* header that provides one or more signatures of the request/response body text.
+Didery service requests or responses may require a custom *Signature* header that provides one or more signatures of the request/response body text.
 
 The format of the custom Signature header follows the conventions of [RFC 7230](https://tools.ietf.org/html/rfc7230)
 
@@ -33,16 +33,10 @@ in Base64 url safe format. By default the signatures are 64 byte EdDSA (Ed25519)
 
 The two tag field values currently supported are *signer* and *rotation*.
 
-The didery python library has a helper function,
+The Didery python library has a helper function,
 
 ```python
-parseSignatureHeader(signature)
-```
-
-in the
-
-```python
-didery.help.helping
+didery.help.helping.parseSignatureHeader(signature)
 ```
 
 that parses *Signature* header values and returns a python dictionary keyed by tags and whose values are the signatures provided in the header.
@@ -61,12 +55,15 @@ Signature: signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2XPZHLmzQFHWzjA2P
 
 # Signature Schemes
 An optional *tag* name = *scheme*. The *scheme* tag field value specifies the type of signature. All signatures within the header
-must be of the same scheme. Currently the only supported signature type is *EdDSA(Ed25519)*. In the future we plan to also support *ECDSA(secp256k1)*. 
+must be of the same scheme. Currently the only supported signature types are *EdDSA(Ed25519)* and *ECDSA(Secp256k1)*. In the future we plan to also support *ECDSA(secp256k1)*. 
 
 #### Scheme Values
 ```
 EdDSA
 Ed25519
+
+ECDSA
+Secp256k1
 ```
 
 ```http
@@ -78,10 +75,10 @@ Signature: name="Ed25519"; signer="B0Qc72RP5IOodsQRQ_s4MKMNe0PIAqwjKsBl4b6lK9co2
 ```
 
 # Key Revocation
-For simplicity didery handles key revocation by rotating to the null key.  This is done by sending a rotation request to the didery server and setting the new pre rotated key to null. The "signer" index needs to point to the null key. As shown below the index jumps from 0 to 2 so that anyone who comes along later and verifies your keys with didery will see that you don't have a current valid key.
+For simplicity Didery handles key revocation by rotating to the null key.  This is done by sending a rotation request to the Didery server and setting the new pre rotated key to null. The "signer" index needs to point to the null key. As shown below the index jumps from 0 to 2 so that anyone who comes along later and verifies your keys with Didery will see that you don't have a current valid key.
 
 ##### Existing Data
-Suppose the didery servers already have this data.
+Suppose the Didery servers already have this data.
 ```
 [
     {
