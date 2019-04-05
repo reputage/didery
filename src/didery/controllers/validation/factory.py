@@ -11,6 +11,13 @@ def historyFactory(mode, req, params):
     :param params: (dict) URI Template field names
     """
     req.raw = helping.parseReqBody(req)
+
+    did = None
+    if "id" in req.body:
+        did = req.body["id"]
+    elif "did" in params:
+        did = params["did"]
+
     validators = []
 
     if req.method == "POST" or req.method == "post":
@@ -24,7 +31,7 @@ def historyFactory(mode, req, params):
             validation.SignerIsIntValidator(req, params),
             validation.ChangedIsISODatetimeValidator(req, params),
             validation.NoEmptyKeysValidator(req, params),
-            validation.DIDFormatValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.FieldNotEmptyValidator(req, params, "signers"),
             validation.ContainsPreRotationValidator(req, params),
             validation.SignersKeysNotNoneValidator(req, params),
@@ -47,7 +54,7 @@ def historyFactory(mode, req, params):
             validation.ContainsPreRotationOrRevokedValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
             validation.SignersNotNoneValidator(req, params),
-            validation.DIDFormatValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.RotationSigValidator(req, params),
             validation.ChangedLaterThanPreviousValidator(req, params),
             validation.SignersNotChangedValidator(req, params),
@@ -58,6 +65,7 @@ def historyFactory(mode, req, params):
             validation.RequiredFieldsValidator(req, params, ["vk"]),
             validation.HasSignatureHeaderValidator(req, params),
             validation.DidInURLValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.FieldNotEmptyValidator(req, params, "vk"),
             validation.DeletionSigValidator(req, params),
         ]
@@ -67,15 +75,15 @@ def historyFactory(mode, req, params):
 
     if mode == "race":
         if req.method == "POST" or req.method == "post":
-            validators.append(validation.CascadingValidationValidator(req, params))
+            validators.append(validation.CascadingValidationValidator(req, params, did))
             validators.append(validation.HistoryDoesntExistValidator(req, params))
     elif mode == "promiscuous":
         if req.method == "POST" or req.method == "post":
-            validators.append(validation.CascadingValidationValidator(req, params))
+            validators.append(validation.CascadingValidationValidator(req, params, did))
     elif mode == "method":
         if req.method == "POST" or req.method == "post":
-            validators.append(validation.DidMethodExistsValidator(req, params))
-            validators.append(validation.DidHijackingValidator(req, params))
+            validators.append(validation.DidMethodExistsValidator(req, params, did))
+            validators.append(validation.DidHijackingValidator(req, params, did))
             validators.append(validation.HistoryDoesntExistValidator(req, params))
 
     return validation.CompositeValidator(req, params, validators)
@@ -90,6 +98,11 @@ def blobFactory(mode, req, params):
     :param params: (dict) URI Template field names
     """
     req.raw = helping.parseReqBody(req)
+
+    did = None
+    if "id" in req.body:
+        did = req.body["id"]
+
     validators = []
 
     if req.method == "POST" or req.method == "post":
@@ -101,7 +114,7 @@ def blobFactory(mode, req, params):
             validation.FieldNotEmptyValidator(req, params, "blob"),
             validation.FieldNotEmptyValidator(req, params, "changed"),
             validation.ChangedIsISODatetimeValidator(req, params),
-            validation.DIDFormatValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.DADValidator(req, params),
             validation.BlobSigValidator(req, params),
             validation.BlobDoesntExistValidator(req, params)
@@ -114,7 +127,7 @@ def blobFactory(mode, req, params):
             validation.FieldNotEmptyValidator(req, params, "blob"),
             validation.FieldNotEmptyValidator(req, params, "changed"),
             validation.ChangedIsISODatetimeValidator(req, params),
-            validation.DIDFormatValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.DADValidator(req, params),
             validation.DidInURLValidator(req, params),
             validation.URLDidMatchesIdValidator(req, params),
@@ -127,7 +140,7 @@ def blobFactory(mode, req, params):
             validation.DidInURLValidator(req, params),
             validation.FieldNotEmptyValidator(req, params, "id"),
             validation.URLDidMatchesIdValidator(req, params),
-            validation.DIDFormatValidator(req, params),
+            validation.DIDFormatValidator(req, params, did),
             validation.DeleteBlobSigValidator(req, params),
             validation.OTPDeleteIdenticalSigsValidator(req, params)
         ]

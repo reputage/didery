@@ -2163,10 +2163,6 @@ class TestHistoryMethodMode:
         exp_result = {
             "deleted": [
                 {
-                    "history": json.loads(hhistory),
-                    "signatures": {"signer": hsignature}
-                },
-                {
                     "history": json.loads(history),
                     "signatures": {"signer": signature}
                 }
@@ -3271,6 +3267,83 @@ class TestEventsDeletionMethodMode:
 
         assert events_db.getEvent(did) is None
         assert history_db.getHistory(did) is None
+
+    def test_partial_deletion(self, client, dbs):
+        # If a DELETE Request is received from someone who is not the owner of the DID, but they do own
+        # a history connected to the did, they should be able to delete it.
+
+        # setup
+        history_db, events_db = dbs("promiscuous")
+
+        # did owner
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        vk, sk, did, history = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        vk = h.bytesToStr64u(vk)
+
+        signature = eddsa.signResource(history, sk)
+
+        history = json.loads(history.decode())
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # rotation
+        history["signer"] = 1
+        history["signers"].append(vk)
+
+        signature = eddsa.signResource(json.dumps(history).encode(), sk)
+        signatures = {"signer": signature}
+
+        history_db.saveHistory(did, history, signatures)
+        events_db.saveEvent(did, history, signatures)
+
+        # hacked did
+        seed = libnacl.randombytes(libnacl.crypto_sign_SEEDBYTES)
+        hvk, hsk, hdid, hhistory = eddsa.genDidHistory(seed, signer=0, numSigners=2)
+        hvk = h.bytesToStr64u(hvk)
+
+        hhistory = json.loads(hhistory.decode())
+        hhistory["id"] = did
+
+        hsignature = eddsa.signResource(json.dumps(hhistory).encode(), hsk)
+        hsignatures = {"signer": hsignature}
+
+        history_db.saveHistory(did, hhistory, hsignatures)
+        events_db.saveEvent(did, hhistory, hsignatures)
+
+        # check setup success
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
+
+        # begin test
+        history_db, events_db = dbs("method")
+
+        body = {"vk": hvk}
+        headers = {
+            "Signature": 'signer="{0}"'.format(eddsa.signResource(json.dumps(body).encode(), hsk))
+        }
+
+        exp_result = {
+            "deleted": [
+                {
+                    "history": hhistory,
+                    "signatures": {
+                        "signer": hsignature
+                    }
+                }
+            ]
+        }
+
+        verifyRequest(client.simulate_delete,
+                      "{}/{}".format(HISTORY_BASE_PATH, did),
+                      body,
+                      headers=headers,
+                      exp_result=exp_result,
+                      exp_status=falcon.HTTP_200)
+
+        assert events_db.getEvent(did) is not None
+        assert history_db.getHistory(did) is not None
 
 
 class TestEventsDeletionPromiscuousMode:

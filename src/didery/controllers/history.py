@@ -8,6 +8,7 @@ except ImportError:
     import json
 
 from ..help import helping
+from ..did.didering import Did, getDIDModel
 from ..db import dbing as db
 from ..controllers.validation import factory
 from ..models.models import BasicHistoryModel
@@ -112,7 +113,12 @@ class History:
         vk = req.body["vk"]
 
         if self.mode == "method":
-            vk = None  # Delete all data
+            did_class = getDIDModel(did)
+            if did_class is not None:  # Test id-string Resolver exists
+                did_obj = did_class(did)
+
+                if did_obj.match_vk(vk):
+                    vk = None  # Delete all data
 
         success = db.historyDB.deleteHistory(did, vk)
         db.eventsDB.deleteEvent(did, vk)

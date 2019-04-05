@@ -102,6 +102,20 @@ class HistoryExistsValidator(Validator):
             raise falcon.HTTPError(falcon.HTTP_404)
 
 
+class VKExistsValidator(Validator):
+    def __init__(self, req, params):
+        Validator.__init__(self, req, params)
+
+    def validate(self):
+        vk = self.req.body["vk"]
+        history = db.historyDB.getHistory(did)
+        index = history.find(vk)
+        if index is None:
+            raise falcon.HTTPError(falcon.HTTP_400,
+                                   "Validation Error",
+                                   "Could not find a history with vk={}".format(vk))
+
+
 class OTPDeleteIdenticalSigsValidator(Validator):
     # Signatures cannot match the existing data
     # A Hacker can simply do a GET and then resend the data as a DELETE request.
@@ -301,12 +315,14 @@ class SigExistsValidator(Validator):
 
 
 class DIDFormatValidator(Validator):
-    def __init__(self, req, params):
+    def __init__(self, req, params, did):
         Validator.__init__(self, req, params)
+
+        self.did = did
 
     def validate(self):
         try:
-            didery.did.didering.Did(self.body['id'])
+            didery.did.didering.Did(self.did)
         except ValueError as ex:
             raise falcon.HTTPError(falcon.HTTP_400,
                                    'Validation Error',
@@ -417,14 +433,15 @@ class SignatureValidator(Validator):
 
 
 class DidMethodExistsValidator(Validator):
-    def __init__(self, req, params):
+    def __init__(self, req, params, did):
         Validator.__init__(self, req, params)
 
-        self.didFormatValidator = DIDFormatValidator(req, params)
+        self.didFormatValidator = DIDFormatValidator(req, params, did)
+        self.did = did
 
     def validate(self):
         self.didFormatValidator.validate()
-        did_class = didery.did.didering.getDIDModel(self.body['id'])
+        did_class = didery.did.didering.getDIDModel(self.did)
 
         if did_class is None:
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -433,16 +450,17 @@ class DidMethodExistsValidator(Validator):
 
 
 class DidHijackingValidator(Validator):
-    def __init__(self, req, params):
+    def __init__(self, req, params, did):
         Validator.__init__(self, req, params)
 
-        self.didFormatValidator = DIDFormatValidator(req, params)
+        self.didFormatValidator = DIDFormatValidator(req, params, did)
+        self.did = did
 
     def validate(self):
         self.didFormatValidator.validate()
-        did_class = didery.did.didering.getDIDModel(self.body['id'])
+        did_class = didery.did.didering.getDIDModel(self.did)
 
-        did = did_class(self.body['id'])
+        did = did_class(self.did)
 
         if not did.match_vk(self.body['signers'][0]):
             raise falcon.HTTPError(falcon.HTTP_400,
@@ -480,15 +498,16 @@ class URLDidMatchesIdValidator(Validator):
 
 
 class CascadingValidationValidator(Validator):
-    def __init__(self, req, params):
+    def __init__(self, req, params, did):
         Validator.__init__(self, req, params)
 
-        self.didFormatValidator = DIDFormatValidator(req, params)
-        self.Hijacked = DidHijackingValidator(req, params)
+        self.didFormatValidator = DIDFormatValidator(req, params, did)
+        self.Hijacked = DidHijackingValidator(req, params, did)
+        self.did = did
 
     def validate(self):
         self.didFormatValidator.validate()
-        did_class = didery.did.didering.getDIDModel(self.body['id'])
+        did_class = didery.did.didering.getDIDModel(self.did)
 
         if did_class is None:
             return
