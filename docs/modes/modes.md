@@ -49,17 +49,27 @@ histories, because of promiscuous mode, the owners of the individual histories c
 Didery is currently using.
 
 ## Method Mode
-The owner of a DID can delete their history as well as any other histories connected to the DID.  When a server has been 
-run in promiscuous mode and then switched to method mode deletion can take a different path. If a DELETE request
-is received and the requester is not the owner of the DID, but they have a history attached to the DID, only their history 
-will be deleted. If no history was uploaded by the requester the request will be denied.
+When a server has been run in promiscuous mode and then switched to method mode deletion can take a few different paths. 
+
+#### DELETE Request From A DID Owner/Creator
+The owner of a DID can delete their history as well as any other histories connected to the DID as long as Didery has an
+implementation for the DID's method.  If no implementation exists deletion reverts to Promiscuous deletion as described 
+[below](#promiscuous-mode).  
+
+#### DELETE Request For An Unsupported DID Method
+If Didery was ever run in promiscuous or race mode it is possible that a DID was accepted for which Didery has no 
+implementation. To handle this case deletion reverts to Promiscuous deletion as described [below](#promiscuous-mode).
+
+#### DELETE Request From A Non DID Owner/Creator
+This scenario is handled the same as a [DELETE Request For An Unsupported DID Method](#delete-request-for-an-unsupported-did-method)
+shown above.
 
 ## Promiscuous Mode
 Promiscuous mode allows multiple histories per DID. When DELETE requests are received a history is looked up using 
 the DID and the public key included in the request. If no history is found an error is returned.  If a history exists
 the requests signatures are validated against the histories current signing key.  Only histories that contain the key 
-sent in the DELETE request will be deleted. In this mode there is no way for one person to delete all histories 
-connected to a single DID.
+sent in the DELETE request will be deleted.  If no history can be found a 400 error will be returned. In this mode there 
+is no way for one person to delete all histories connected to a single DID.
 
 ## Race Mode
 The owner of a specific history can delete their history just like in promiscuous mode. If a server was first
