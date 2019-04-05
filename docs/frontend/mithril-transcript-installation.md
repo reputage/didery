@@ -20,19 +20,24 @@ Need to install NodeJs which installs npm
 Installed version 8.5 of nodejs and version 5.3.0 of npm
 
 To use Mithril via NPM, go to your project folder, and run 
+```
 $ npm init --yes 
+```
 
 from the command line. 
 
-
+```
 $ cd /Data/Code/private/indigo/bluepea/src/bluepea/static
+```
 
 This will create a file called package.json.
 
+```
 $ npm init --yes
+```
 
 Wrote to /Data/Code/private/indigo/bluepea/src/bluepea/static/package.json:
-
+```json
 {
   "name": "static",
   "version": "1.0.0",
@@ -45,9 +50,10 @@ Wrote to /Data/Code/private/indigo/bluepea/src/bluepea/static/package.json:
   "author": "",
   "license": "ISC"
 }
+```
 
 Edited package.json to be
-
+```json
 {
   "name": "bluepea",
   "version": "1.0.0",
@@ -60,13 +66,16 @@ Edited package.json to be
   "author": "",
   "license": "Apache2"
 }
-
+```
 
 #### creates a file called package.json
 Then, to install Mithril, run:
 
+```
 $ npm install mithril --save
+```
 
+```
 $ npm install mithril --save
 npm notice created a lockfile as package-lock.json. You should commit this file.
 npm WARN bluepea@1.0.0 No description
@@ -75,9 +84,10 @@ npm WARN bluepea@1.0.0 license should be a valid SPDX license expression
 
 + mithril@1.1.3
 added 1 package in 1.583s
+```
 
 Edited package.json license to be valid
-
+```json
 {
   "name": "bluepea",
   "version": "1.0.0",
@@ -93,6 +103,7 @@ Edited package.json license to be valid
     "mithril": "^1.1.3"
   }
 }
+```
 
 Install added node_modules folder which has mithril folder
 
@@ -107,10 +118,12 @@ Create subdirectory src/in the root of the static project directory
 Create file  index.js in src
 /Data/Code/private/indigo/bluepea/src/bluepea/static/src/index.js
 
+```javascript
 // index.js
 var m = require("mithril")
 
 m.render(document.body, "hello world")
+```
 
 Modularization is the practice of separating the code into files. 
 Doing so makes it easier to find code, understand what code relies on what code, 
@@ -138,6 +151,7 @@ running in a client-side application.
 A popular way for creating a bundle is to setup an NPM script for Webpack. 
 To install Webpack, run this from the command line:
 
+```
 $ npm install webpack --save-dev
 
 
@@ -155,16 +169,18 @@ npm WARN bluepea@1.0.0 No repository field.
 
 + webpack@3.5.6
 added 365 packages in 9.141s
-
+```
 
 Open the package.json that you created earlier, and add an entry to the scripts section:
-
+```json
 {
     "name": "my-project",
     "scripts": {
         "start": "webpack src/index.js bin/app.js -d --watch"
     }
 }
+```
+
 Remember this is a JSON file, so object key names such as "scripts" and "start" 
 must be inside of double quotes.
 
@@ -182,10 +198,13 @@ you need to either add node_modules/.bin to your PATH,
 or install webpack globally via npm install webpack -g. 
 It's, however, recommended that you always install webpack locally 
 and use npm scripts, to ensure builds are reproducible in different computers.
-
+```
 $ npm start
+```
+
 or
 
+```
 $ npm run-script start
 
 > bluepea@1.0.0 start /Data/Code/private/indigo/bluepea/src/bluepea/static
@@ -205,22 +224,21 @@ app.js  171 kB       0  [emitted]  main
 
 
 Control-c to exit
+```
 
-The start command created the directory bin with 
-bin/app.js in it.
+The start command created the directory bin with bin/app.js in it.
 
-
-
-
+```
 $ ll
 total 336
 drwxrwxr-x   3 samuel  staff     102 Sep 14 16:24 ./
 drwxrwxr-x  11 samuel  staff     374 Sep 14 16:22 ../
 -rw-rw-r--   1 samuel  staff  171200 Sep 14 16:24 app.js
-
+```
 
 Now update main.html to reference the  bin/app.js as the packaged mithril load
 
+```html
 <html>
   <head>
     <title>Hello world</title>
@@ -229,6 +247,7 @@ Now update main.html to reference the  bin/app.js as the packaged mithril load
     <script src="bin/app.js"></script>
   </body>
 </html>
+```
 
 This takes 5 seconds to load the app.js with the Valet server?
 Tried changed from 1/16  0.0625  period to 0.015625 period 1/64 of the ioflo
@@ -240,20 +259,23 @@ On google chrome it loads right away.
 
 
 To export a module, assign what you want to export to the special module.exports object:
-
+```javascript
 // mycomponent.js
 module.exports = {
     view: function() {return "hello from a module"}
 }
+```
+
 In the index.js, you would then write this code to import that module:
 
+```javascript
 // index.js
 var m = require("mithril")
 
 var MyComponent = require("./mycomponent")
 
 m.mount(document.body, MyComponent)
-
+```
 
 Note that in this example, we're using m.mount, which wires up the component 
 to Mithril's autoredraw system. 
@@ -270,6 +292,7 @@ If you open bin/app.js, you'll notice that the Webpack bundle is not minified,
 so this file is not ideal for a live application. 
 To generate a minified file, open package.json and add a new npm script:
 
+```json
 {
     "name": "my-project",
     "scripts": {
@@ -277,7 +300,9 @@ To generate a minified file, open package.json and add a new npm script:
         "release": "webpack src/index.js bin/app.js -p",
     }
 }
+```
 
+```
 $ npm run-script build   # just npm build does not work
 
 > bluepea@1.0.0 build /Data/Code/private/indigo/bluepea/src/bluepea/static
@@ -291,18 +316,20 @@ app.js  27.8 kB       0  [emitted]  main
    [0] (webpack)/buildin/global.js 509 bytes {0} [built]
    [1] ./src/index.js 79 bytes {0} [built]
     + 4 hidden modules
+```
 
+```
 $ ll bin
 total 56
 drwxrwxr-x   3 samuel  staff    102 Sep 14 16:49 ./
 drwxrwxr-x  11 samuel  staff    374 Sep 14 16:22 ../
 -rw-rw-r--   1 samuel  staff  27832 Sep 14 16:49 app.js
-
+```
 
 
 You can use hooks in your production environment to run the production build 
 script automatically. Here's an example for Heroku:
-
+```json
 {
     "name": "my-project",
     "scripts": {
@@ -311,7 +338,7 @@ script automatically. Here's an example for Heroku:
         "heroku-postbuild": "webpack -p"
     }
 }
-
+```
 
 Alternate ways to use Mithril
 
@@ -320,11 +347,12 @@ Live reload development environment
 Live reload is a feature where code changes automatically trigger the page to reload. Budo is one tool that enables live reloading.
 
 #### 1) install
-npm install mithril --save
-npm install budo -g
-
-#### 2) add this line into the scripts section in package.json
 ```
+$ npm install mithril --save
+$ npm install budo -g
+```
+#### 2) add this line into the scripts section in package.json
+```json
 "scripts": {
     "start": "budo --live --open index.js"
 }
@@ -333,7 +361,10 @@ npm install budo -g
 #### 3) create an `index.js` file
 
 #### 4) run budo
-npm start
+```
+$ npm start
+```
+
 The source file index.js will be compiled (bundled) and a browser window opens showing the result. Any changes in the source files will instantly get recompiled and the browser will refresh reflecting the changes.
 
 Mithril bundler
@@ -341,17 +372,19 @@ Mithril bundler
 Mithril comes with a bundler tool of its own. It is sufficient for ES5-based projects that have no other dependencies other than Mithril, but it's currently considered experimental for projects that require other NPM dependencies. It produces smaller bundles than webpack, but you should not use it in production yet.
 
 If you want to try it and give feedback, you can open package.json and change the npm script for webpack to this:
-
+```json
 {
     "name": "my-project",
     "scripts": {
         "build": "bundle index.js --output app.js --watch"
     }
 }
+```
+
 Vanilla
 
 If you don't have the ability to run a bundler script due to company security policies, there's an options to not use a module system at all:
-
+```html
 <html>
   <head>
     <title>Hello world</title>
@@ -361,11 +394,13 @@ If you don't have the ability to run a bundler script due to company security po
     <script src="index.js"></script>
   </body>
 </html>
+```
+```javascript
 // index.js
 
 // if a CommonJS environment is not detected, Mithril will be created in the global scope
 m.render(document.body, "hello world")
-
+```
 
 ----------
 Test Framework
@@ -376,20 +411,22 @@ configurability for the sake of avoiding yak shaving and analysis paralysis.
 
 The easist way to setup the test runner is to create an NPM script for it. 
 Open your project's package.json file and edit the test line under the scripts section:
-
+```json
 {
     "name": "my-project",
     "scripts": {
         "test": "ospec"
     }
 }
+```
+
 Remember this is a JSON file, so object key names such as "test" must be inside of double quotes.
 
 To setup a test suite, create a tests folder and inside of it, create a test file:
 
 Made new directior static/tests
 
-
+```javascript
 // file: tests/math-test.js
 var o = require("mithril/ospec/ospec")
 
@@ -398,12 +435,12 @@ o.spec("math", function() {
         o(1 + 2).equals(3)
     })
 })
+```
+
 To run the test, use the command npm test. Ospec considers any Javascript file 
 inside of a tests folder (anywhere in the project) to be a test.
 
-npm test
-
-
+```
 $ npm test
 
 > bluepea@1.0.0 test /Data/Code/private/indigo/bluepea/src/bluepea/static
@@ -411,7 +448,7 @@ $ npm test
 
 0 assertions completed in 0ms, of which 0 failed
 samuel@AiBook:/Data/Code/private/indigo/bluepea/src/bluepea/static/
-
+```
 
 -----------
 Semantic UI
@@ -423,10 +460,10 @@ https://semantic-ui.com/introduction/getting-started.html
 Install NodeJS
 
 Update NPM
-
+```
 $ npm update
 $ npm i -g npm
-
+```
 
 ---------
 Install Gulp
@@ -441,45 +478,48 @@ by the main gulp package on npm. However, we’ve moved away from coupling
 the CLI and library together. The CLI now lives in the gulp-cli package.
 
 Install global gulp-cli
-
+```
 $ npm install --global gulp-cli
-
+```
 cd to static directory to install local
-
+```
 $ npm install --save-dev gulp
 
 $ gulp -v
 $ gulp --version
 [15:03:52] CLI version 1.4.0
 [15:03:52] Local version 3.9.1
-
+```
 In your project directory, create a file named gulpfile.js in your project root with these contents:
-
+```javascript
 var gulp = require('gulp');
 
 gulp.task('default', function() {
   // place code for your default task here
 });
+```
 Test it out
 
 Run the gulp command in your project directory:
-
+```
 $ gulp
 [15:05:30] Using gulpfile /Data/Code/private/indigo/bluepea/src/bluepea/static/gulpfile.js
 [15:05:30] Starting 'default'...
 [15:05:30] Finished 'default' after 67 μs
-
+```
 
 ---------
 Install Semantic UI
 ------------
 
 Go to root of project directory
-
+```
 $ npm install semantic-ui --save
+```
 
 Installing
 ------------------------------
+```
 Installing to semantic/
 Copying UI definitions
 Copying UI themes
@@ -496,7 +536,6 @@ Creating config file (semantic.json) /Data/Code/private/indigo/bluepea/src/bluep
 [15:10:47] Finished 'create semantic.json' after 11 ms
 [15:10:47] Finished 'create install files' after 187 ms
 [15:10:47] Starting 'clean up install'...
-
  Setup Complete! 
  Installing Peer Dependencies. Please refrain from ctrl + c... 
  After completion navigate to semantic/ and run "gulp build" to build
@@ -505,8 +544,9 @@ npm WARN bluepea@1.0.0 No repository field.
 
 + semantic-ui@2.2.13
 added 321 packages in 51.477s
+```
 
-
+```
 $ cd semantic/
 $ gulp build
 
@@ -545,27 +585,30 @@ Building assets
 [15:11:36] Finished 'package uncompressed css' after 4.74 s
 [15:11:36] Finished 'build-css' after 15 s
 [15:11:36] Finished 'build' after 15 s
+```
 
 Updating
 
 Updating via NPM
+
 Semantic's NPM install script will automatically update Semantic UI to the latest version while preserving your site and packaged themes.
-
+```
 $ npm update
-
-
+```
 
 Install jquery locally using npm
-
+```
 $ npm install jquery --save
+```
 
-Browserify/Webpack
+### Browserify/Webpack
 There are several ways to use Browserify and Webpack. 
 For more information on using these tools, 
 please refer to the corresponding project's documention. 
 In the script, including jQuery will usually look like this...
-
+```javascript
 var $ = require("jquery");
+```
 
 --------------------
 Include in Your HTML
@@ -573,7 +616,7 @@ Include in Your HTML
 ------
 local jquery
 ---------
-
+```html
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
@@ -585,7 +628,7 @@ local jquery
     <script src="bin/app.js"></script>
   </body>
 </html>
-
+```
 
 
 -----
@@ -594,14 +637,14 @@ CDN jquery
 
 Running the gulp build tools will compile CSS and Javascript for use in your project. 
 Just link to these files in your HTML along with the latest jQuery.
-
+```html
 <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
 <script
   src="https://code.jquery.com/jquery-3.1.1.min.js"
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
 <script src="semantic/dist/semantic.min.js"></script>
-
+```
 
 
 --------------
@@ -609,18 +652,19 @@ Transcrypt
 ------------
 
 http://www.transcrypt.org
-
+```
 $ pip3 install -U transcrypt
+```
 
 Created static/transcrypt/ subdirectory to hold transcrypt python files
 
 
 Contents of hello.py
-
+```python
 m = require("mithril")
 
 m.render(document.body, "Hello python")
-
+```
 
 If you want to include Python code that makes full use of generators, iterators and the yield statement, the following workflow is advised:
 
@@ -635,13 +679,14 @@ Python source level debugging is still possible since the sourcemap will refer
 from the minified JavaScript target code to the Python source code.
 
 None minifiled
-
+```
 $ transcrypt -b -m -n  hello.py
 
 Transcrypt (TM) Python to JavaScript Small Sane Subset Transpiler Version 3.6.49
 Copyright (C) Geatec Engineering. License: Apache 2.0
 
 Saving result in: /Data/Code/private/indigo/bluepea/src/bluepea/static/transcrypt/__javascript__/hello.js
+```
 
 
 
@@ -649,7 +694,7 @@ Saving result in: /Data/Code/private/indigo/bluepea/src/bluepea/static/transcryp
 main.html
 
 Setup for transcrypt is
-
+```
 static/
   main.py
   __javascript__/
@@ -670,7 +715,8 @@ static/
           hello.js.map
           hello.mod.js.map
           pylib.hello.mod.js.map
-
+```
 To compile python to js
-
+```
 $ transcrypt -b -m -n -e 6 main.py
+```
