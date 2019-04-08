@@ -2,6 +2,8 @@ import pytest
 import os
 import shutil
 
+from didery.db import dbing
+
 
 DB_DIR_PATH = "/tmp/db_setup_test"
 
@@ -29,3 +31,57 @@ def setupTeardown():
     # teardown
     cleanupBaseDir(DB_DIR_PATH)
     assert not os.path.exists(DB_DIR_PATH)
+
+
+@pytest.fixture
+def otpDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.otpDB
+
+
+@pytest.fixture
+def historyDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.historyDB
+
+
+@pytest.fixture
+def promiscuousHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="promiscuous")
+    return dbing.historyDB
+
+
+@pytest.fixture
+def raceHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="race")
+    return dbing.historyDB
+
+
+@pytest.fixture
+def methodHistoryDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="method")
+    return dbing.historyDB
+
+
+@pytest.fixture
+def eventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH)
+    return dbing.eventsDB
+
+
+@pytest.fixture
+def promiscuousEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="promiscuous")
+    return dbing.eventsDB
+
+
+@pytest.fixture
+def raceEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="race")
+    return dbing.eventsDB
+
+
+@pytest.fixture
+def methodEventsDB():
+    dbing.setupDbEnv(DB_DIR_PATH, mode="method")
+    return dbing.eventsDB

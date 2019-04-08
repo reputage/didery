@@ -40,9 +40,8 @@ Then run these commands:
     $ npm install
     $ npm run-script transcrypt
 
-A common issue with running the software is that your system doesn't
-have libsodium 16 or greater installed. Run these commands and try
-again:
+Some common issues with installing and running the software is that your
+system is missing some dependencies. Run these commands and try again:
 
 Mac
 
@@ -60,6 +59,8 @@ Linux
     $ ./configure  
     $ make && make check  
     $ sudo make install  
+
+    $ sudo apt install gcc python-dev python3-dev libgmp3-dev
 
 Starting The Server
 ===================
@@ -90,6 +91,9 @@ below.
                                       Verbosity level.
       --path DIRECTORY                Path to the database folder. Defaults to
                                       /var/didery/db.
+      -m, --method                    Run Didery in method mode.
+      -P, --promiscuous               Run Didery in promiscuous mode.
+      -r, --race                      Run Didery in race mode.
       --help                          Show this message and exit.
 
 You can manage the backend from your browser by going to:

@@ -25,19 +25,20 @@ def testApp():
     setup falcon and load REST endpoints
 
     """
+    def app(mode="method"):
+        store = storing.Store(stamp=0.0)
+        testApp = falcon.API()
+        loadEndPoints(testApp, store=store, mode=mode)
+        return testApp
 
-    store = storing.Store(stamp=0.0)
-    testApp = falcon.API()
-    loadEndPoints(testApp, store=store)
-
-    return testApp
+    return app
 
 
 @pytest.fixture(scope="module")
 def client(testApp):
     """
 
-    this function utilizes the testApp() fixture above
+    This function utilizes the testApp() fixture above
 
     Pytest runs this function once per module
 
@@ -47,7 +48,41 @@ def client(testApp):
 
     """
 
-    return testing.TestClient(testApp)
+    return testing.TestClient(testApp("method"))
+
+
+@pytest.fixture(scope="module")
+def promiscuous_client(testApp):
+    """
+
+    This function utilizes the testApp() fixture above
+
+    Pytest runs this function once per module
+
+    testing.TestClient() is optional
+    It allows you to avoid passing your app object into every
+    simulate_xxx() function call
+
+    """
+
+    return testing.TestClient(testApp("promiscuous"))
+
+
+@pytest.fixture(scope="module")
+def race_client(testApp):
+    """
+
+    This function utilizes the testApp() fixture above
+
+    Pytest runs this function once per module
+
+    testing.TestClient() is optional
+    It allows you to avoid passing your app object into every
+    simulate_xxx() function call
+
+    """
+
+    return testing.TestClient(testApp("race"))
 
 
 @pytest.fixture(autouse=True)

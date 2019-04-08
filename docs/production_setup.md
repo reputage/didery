@@ -9,17 +9,23 @@ systemd
 
 Production Environment Setup
 =====
-1. Install Circus
+1. SSH into server
+    ```
+    linux
+    ssh -i ~/.ssh/path_to_key_file root@ip_address
+    ```
+
+2. Install Circus
     ```
     sudo apt install libzmq-dev libevent-dev python-dev python-virtualenv
     sudo -H pip3 install circus
     sudo -H pip3 install circus-web
     ```
-2. Install Didery
+3. Install Didery
     ```
     pip3 install didery
     ```
-3. Create a circus.ini File
+4. Create a circus.ini File
     ```
     mkdir /etc/circus/
     vim /etc/circus/circus.ini
@@ -33,7 +39,7 @@ Production Environment Setup
     numprocesses = 1
     ```
     Save and quit.
-4. Create a systemd service file
+5. Create a systemd service file
     ```
     vim /etc/systemd/system/circus.service
     ```
@@ -54,11 +60,11 @@ Production Environment Setup
     WantedBy=default.target
     ```
     Save and quit.
-5. Enable the service to startup on boot
+6. Enable the service to startup on boot
     ```
     systemctl enable circus
     ```
-6. Start the service
+7. Start the service
     Restart the systemd Daemon
     ```
     systemctl --system daemon-reload
@@ -67,3 +73,7 @@ Production Environment Setup
     ```
     sudo reboot
     ```
+
+Tools
+=====
+lmdb has a number of cli tools for managing databases [here](http://www.lmdb.tech/doc/tools.html).

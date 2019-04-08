@@ -1,15 +1,16 @@
 import falcon
-import arrow
-import time
+
 try:
     import simplejson as json
 except ImportError:
     import json
 
 from collections import OrderedDict
+
 from ..help import helping
 from .. import didering
 from ..db import dbing as db
+
 
 class Event:
     def __init__(self, store=None):
@@ -19,7 +20,7 @@ class Event:
         """
         self.store = store
 
-    #@falcon.before(helping.parseQString)
+    # @falcon.before(helping.parseQString)
     def on_get(self, req, resp, did=None):
         """
         Handle and respond to incoming GET request.
@@ -28,22 +29,24 @@ class Event:
         :param did: string
             URL parameter specifying a rotation history
         """
-        #offset = req.offset
-        #limit = req.limit
+        # offset = req.offset
+        # limit = req.limit
 
-        count = db.eventCount()
+        count = db.eventsDB.eventCount()
 
         if did is not None:
-            body = db.getEvent(did)
+            body = db.eventsDB.getEvent(did)
+
             if body is None:
                 raise falcon.HTTPError(falcon.HTTP_404)
+
+            body = body.to_list()
         else:
-            #if offset >= count:
-                #resp.body = json.dumps({}, ensure_ascii=False)
-                #return
+            # if offset >= count:
+                # resp.body = json.dumps({}, ensure_ascii=False)
+                # return
 
-
-            body = db.getAllEvents(limit=count)
+            body = db.eventsDB.getAllEvents(limit=count)
 
             resp.append_header('X-Total-Count', count)
 

@@ -25,6 +25,7 @@ frame server
                                         test="",
                                         port=odict(ival=8080),
                                         db=odict(ival=""),
+                                        mode=odict(ival=""),
                                         ))
 def dideryServerOpen(self):
     """
@@ -40,10 +41,10 @@ def dideryServerOpen(self):
         do didery server open at enter
     """
     port = int(self.port.value)
-    dbing.setupDbEnv(self.db.value, self.port.value)
+    dbing.setupDbEnv(self.db.value, self.port.value, mode=self.mode.value)
 
     app = falcon.API(middleware=[routing.CORSMiddleware()])
-    routing.loadEndPoints(app, store=self.store)
+    routing.loadEndPoints(app, store=self.store, mode=self.mode.value)
 
     self.valet.value = Valet(
                             port=port,

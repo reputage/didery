@@ -1,7 +1,7 @@
 Signature Header
 ================
 
-didery service requests or responses may require a custom *Signature*
+Didery service requests or responses may require a custom *Signature*
 header that provides one or more signatures of the request/response body
 text.
 
@@ -42,17 +42,11 @@ length and include two trailing pad characters ``=``.
 The two tag field values currently supported are *signer* and
 *rotation*.
 
-The didery python library has a helper function,
+The Didery python library has a helper function,
 
 .. code:: python
 
-    parseSignatureHeader(signature)
-
-in the
-
-.. code:: python
-
-    didery.help.helping
+    didery.help.helping.parseSignatureHeader(signature)
 
 that parses *Signature* header values and returns a python dictionary
 keyed by tags and whose values are the signatures provided in the
@@ -73,9 +67,9 @@ Signature Schemes
 
 An optional *tag* name = *scheme*. The *scheme* tag field value
 specifies the type of signature. All signatures within the header must
-be of the same scheme. Currently the only supported signature type is
-*EdDSA(Ed25519)*. In the future we plan to also support
-*ECDSA(secp256k1)*.
+be of the same scheme. Currently the only supported signature types are
+*EdDSA(Ed25519)* and *ECDSA(Secp256k1)*. In the future we plan to also
+support *ECDSA(secp256k1)*.
 
 Scheme Values
 ^^^^^^^^^^^^^
@@ -84,6 +78,9 @@ Scheme Values
 
     EdDSA
     Ed25519
+
+    ECDSA
+    Secp256k1
 
 .. code:: http
 
@@ -96,30 +93,32 @@ Scheme Values
 Key Revocation
 ==============
 
-For simplicity didery handles key revocation by rotating to the null
-key. This is done by sending a rotation request to the didery server and
+For simplicity Didery handles key revocation by rotating to the null
+key. This is done by sending a rotation request to the Didery server and
 setting the new pre rotated key to null. The "signer" index needs to
 point to the null key. As shown below the index jumps from 0 to 2 so
-that anyone who comes along later and verifies your keys with didery
+that anyone who comes along later and verifies your keys with Didery
 will see that you don't have a current valid key.
 
 Existing Data
 '''''''''''''
 
-Suppose the didery servers already have this data.
+Suppose the Didery servers already have this data.
 
 ::
 
-    {
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "changed": "2000-01-01T00:00:00+00:00",
-        "signer": 0,
-        "signers": 
-        [
-            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
-        ]
-    }
+    [
+        {
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "changed": "2000-01-01T00:00:00+00:00",
+            "signer": 0,
+            "signers": 
+            [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+            ]
+        }
+    ]
 
 Rotation Event Data
 '''''''''''''''''''
@@ -129,17 +128,19 @@ looked something like this:
 
 ::
 
-    {
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-        "changed": "2000-01-01T00:00:01+00:00",
-        "signer": 2,
-        "signers": 
-        [
-            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-            null
-        ]
-    }
+    [
+        {
+            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+            "changed": "2000-01-01T00:00:01+00:00",
+            "signer": 2,
+            "signers": 
+            [
+                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                null
+            ]
+        }
+    ]
 
 Signatures
 ~~~~~~~~~~
@@ -180,21 +181,23 @@ listed below.
 HTTP Status codes
 ~~~~~~~~~~~~~~~~~
 
-+--------+-------------------------+------------------------------------------+
-| Code   | Title                   | Description                              |
-+========+=========================+==========================================+
-| 200    | OK                      | The request was successful.              |
-+--------+-------------------------+------------------------------------------+
-| 201    | Created                 | The resource was successfully created.   |
-+--------+-------------------------+------------------------------------------+
-| 400    | Bad Request             | Bad request                              |
-+--------+-------------------------+------------------------------------------+
-| 401    | Unauthorized            | Signature(s) verification failed.        |
-+--------+-------------------------+------------------------------------------+
-| 404    | Not found               | The resource does not exist.             |
-+--------+-------------------------+------------------------------------------+
-| 50X    | Internal Server Error   | An error occurred with our API.          |
-+--------+-------------------------+------------------------------------------+
++--------+-------------------------+-------------------------------------------------+
+| Code   | Title                   | Description                                     |
++========+=========================+=================================================+
+| 200    | OK                      | The request was successful.                     |
++--------+-------------------------+-------------------------------------------------+
+| 201    | Created                 | The resource was successfully created.          |
++--------+-------------------------+-------------------------------------------------+
+| 400    | Bad Request             | Bad request                                     |
++--------+-------------------------+-------------------------------------------------+
+| 401    | Unauthorized            | Signature(s) verification failed.               |
++--------+-------------------------+-------------------------------------------------+
+| 404    | Not found               | The resource does not exist.                    |
++--------+-------------------------+-------------------------------------------------+
+| 409    | Resource Conflict       | State of the resource doesn't permit request.   |
++--------+-------------------------+-------------------------------------------------+
+| 50X    | Internal Server Error   | An error occurred with our API.                 |
++--------+-------------------------+-------------------------------------------------+
 
 Error Types
 ~~~~~~~~~~~
@@ -221,6 +224,8 @@ description.
 +-----------------------+----------------------------------------------------+
 | Resource Already      | Resource cannot be created twice.                  |
 | Exists                |                                                    |
++-----------------------+----------------------------------------------------+
+| Deletion Error        | Error while attempting to delete the resource.     |
 +-----------------------+----------------------------------------------------+
 
 Key Rotation History
@@ -294,20 +299,22 @@ Response
     Date: Mon, 30 Apr 2018 23:03:01 GMT
     Server: Ioflo WSGI Server
 
-    {
-        "history": {
-            "changed": "2000-01-01T00:00:00+00:00",
-            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "signer": "0",
-            "signers": [
-                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+    [
+        {
+            "history": {
+                "changed": "2000-01-01T00:00:00+00:00",
+                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "signer": "0",
+                "signers": [
+                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148="
+                ]
+            },
+            "signatures": [
+                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
             ]
-        },
-        "signatures": [
-            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg=="
-        ]
-    }
+        }
+    ]
 
 Rotation Event (PUT)
 ====================
@@ -377,23 +384,25 @@ Response
     Date: Mon, 30 Apr 2018 23:03:01 GMT
     Server: Ioflo WSGI Server
 
-    {
-        "history": {
-            "changed": "2000-01-01T00:00:00+00:00",
-            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "signer": "1",
-            "signers": [
-                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+    [
+        {
+            "history": {
+                "changed": "2000-01-01T00:00:00+00:00",
+                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "signer": "1",
+                "signers": [
+                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+                ]
+            },
+            "signatures":
+            [
+                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
             ]
-        },
-        "signatures":
-        [
-            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-        ]
-    }
+        }
+    ]
 
 Get Rotation History (GET)
 ==========================
@@ -424,27 +433,28 @@ Response
     Date: Mon, 30 Apr 2018 23:11:20 GMT
     Server: Ioflo WSGI Server
 
-        
-    {
-        "history":
+    [
         {
-            "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-            "changed": "2000-01-01T00:00:00+00:00",
-            "signer": 2,
-            "signers": 
+            "history":
+            {
+                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                "changed": "2000-01-01T00:00:00+00:00",
+                "signer": 2,
+                "signers": 
+                [
+                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                    "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                ]
+            },
+            "signatures":
             [
-                "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
             ]
-        },
-        "signatures":
-        [
-            "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-            "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-        ]
-    }
+        }
+    ]
 
 Get All Rotation Histories (GET)
 ================================
@@ -476,45 +486,49 @@ Response
         
     {
         "data": [
-            {
-                "history":
+            [
                 {
-                    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                    "changed": "2000-01-01T00:00:00+00:00",
-                    "signer": 2,
-                    "signers": 
+                    "history":
+                    {
+                        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                        "changed": "2000-01-01T00:00:00+00:00",
+                        "signer": 2,
+                        "signers": 
+                        [
+                            "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                            "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                        ]
+                    },
+                    "signatures":
                     [
-                        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                        "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
                     ]
-                },
-                "signatures":
-                [
-                    "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-                ]
-            },
-            {
-                "history":
+                }
+            ],
+            [
                 {
-                    "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                    "changed": "2000-01-01T00:00:00+00:00",
-                    "signer": 1,
-                    "signers": 
+                    "history":
+                    {
+                        "id": "did:igo:dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                        "changed": "2000-01-01T00:00:00+00:00",
+                        "signer": 1,
+                        "signers": 
+                        [
+                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                            "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                            "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+                        ]
+                    },
+                    "signatures":
                     [
-                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY="
+                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
+                        "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
                     ]
-                },
-                "signatures":
-                [
-                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw==",
-                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-                ]
-            }
+                }
+            ]
         ]
     }
 
@@ -522,12 +536,19 @@ Delete Rotation History (DELETE)
 ================================
 
 To comply with GDPR a delete history option is provided. In order to
-prevent bad actors from deleting the database a signature using the
-current signing key pair is required to delete the history. Each request
-must include the histories did in the body.
+prevent unauthorized deletion a signature using the current signing key
+pair is required to delete the history. In order to function with
+Didery's multiple operating modes the original public key of the target
+history must be included in the body of the request.
 
-**id** - [string] decentralized identifier
-`(DID) <https://w3c-ccg.github.io/did-spec/>`__ *Required*
+Sending a DELETE request will delete both the current rotation and a
+DID's entire rotation history.
+
+For an explanation of how Didery's running modes affect the
+functionality of a DELETE request see the modes documentation.
+
+**vk** - [string] The first public key associated with a rotation
+history *Required*
 
 Request
 '''''''
@@ -542,9 +563,10 @@ Request
     Content-Type: application/json
     Host: localhost:8000
     User-Agent: HTTPie/0.9.9
+    Signature: signer="AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==";
         
     {
-        "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
+        "vk": "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE="
     }
 
 Response
@@ -559,26 +581,25 @@ Response
     Server: Ioflo WSGI Server
         
     {
-        "deleted": {
-            "history":
+        "deleted": [ 
             {
-                "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                "changed": "2000-01-01T00:00:00+00:00",
-                "signer": 2,
-                "signers": 
-                [
-                    "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
-                    "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
-                    "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
-                    "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                "history": {
+                    "id": "did:dad:Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                    "changed": "2000-01-01T00:00:00+00:00",
+                    "signer": 2,
+                    "signers": [
+                        "Qt27fThWoNZsa88VrTkep6H-4HA8tr54sHON1vWl6FE=",
+                        "Xq5YqaL6L48pf0fu7IUhL0JRaU2_RxFP0AL43wYn148=",
+                        "dZ74MLZXD-1QHoa73w9pQ9GroAvxqFi2RTZWlkC0raY=",
+                        "3syVH2woCpOvPF0SD9Z0bu_OxNe2ZgxKjTQ961LlMnA="
+                    ]
+                },
+                "signatures": [
+                    "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
+                    "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
                 ]
-            },
-            "signatures":
-            [
-                "AeYbsHot0pmdWAcgTo5sD8iAuSQAfnH5U6wiIGpVNJQQoYKBYrPPxAoIc1i5SHCIDS8KFFgf8i0tDq8XGizaCg==",
-                "o9yjuKHHNJZFi0QD9K6Vpt6fP0XgXlj8z_4D-7s3CcYmuoWAh6NVtYaf_GWw_2sCrHBAA2mAEsml3thLmu50Dw=="
-            ]
-        }
+            }
+        ]
     }
 
 OTP Encrypted Private Key Store
