@@ -1,7 +1,7 @@
 DashboardManager = {
-    tabs: [tabs.History(), tabs.Blobs(), tabs.Relays(), tabs.Errors()],
+    tabs: [HistoryTab, BlobsTab, RelaysTab, ErrorsTab],
     _searchId: "search-input",
-    searcher: searcher.Searcher(),
+    searcher: searcher,
     _refreshing: false,
     _refreshPromise: null,
 
