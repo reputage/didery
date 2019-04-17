@@ -1,25 +1,31 @@
-const router = {
-    /*
-     * Class for routing between urls and pages.
-     */
-    route: function(root=null) {
+let m = require("mithril");
+let Dashboard = require("./dashboard");
+let DashboardManager = Dashboard.DashboardManager;
+
+module.exports = {
+    Router: class Route {
         /*
-         * Sets up project routes.
-         *
-         *  Parameters:
-         *      root - DOM for root page
+         * Class for routing between urls and pages.
          */
-        let view = DashboardManager.view;
+        static route(root=null) {
+            /*
+             * Sets up project routes.
+             *
+             *  Parameters:
+             *      root - DOM for root page
+             */
+            let view = DashboardManager.view;
 
-        if(root === null) {
-            root = document.body;
+            if(root === null) {
+                root = document.body;
+            }
+
+            m.route(
+                root,
+                "/dashboard",
+                {"/dashboard": {"render": view}}
+            );
+
         }
-
-        m.route(
-            root,
-            "/dashboard",
-            {"/dashboard": {"render": view}}
-        );
-
     }
 };

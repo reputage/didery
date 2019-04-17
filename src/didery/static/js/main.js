@@ -1,1 +1,3 @@
-router.route(document.body);
+let route = require("./router");
+
+route.Router.route(document.body);

@@ -1,6 +1,7 @@
 DEFAULT_INTERVAL = 1000;
 
-let request = function (path, args) {
+
+request = function (path, args) {
     /* Performs a mithril GET request.
 
            Parameters:
@@ -24,7 +25,7 @@ let request = function (path, args) {
     return m.request(path);
 };
 
-let onlyOne = function(func, interval=1000){
+onlyOne = function(func, interval=1000){
     /*
     * Enforces the promise function. Never called more than once
     * per interval.
@@ -54,7 +55,7 @@ let onlyOne = function(func, interval=1000){
     };
 };
 
-let clearArray = function (arr) {
+clearArray = function (arr) {
     /*
     * Clears an array/list.
     *
@@ -67,13 +68,14 @@ let clearArray = function (arr) {
 };
 
 
-class Resource{
-    Refresh_Interval = DEFAULT_INTERVAL;
+let Resource = class Res{
 
     constructor(path){
+        Res.Refresh_Interval = DEFAULT_INTERVAL;
+
         this.path = path;
         this.resources = [];
-        this.refreshResource = onlyOne(this._refreshResource, this.Refresh_Interval);
+        this.refreshResource = onlyOne(this._refreshResource, Res.Refresh_Interval);
     }
 
     _refreshResource(){
@@ -94,9 +96,9 @@ class Resource{
         }
     }
 
-}
+};
 
-class Relays extends Resource{
+let Relays = class Rel extends Resource{
 
     constructor(path){
         super(path)
@@ -109,11 +111,20 @@ class Relays extends Resource{
             }
         }
     }
-}
+};
 
-let serverManager = {
+serverManager = {
     errors: new Resource("/errors"),
     history: new Resource("/history"),
     otpBlobs: new Resource("/blob"),
     relays: new Relays("/relay"),
+};
+
+module.exports = {
+    "request": request,
+    "onlyOne": onlyOne,
+    "clearArray": clearArray,
+    "Resource": Resource,
+    "Relays": Relays,
+    "serverManager": serverManager,
 };
