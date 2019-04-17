@@ -13,12 +13,22 @@ pip install twine
 sudo apt install npm
 ```
 
-Then run these commands
+If you've made changes to the front end make sure to run these commands first:
 ```bash
 cd /path/to/didery/src/didery/static/
 npm install
 npm run-script transcrypt
+```
 
+These commands are recommended to avoid errors but are not required:
+```bash
+rm -rf didery/build/
+rm -rf didery/dist/
+rm -rf didery/src/didery.egg-info
+```
+
+To build the wheel run these commands
+```bash
 cd path/to/didery/
 python3 setup.py sdist bdist_wheel
 ```

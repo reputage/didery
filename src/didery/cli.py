@@ -58,6 +58,7 @@ from didery.db.dbing import DATABASE_DIR_PATH
 @click.option(
     '--method',
     '-m',
+    'mode',
     flag_value='method',
     default=True,
     help="Run Didery in method mode."
@@ -65,12 +66,14 @@ from didery.db.dbing import DATABASE_DIR_PATH
 @click.option(
     '--promiscuous',
     '-P',
+    'mode',
     flag_value='promiscuous',
     help="Run Didery in promiscuous mode."
 )
 @click.option(
     '--race',
     '-r',
+    'mode',
     flag_value='race',
     help="Run Didery in race mode."
 )
@@ -94,7 +97,7 @@ def main(port, version, verbose, path, mode):
     verbose = VERBIAGE_NAMES.index(verbose)
 
     ioflo.app.run.run(name="skedder",
-                      period=0.125,
+                      period=100,
                       real=True,
                       retro=True,
                       filepath=floScriptpath,

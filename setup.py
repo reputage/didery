@@ -102,21 +102,6 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-    package_data={
-        'didery': ['static/main.html',
-                   'static/css/*.css',
-                   'static/fonts/Raleway/*.ttf',
-                   'static/node_modules/mithril/mithril.min.js',
-                   'static/node_modules/jquery/dist/jquery.min.js',
-                   'static/node_modules/semantic-ui/dist/semantic.min.css',
-                   'static/node_modules/semantic-ui/dist/semantic.min.js',
-                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff2',
-                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff',
-                   'static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.ttf',
-                   'static/transcrypt/__javascript__/main.js',
-                   'flo/*.flo'
-                   ]
-    },
     include_package_data=True,
     zip_safe=False,
     classifiers=[
