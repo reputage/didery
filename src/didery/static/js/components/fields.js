@@ -6,15 +6,15 @@ let Field = class F{
         /*
          * Initialize Field object. Set title and length.
          */
-        F.Title = null;
-        F.Length = 4;
+        this.Title = null;
+        this.Length = 4;
 
-        this.title = F.Title;
+        this.title = this.Title;
         if(title !== null){
             this.title = title;
         }
 
-        this.mlength = F.Length;
+        this.mlength = this.Length;
         if(length !== null){
             this.mlength = length;
         }
@@ -64,7 +64,7 @@ let FillField = class Fill extends Field{
     }
 
     view(data) {
-        Fill.Length = 100;
+        this.Length = 100;
 
         let node = super.view(data);
         node.attrs["class"] = "fill-space";
@@ -77,8 +77,8 @@ let DateField = class Date extends Field{
     constructor(title=null, length=null) {
         super(title, length);
 
-        Date.Length = 12;
-        Date.Title = "Date";
+        this.Length = 12;
+        this.Title = "Date";
     }
 };
 
@@ -97,14 +97,14 @@ let IDField = class ID extends Field{
     constructor(title=null, length=null) {
         super(title, length);
 
-        ID.Length = 4;
-        ID.Title = "UID";
-        ID.Header = "";
+        this.Length = 4;
+        this.Title = "UID";
+        this.Header = "";
     }
 
     format(data) {
-        if(data.startsWith(ID.Header)){
-            data = data.substr(len(ID.Header));
+        if(data.startsWith(this.Header)){
+            data = data.substr(this.Header.length);
         }
 
         return super.format(data);
@@ -115,8 +115,8 @@ let DIDField = class DID extends IDField{
     constructor(title=null, length=null) {
         super(title, length);
 
-        DID.Header = "did:dad:";
-        DID.Title = "DID";
+        this.Header = "did:dad:";
+        this.Title = "DID";
     }
 };
 

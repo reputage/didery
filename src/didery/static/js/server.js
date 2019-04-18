@@ -62,7 +62,7 @@ clearArray = function (arr) {
     *    Parameters:
     *    a - Array/List to be cleared
     */
-    while(len(arr) > 0){
+    while(arr.length > 0){
         arr.pop();
     }
 };

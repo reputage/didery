@@ -1,6 +1,7 @@
 let tab = require("./tab");
 let Table = require("./tables");
 let m = require("mithril");
+let $ = require("jquery");
 
 module.exports = {
     TabledTab: class TTab extends tab.Tab {

@@ -1,6 +1,7 @@
 let tabs = require("./components/tabs");
 let search = require("./components/searcher");
 let m = require("mithril");
+let $ = require("jquery");
 
 
 let DashboardManager = class Dash {
@@ -87,7 +88,7 @@ let DashboardManager = class Dash {
                 menu_items,
                 m("div.right.menu",
                     m("div.item",
-                        m("form", {"onsubmit": this.searchAll},
+                        m("form", {"onsubmit": this.searchAll.bind(this)},
                             m("div#search.ui.transparent.icon.input",
                                 m("input[type=text][placeholder=Search...]", {"id": this._searchId}),
                                 m("button.ui.icon.button[type=submit]",

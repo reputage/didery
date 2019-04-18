@@ -196,7 +196,7 @@ let Table = class Tables {
 
         this.shown = 0;
 
-        for (let i = 0; i < len(this.data); i++) {
+        for (let i = 0; i < this.data.length; i++) {
             let obj = this.data[i];
             if (this.shown >= this.max_size) {
                 break;
