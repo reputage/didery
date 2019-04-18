@@ -12,7 +12,7 @@ let Table = class Tables {
         this.data = [];
         this._shownData = [];
         this.view = {
-            "view": this._view,
+            "view": this._view.bind(this),
         };
 
         this._selected = null;
