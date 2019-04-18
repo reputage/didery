@@ -1,11 +1,11 @@
 let server = require("../server");
 let field = require("./fields");
-
+let m = require("mithril");
 
 let Table = class Tables {
 
     constructor(fields) {
-        Tables.no_results_text = "No results found.";
+        this.no_results_text = "No results found.";
 
         this.max_size = 100;
         this.fields = fields;

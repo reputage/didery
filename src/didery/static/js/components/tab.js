@@ -1,3 +1,5 @@
+let m = require("mithril");
+
 
 module.exports = {
     Tab: class T {
@@ -5,17 +7,17 @@ module.exports = {
             /*
              * Initialize Tab object. Load base attributes and markup.
              */
-            T.Name = "";
-            T.Icon = "";
-            T.DataTab = "";
-            T.Active = false;
+            this.Name = "";
+            this.Icon = "";
+            this.DataTab = "";
+            this.Active = false;
 
-            this._menu_attrs = {"data-tab": T.DataTab};
-            this._tab_attrs = {"data-tab": T.DataTab};
+            this._menu_attrs = {"data-tab": this.DataTab};
+            this._tab_attrs = {"data-tab": this.DataTab};
             this._menu = "a.item";
             this._tab = "div.ui.bottom.attached.tab.segment";
 
-            if (T.Active) {
+            if (this.Active) {
                 this._menu += ".active";
                 this._tab += ".active";
             }
@@ -25,7 +27,7 @@ module.exports = {
             /*
              * Returns menu item markup for given tab.
              */
-            return m(this._menu, this._menu_attrs, T.Name);
+            return m(this._menu, this._menu_attrs, this.Name);
         }
 
         tab_item() {
@@ -39,7 +41,7 @@ module.exports = {
             /*
              * Returns main view markup for given tab.
              */
-            return m("div", "hello " + T.Name);
+            return m("div", "hello " + this.Name);
         }
     },
 };

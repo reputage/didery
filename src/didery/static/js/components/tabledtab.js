@@ -1,4 +1,6 @@
 let tab = require("./tab");
+let Table = require("./tables");
+let m = require("mithril");
 
 module.exports = {
     TabledTab: class TTab extends tab.Tab {
@@ -18,7 +20,7 @@ module.exports = {
             /*
              * Sets up table object.
              */
-            this.table = new Table([]);
+            this.table = new Table.Table([]);
         }
 
         _copyDetails() {
@@ -43,7 +45,7 @@ module.exports = {
             return m(this._menu, this._menu_attrs,
                 m("div.menu-item-text", this.Name),
                 m(this.Icon),
-                m("div.ui.label.small.menu-item-number", "{0}/{1}".format(this.table.shown, this.table.total))
+                m("div.ui.label.small.menu-item-number", this.table.shown + "/" + this.table.total)
             );
         }
 

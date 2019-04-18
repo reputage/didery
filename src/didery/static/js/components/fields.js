@@ -1,3 +1,5 @@
+let m = require("mithril");
+
 let Field = class F{
 
     constructor(title=null, length=null){

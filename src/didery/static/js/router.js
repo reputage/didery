@@ -1,6 +1,6 @@
 let m = require("mithril");
 let Dashboard = require("./dashboard");
-let DashboardManager = Dashboard.DashboardManager;
+let DashboardManager = new Dashboard.DashboardManager();
 
 module.exports = {
     Router: class Route {
@@ -23,7 +23,7 @@ module.exports = {
             m.route(
                 root,
                 "/dashboard",
-                {"/dashboard": {"render": view}}
+                {"/dashboard": {"render": view.bind(DashboardManager)}}
             );
 
         }

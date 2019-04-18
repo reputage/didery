@@ -5,10 +5,23 @@ module.exports = {
     ErrorsTab: class Errors extends tabled_tab.TabledTab{
         constructor() {
             super();
-            Errors.Name = "Errors";
-            Errors.Icon = "i.exclamation.circle.icon";
-            Errors.DataTab = "errors";
-            Errors.Active = false;
+            this.Name = "Errors";
+            this.Icon = "i.exclamation.circle.icon";
+            this.DataTab = "errors";
+            this.Active = false;
+
+            this._menu_attrs = {"data-tab": this.DataTab};
+            this._tab_attrs = {"data-tab": this.DataTab};
+
+            if (this.Active) {
+                this._menu += ".active";
+                this._tab += ".active";
+            }
+
+            this._detailsId = this.DataTab + "DetailsCodeBlock";
+            this._copiedId = this.DataTab + "CopiedCodeBlock";
+            this._copyButtonId = this.DataTab + "CopyButton";
+            this._clearButtonId = this.DataTab + "ClearButton";
         }
 
         setup_table () {
@@ -19,10 +32,23 @@ module.exports = {
     RelaysTab: class Relays extends tabled_tab.TabledTab{
         constructor() {
             super();
-            Relays.Name = "Relays";
-            Relays.Icon = "i.server.icon";
-            Relays.DataTab = "relays";
-            Relays.Active = false;
+            this.Name = "Relays";
+            this.Icon = "i.server.icon";
+            this.DataTab = "relays";
+            this.Active = false;
+
+            this._menu_attrs = {"data-tab": this.DataTab};
+            this._tab_attrs = {"data-tab": this.DataTab};
+
+            if (this.Active) {
+                this._menu += ".active";
+                this._tab += ".active";
+            }
+
+            this._detailsId = this.DataTab + "DetailsCodeBlock";
+            this._copiedId = this.DataTab + "CopiedCodeBlock";
+            this._copyButtonId = this.DataTab + "CopyButton";
+            this._clearButtonId = this.DataTab + "ClearButton";
         }
 
         setup_table () {
@@ -33,10 +59,23 @@ module.exports = {
     BlobsTab: class Blobs extends tabled_tab.TabledTab{
         constructor() {
             super();
-            Blobs.Name = "Encrypted Blobs";
-            Blobs.Icon = "i.unlock.alternate.icon";
-            Blobs.DataTab = "blobs";
-            Blobs.Active = false;
+            this.Name = "Encrypted Blobs";
+            this.Icon = "i.unlock.alternate.icon";
+            this.DataTab = "blobs";
+            this.Active = false;
+
+            this._menu_attrs = {"data-tab": this.DataTab};
+            this._tab_attrs = {"data-tab": this.DataTab};
+
+            if (this.Active) {
+                this._menu += ".active";
+                this._tab += ".active";
+            }
+
+            this._detailsId = this.DataTab + "DetailsCodeBlock";
+            this._copiedId = this.DataTab + "CopiedCodeBlock";
+            this._copyButtonId = this.DataTab + "CopyButton";
+            this._clearButtonId = this.DataTab + "ClearButton";
         }
 
         setup_table () {
@@ -47,10 +86,23 @@ module.exports = {
     HistoryTab: class History extends tabled_tab.TabledTab{
         constructor() {
             super();
-            History.Name = "Public Keys";
-            History.Icon = "i.key.icon";
-            History.DataTab = "history";
-            History.Active = false;
+            this.Name = "Public Keys";
+            this.Icon = "i.key.icon";
+            this.DataTab = "history";
+            this.Active = true;
+
+            this._menu_attrs = {"data-tab": this.DataTab};
+            this._tab_attrs = {"data-tab": this.DataTab};
+
+            if (this.Active) {
+                this._menu += ".active";
+                this._tab += ".active";
+            }
+
+            this._detailsId = this.DataTab + "DetailsCodeBlock";
+            this._copiedId = this.DataTab + "CopiedCodeBlock";
+            this._copyButtonId = this.DataTab + "CopyButton";
+            this._clearButtonId = this.DataTab + "ClearButton";
         }
 
         setup_table () {
