@@ -364,7 +364,7 @@ let ErrorsTable = class Errors extends Table {
         });
     }
 
-    static _getField(obj, field) {
+    _getField(obj, field) {
         /*
          * Extracts data from json-like object.
          *
@@ -409,7 +409,7 @@ let RelaysTable = class Relays extends Table {
         });
     }
 
-    static _getField(obj, field) {
+    _getField(obj, field) {
         /*
          * Extracts data from json-like object.
          *
@@ -456,7 +456,7 @@ let BlobsTable = class Blobs extends Table {
         });
     }
 
-    static _getField(obj, field) {
+    _getField(obj, field) {
         /*
          * Extracts data from json-like object.
          *
@@ -582,6 +582,7 @@ let HistoryTable = class History extends Table {
             }
 
             this._shownData.push(obj);
+            this.shown++;
 
             //only limit by unique did's
             let did = obj.history.id;
