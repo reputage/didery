@@ -1,3 +1,6 @@
+let m = require('mithril');
+
+
 DEFAULT_INTERVAL = 1000;
 
 
@@ -75,7 +78,7 @@ let Resource = class Res{
 
         this.path = path;
         this.resources = [];
-        this.refreshResource = onlyOne(this._refreshResource, Res.Refresh_Interval);
+        this.refreshResource = onlyOne(this._refreshResource.bind(this), Res.Refresh_Interval);
     }
 
     _refreshResource(){
@@ -84,7 +87,7 @@ let Resource = class Res{
         */
 
         clearArray(this.resources);
-        return request(this.path).then(this._parseAll);
+        return request(this.path).then(this._parseAll.bind(this));
     }
 
     _parseAll(data){

@@ -1,14 +1,13 @@
 let tab = require("./tab");
 let Table = require("./tables");
 let m = require("mithril");
-let $ = require("jquery");
 
 module.exports = {
     TabledTab: class TTab extends tab.Tab {
         constructor() {
             super();
 
-            this.table = null;
+            this.table;
             this.setup_table();
             this.copiedDetails = "";
             this._detailsId = this.DataTab + "DetailsCodeBlock";
@@ -60,7 +59,7 @@ module.exports = {
                             m("div.header",
                                 m("span", "Details"),
                                 m("span.ui.mini.right.floated.button", {
-                                        "onclick": this._copyDetails,
+                                        "onclick": this._copyDetails.bind(this),
                                         "id": this._copyButtonId
                                     },
                                     "Copy")
@@ -75,7 +74,7 @@ module.exports = {
                             m("div.header",
                                 m("span", "Copied"),
                                 m("span.ui.mini.right.floated.button", {
-                                        "onclick": this._clearCopy,
+                                        "onclick": this._clearCopy.bind(this),
                                         "id": this._clearButtonId
                                     },
                                     "Clear")

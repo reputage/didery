@@ -6,7 +6,7 @@ let Field = class F{
         /*
          * Initialize Field object. Set title and length.
          */
-        this.Title = null;
+        this.Title;
         this.Length = 4;
 
         this.title = this.Title;

@@ -10,7 +10,11 @@ module.exports = {
             this.DataTab = "errors";
             this.Active = false;
 
-            this._menu_attrs = {"data-tab": this.DataTab};
+            this._menu_attrs = {
+                "data-tab": this.DataTab,
+                "onclick":this._changeTab.bind(this),
+                "cssClassChange":this._removeActive.bind(this)
+            };
             this._tab_attrs = {"data-tab": this.DataTab};
 
             if (this.Active) {
@@ -37,7 +41,11 @@ module.exports = {
             this.DataTab = "relays";
             this.Active = false;
 
-            this._menu_attrs = {"data-tab": this.DataTab};
+            this._menu_attrs = {
+                "data-tab": this.DataTab,
+                "onclick":this._changeTab.bind(this),
+                "cssClassChange":this._removeActive.bind(this)
+            };
             this._tab_attrs = {"data-tab": this.DataTab};
 
             if (this.Active) {
@@ -64,7 +72,11 @@ module.exports = {
             this.DataTab = "blobs";
             this.Active = false;
 
-            this._menu_attrs = {"data-tab": this.DataTab};
+            this._menu_attrs = {
+                "data-tab": this.DataTab,
+                "onclick":this._changeTab.bind(this),
+                "cssClassChange":this._removeActive.bind(this)
+            };
             this._tab_attrs = {"data-tab": this.DataTab};
 
             if (this.Active) {
@@ -91,7 +103,11 @@ module.exports = {
             this.DataTab = "history";
             this.Active = true;
 
-            this._menu_attrs = {"data-tab": this.DataTab};
+            this._menu_attrs = {
+                "data-tab": this.DataTab,
+                "onclick":this._changeTab.bind(this),
+                "cssClassChange":this._removeActive.bind(this)
+            };
             this._tab_attrs = {"data-tab": this.DataTab};
 
             if (this.Active) {

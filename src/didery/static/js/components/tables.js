@@ -15,11 +15,11 @@ let Table = class Tables {
             "view": this._view.bind(this),
         };
 
-        this._selected = null;
+        this._selected;
         this.detailSelected = "";
 
-        this.filter = null;
-        this.sortField = null;
+        this.filter;
+        this.sortField;
         this.reversed = false;
 
         this.total = 0;
@@ -63,7 +63,7 @@ let Table = class Tables {
             delete this._selected._selected;
 
             if (this._selected._uid === obj._uid) {
-                this._selected = null;
+                this._selected = undefined;
                 this.detailSelected = "";
                 return;
             }
@@ -129,6 +129,7 @@ let Table = class Tables {
             this.clear();
         }
 
+
         for (let datum in data) {
             if (data.hasOwnProperty(datum)) {
                 data[datum]._uid = this.total;
@@ -179,12 +180,30 @@ let Table = class Tables {
         if (typeof this.sortField === 'undefined') {
             return;
         }
+
         let self = this;
-        let field = function (obj) {
-            self._getField(obj, self.sortField);
+        let sort = function (obj1, obj2) {
+            let field = self._getField(obj1, self.sortField);
+            if(self.reversed){
+                if (obj1[field] === obj2[field]) {
+                    return 0;
+                } else if (obj1[field] > obj2[field]) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }else {
+                if (obj1[field] === obj2[field]) {
+                    return 0;
+                } else if (obj1[field] > obj2[field]) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
         };
 
-        this._shownData.sort(field, this.reversed);
+        this._shownData.sort(sort);
     }
 
     _processData() {
@@ -201,7 +220,7 @@ let Table = class Tables {
             if (this.shown >= this.max_size) {
                 break;
             }
-            if (typeof this.filter !== 'undefined') {
+            if (typeof this.filter !== 'undefined' ) {
                 if (!this.filter(obj)) {
                     continue;
                 }
@@ -222,7 +241,7 @@ let Table = class Tables {
          *   obj - Data object
          *   field - Field/Key
          */
-        return obj[field];
+        return obj[field.name];
     }
 
     _makeRow(obj) {
@@ -236,7 +255,7 @@ let Table = class Tables {
 
         for (let key in this.fields) {
             if (this.fields.hasOwnProperty(key)) {
-                let field = this.fields[key].view(this._getField(obj, key));
+                let field = this.fields[key].view(this._getField(obj, this.fields[key]));
                 row.push(field);
             }
         }
@@ -341,7 +360,7 @@ let ErrorsTable = class Errors extends Table {
 
         let self = this;
         return errors.refreshResource().then(function () {
-            self._setData(errors.errors);
+            self._setData(errors.resources);
         });
     }
 
@@ -386,7 +405,7 @@ let RelaysTable = class Relays extends Table {
 
         let self = this;
         return relays.refreshResource().then(function () {
-            self._setData(relays.relays);
+            self._setData(relays.resources);
         });
     }
 
@@ -433,7 +452,7 @@ let BlobsTable = class Blobs extends Table {
 
         let self = this;
         return otpBlobs.refreshResource().then(function () {
-            self._setData(otpBlobs.otpBlobs);
+            self._setData(otpBlobs.resources);
         });
     }
 
@@ -475,11 +494,11 @@ let HistoryTable = class History extends Table {
 
         let self = this;
         return history.refreshResource().then(function () {
-            self._setData(history.history);
+            self._setData(history.resources);
         });
     }
 
-    static _getField(obj, field) {
+    _getField(obj, field) {
         /*
          * Extracts data from json-like object.
          *
@@ -502,12 +521,77 @@ let HistoryTable = class History extends Table {
             return signers.slice(0, -2);
         } else if (field.name === "signatures") {
             let signatures = "";
-            obj.signatures.forEach(function (sig, index) {
-                signatures += sig + ", ";
-            });
+            for(let key in obj.signatures) {
+                if(obj.signatures.hasOwnProperty(key)) {
+                    signatures += obj.signatures[key] + ", ";
+                }
+            }
 
             return signatures.slice(0, -2);
         }
+    }
+
+    _setData(data, clear = true) {
+        /*
+         * Clears existing data and uses provided data instead.
+         * Adds "_uid" field to each piece of data, for internal tracking.
+         *
+         *   Parameters:
+         *   data - Input data
+         *   clear - Boolean
+         */
+        if (clear) {
+            this.clear();
+        }
+
+
+        for (let did_history in data) {
+            if(data.hasOwnProperty(did_history)) {
+                for (let datum in data[did_history]) {
+                    if (data[did_history].hasOwnProperty(datum)) {
+                        data[did_history][datum]._uid = this.total;
+                        this.data.push(data[did_history][datum]);
+                        this.total += 1;
+                    }
+                }
+            }
+
+            this._processData();
+        }
+    }
+
+    _processData() {
+        /*
+         * Processes data, determines which items to show, and
+         * puts items into sorted list.
+         */
+        server.clearArray(this._shownData);
+
+        this.shown = 0;
+        let shownDids = {};
+
+        for (let i = 0; i < this.data.length; i++) {
+            let obj = this.data[i];
+            if (this.shown >= this.max_size) {
+                break;
+            }
+            if (typeof this.filter !== 'undefined' ) {
+                if (!this.filter(obj)) {
+                    continue;
+                }
+            }
+
+            this._shownData.push(obj);
+
+            //only limit by unique did's
+            let did = obj.history.id;
+            if(!did in shownDids) {
+                this.shown += 1;
+            }
+            shownDids[did] = true;
+        }
+
+        this._sortData();
     }
 };
 

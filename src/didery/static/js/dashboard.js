@@ -1,7 +1,7 @@
 let tabs = require("./components/tabs");
 let search = require("./components/searcher");
 let m = require("mithril");
-let $ = require("jquery");
+require("jquery-ui-bundle");
 
 
 let DashboardManager = class Dash {
@@ -10,7 +10,13 @@ let DashboardManager = class Dash {
         this._searchId = "search-input";
         this.searcher = search.searcher;
         this._refreshing = false;
-        this._refreshPromise = null;
+        this._refreshPromise;
+
+        //this is currently not working. Need to figure out why.
+        //tabs.js has onclick functions handling the tab change.
+        $(document).ready(() => {$('div.tabular.menu').tabs()});
+
+        this.refresh()
     }
 
     refresh () {
@@ -24,7 +30,7 @@ let DashboardManager = class Dash {
 
         let promises = [];
         this.tabs.forEach(function (tab, index) {
-            promises.append(tab.table.refresh());
+            promises.push(tab.table.refresh());
         });
 
         let self = this;
