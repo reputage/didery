@@ -183,19 +183,20 @@ let Table = class Tables {
 
         let self = this;
         let sort = function (obj1, obj2) {
-            let field = self._getField(obj1, self.sortField);
+            let field1 = self._getField(obj1, self.sortField);
+            let field2 = self._getField(obj2, self.sortField);
             if(self.reversed){
-                if (obj1[field] === obj2[field]) {
+                if (field1 === field2) {
                     return 0;
-                } else if (obj1[field] > obj2[field]) {
+                } else if (field1 > field2) {
                     return 1;
                 } else {
                     return -1;
                 }
             }else {
-                if (obj1[field] === obj2[field]) {
+                if (field1 === field2) {
                     return 0;
-                } else if (obj1[field] > obj2[field]) {
+                } else if (field1 > field2) {
                     return -1;
                 } else {
                     return 1;
@@ -279,7 +280,7 @@ let Table = class Tables {
                     };
                 };
 
-                if (key === this.sortField) {
+                if (this.fields[key] === this.sortField) {
                     let icon = null;
                     if (this.reversed) {
                         icon = m("i.angle.down.icon");
@@ -289,12 +290,12 @@ let Table = class Tables {
 
                     header = m(
                         "th.ui.right.labeled.icon",
-                        {"onclick": makeScope(key)},
+                        {"onclick": makeScope(this.fields[key])},
                         icon,
                         this.fields[key].title
                     );
                 } else {
-                    header = m("th", {"onclick": makeScope(key)}, this.fields[key].title);
+                    header = m("th", {"onclick": makeScope(this.fields[key])}, this.fields[key].title);
                 }
 
                 headers.push(header);
