@@ -11,6 +11,9 @@ static/
 |––– css/
 |    '--- dashboard.css
 |
+|--- dist/
+|    '---main.js
+|
 |--- fonts/
 |    '--- Raleway/
 |         |--- OFL.txt
@@ -37,6 +40,19 @@ static/
 |    |--- logo.png
 |    '--- logo-extended.png
 |
+|--- js/
+|    |--- components/
+|         |--- fields.js
+|         |--- searcher.js
+|         |--- tab.js
+|         |--- tabledtab.js
+|         |--- tables.js
+|         '--- tabs.js
+|    |--- dashboard.js
+|    |--- main.js
+|    |--- router.js
+|    '--- server.js
+|
 |--- (node_modules/)
 |
 |--- tests/
@@ -47,45 +63,27 @@ static/
 |    |--- test_server.py
 |    '--- tester.py
 |
-|--- transcrypt/
-|    |--- (__javascript__/)
-|    |--- components/
-|    |    |--- (__javascript__/)
-|    |    |--- __init__.py
-|    |    |--- fields.py
-|    |    |--- searcher.py
-|    |    |--- tab.py
-|    |    |--- tabledtab.py
-|    |    |--- tables.py
-|    |    '--- tabs.py
-|    |
-|    |--- __init__.py
-|    |--- dashboard.py
-|    |--- main.py
-|    |--- router.py
-|    '--- server.py
-|
 |--- __init__.py
 |--- clean_tests.py
 |--- favicon.ico
 |--- main.html
 |--- package.json
-'--- package-lock.json
+|--- package-lock.json
+'--- webpack.config.js
 ```
 
 The didery frontend is located exclusively within the static folder (didery/src/didery/static/). On server launch, 
-main.html is loaded into the browser. main.html imports javascript compiled from transcrypt files in the transcrypt 
-folder. This compiled javascript uses Mithril.js to render the actual document. Frontend styling comes from the 
+main.html is loaded into the browser. main.html imports javascript minified by webpack and stored in the dist 
+folder. This minified javascript uses Mithril.js to render the actual document. Frontend styling comes from the 
 dashboard.css file in the css folder. Fonts used in the interface are saved in the fonts folder. Static images used on
 the frontend are stored in the images folder. The package.json file contains Node.js scripts and dependencies. Once 
-these dependencies are installed, they can be found in the node_modules folder. The tests folder contains transcrypt 
-files that can be compiled into javascript unit tests. The clean_tests.py file is used to remove extra generated files.
+these dependencies are installed, they can be found in the node_modules folder. The tests folder contains unit test 
+files for validating the frontend works as intended. The clean_tests.py file is used to remove extra generated files.
 
 #### 1.2. Development Language and Environment
 The main.html is written in HTML5. Styling uses CSS3. Dependencies are imported and managed using Node.js. Scripts are
-also defined and run through Node.js. Components and general functionality is written using Transcrypt (Python). 
-Transcrypt files are compiled into ES6 Javascript files. Mithril.js is used to create generated the rendered markup. 
-Testing uses the ospec framework.
+also defined and run through Node.js. Components and general functionality is written using ES6. Mithril.js is used to 
+create and rendered markup. Testing uses the ospec framework.
 
 ## 2. Components
 
@@ -100,7 +98,7 @@ into one convenient class for ease of use. Helper functions are included for the
 promises. 
 
 #### 2.3. Dashboard
-The dashboard is stored in a manager class in the dashboard.py file. Upon instantiation, the manager initializes all of
+The dashboard is stored in a manager class in the dashboard.js file. Upon instantiation, the manager initializes all of
 the different tabs, initializes the search bar, sets up a jquery function for clicking tabs, and retrieves/refreshes tab
 data. The dashboard manager has four member functions. The refresh function retrieves fresh data for each of the tabs.
 The currentTab function returns the currently active tab. The searchAll function interfaces with the searcher object to 
@@ -114,7 +112,7 @@ found on the tab itself). Member functions set up the table for a given tab, cop
 return the number of table rows, return the entries label, clear copied details, and return Mithril.js generated HTML
 markup for both the tab itself and its page content. The details box in a tabled tab lets one see the JSON associated
 with a table row. The copied box allows one to copy the JSON data from a selected table row. Together the details and
-copied boxes allow for the comparison of table rows. Specific tabled tabs are defined in the tabs.py file.
+copied boxes allow for the comparison of table rows. Specific tabled tabs are defined in the tabs.js file.
 
 
 #### 2.5. Tabs
@@ -130,11 +128,11 @@ Member functions stringify table data, limit displayed results, select row data,
 create testing data, set table data, filter displayed results, sort displayed results, return a table field, create a
 table row, and return a Mithril.js generated HTML markup for that table. Tables are made up of field objects. These 
 fields setup the columns in the table and provide headers for those columns. Rows are created for each entry in a data
-set stored in the table. Specific tables are defined in the tables.py file together with the base table class.
+set stored in the table. Specific tables are defined in the tables.js file together with the base table class.
 
 #### 2.7. Fields
 Fields set up the columns in a table. Field member functions format field titles, shorten field titles if necessary, and
-return the Mithril.js generated HTML markup for that field. Specific fields are defined in the fields.py file together 
+return the Mithril.js generated HTML markup for that field. Specific fields are defined in the fields.js file together 
 with the base field class.
 
 #### 2.8. Searcher
@@ -144,7 +142,7 @@ as dictionaries), and returns the result of a search.
 
 ## 3. Testing
 Testing uses the ospec framework. Unit tests are written in Python. They are compiled into Javascript using Transcrypt.
-Excess generated files are removed by the clean_tests.py file. To both compile and clean the frontend tests, an npm 
+Excess generated files are removed by the clean_tests.js file. To both compile and clean the frontend tests, an npm 
 script can be run using the following commands:
 ```
 $ cd didery/src/didery/static

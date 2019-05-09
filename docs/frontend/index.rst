@@ -7,4 +7,4 @@ Frontend
    :titlesonly:
 
    frontend-design
-   mithril-transcript-installation
+   setup
