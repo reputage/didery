@@ -10,7 +10,7 @@
     "transcrypt": "transcrypt -b -m -n -e 6 transcrypt/main.py",
     "start": "webpack src/index.js --output-path='bin' --output-filename='app.js' -d --watch",
     "build": "webpack src/index.js --output-path='bin' --output-filename='app.js' -p",
-    "webpack-test": "webpack -d --profile --watch"
+    "webpack": "webpack -d --profile --watch"
   },
   "keywords": [],
   "author": "Brady Hammond & Nick Telfer",
