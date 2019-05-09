@@ -7,9 +7,6 @@
     "prep-tests": "transcrypt -b -de -v -n -p .none tests/run_tests.py && python -m clean_tests",
     "debug-tests": "node %NODE_DEBUG_OPTION% tests/__javascript__/tests.js",
     "test": "ospec",
-    "transcrypt": "transcrypt -b -m -n -e 6 transcrypt/main.py",
-    "start": "webpack src/index.js --output-path='bin' --output-filename='app.js' -d --watch",
-    "build": "webpack src/index.js --output-path='bin' --output-filename='app.js' -p",
     "webpack": "webpack -d --profile --watch"
   },
   "keywords": [],
