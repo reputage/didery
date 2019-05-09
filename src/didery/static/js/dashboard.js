@@ -6,7 +6,8 @@ require("jquery-ui-bundle");
 
 let DashboardManager = class Dash {
     constructor() {
-        this.tabs = [new tabs.HistoryTab(), new tabs.BlobsTab(), new tabs.RelaysTab(), new tabs.ErrorsTab()];
+        // this.tabs = [new tabs.HistoryTab(), new tabs.BlobsTab(), new tabs.RelaysTab(), new tabs.ErrorsTab()];
+        this.tabs = [new tabs.HistoryTab(), new tabs.BlobsTab(),];
         this._searchId = "search-input";
         this.searcher = search.searcher;
         this._refreshing = false;
@@ -69,7 +70,7 @@ let DashboardManager = class Dash {
 
         let self = this;
         this.tabs.forEach(function (tab, index) {
-            tab.table.setFilter(self.searcher.search);
+            tab.table.setFilter(self.searcher.search.bind(self.searcher));
         });
     }
 

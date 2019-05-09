@@ -29,11 +29,13 @@ module.exports = {
             /*
             * Checks for search term in provided string.
             */
+            let searchTerm = this.searchTerm;
             if (typeof item === "string") {
                 if (!this.caseSensitive) {
                     item = item.toLowerCase();
+                    searchTerm = searchTerm.toLowerCase();
                 }
-                return this.searchTerm.indexOf(item) !== -1;
+                return item.indexOf(searchTerm) !== -1;
             }
 
             return false;
