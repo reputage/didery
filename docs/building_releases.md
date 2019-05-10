@@ -17,7 +17,7 @@ If you've made changes to the front end make sure to run these commands first:
 ```bash
 cd /path/to/didery/src/didery/static/
 npm install
-npm run-script transcrypt
+npm run webpack
 ```
 
 These commands are recommended to avoid errors but are not required:
@@ -25,6 +25,23 @@ These commands are recommended to avoid errors but are not required:
 rm -rf didery/build/
 rm -rf didery/dist/
 rm -rf didery/src/didery.egg-info
+```
+
+You'll need to update the package version in setup.py and didery/src/didery/__init__.py
+#### setup.py
+This is used in building the wheel
+```python
+setup(
+    name='didery',
+    version="0.2.0",
+    "..."
+    )
+```
+
+#### didery/src/didery/__init__.py
+Didery uses this internally for things like the --version cli command 
+```python
+__version__ = "0.2.0"
 ```
 
 To build the wheel run these commands
@@ -36,6 +53,7 @@ python3 setup.py sdist bdist_wheel
 # Uploading to Pypi
 
 ## Test
+It is recommended to always upload to the test repository and then run didery to make sure everything was packaged correctly for the front end. 
 ```bash
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple didery

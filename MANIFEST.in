@@ -1,5 +1,7 @@
 include src/didery/static/main.html
 include src/didery/static/css/*.css
+include src/didery/static/images/*.png
+include src/didery/static/favicon.ico
 include src/didery/static/fonts/Raleway/*.ttf
 include src/didery/static/node_modules/mithril/mithril.min.js
 include src/didery/static/node_modules/jquery/dist/jquery.min.js
@@ -8,5 +10,5 @@ include src/didery/static/node_modules/semantic-ui/dist/semantic.min.js
 include src/didery/static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff2
 include src/didery/static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.woff
 include src/didery/static/node_modules/semantic-ui/dist/themes/default/assets/fonts/*.ttf
-include src/didery/static/transcrypt/__javascript__/main.js
+include src/didery/static/dist/main.js
 include src/didery/flo/*.flo
