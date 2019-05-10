@@ -1,5 +1,5 @@
 ####################
-didery Documentation
+Didery Documentation
 ####################
 
 Cryptographic key management is a challenging problem for the blockchain
@@ -35,7 +35,7 @@ The project is built on the open source
 `click <http://click.pocoo.org/5/>`__, and
 `lmdb <https://lmdb.readthedocs.io/en/release/>`__ on the back end. The
 frontend is built with
-`Transcrypt <https://www.transcrypt.org/documentation>`__ and
+JavaScript(ES6) and
 `mithril.js <https://mithril.js.org/>`__.
 
 .. toctree::

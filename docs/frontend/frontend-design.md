@@ -141,8 +141,7 @@ not. Member functions process the search query string, check primitives (such as
 as dictionaries), and returns the result of a search.
 
 ## 3. Testing
-Testing uses the ospec framework. Unit tests are written in Python. They are compiled into Javascript using Transcrypt.
-Excess generated files are removed by the clean_tests.js file. To both compile and clean the frontend tests, an npm 
+Testing uses the ospec framework. Excess generated files are removed by the clean_tests.js file. To both compile and clean the frontend tests, an npm 
 script can be run using the following commands:
 ```
 $ cd didery/src/didery/static

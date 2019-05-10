@@ -195,10 +195,9 @@ a search.
 3. Testing
 ----------
 
-Testing uses the ospec framework. Unit tests are written in Python. They
-are compiled into Javascript using Transcrypt. Excess generated files
-are removed by the clean\_tests.js file. To both compile and clean the
-frontend tests, an npm script can be run using the following commands:
+Testing uses the ospec framework. Excess generated files are removed by
+the clean\_tests.js file. To both compile and clean the frontend tests,
+an npm script can be run using the following commands:
 
 ::
 

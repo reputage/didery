@@ -8,7 +8,7 @@ Background
 ==========
 Cryptographic key management is a challenging problem for the blockchain community. To address this problem, we have developed a decentralized key management toolkit called Didery which is designed to manage decentralized identifiers [(DIDs)](https://w3c-ccg.github.io/did-spec/). [DIDs](https://w3c-ccg.github.io/did-spec/), as a [W3C specification](https://w3c-ccg.github.io/did-spec/), have the potential to eventually supplant URLs as the main identifier in Web 3.0 applications. Didery implements ideas found in the paper titled [“Decentralized Autonomic Data (DAD) and the three R's of Key Management”](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/DecentralizedAutonomicData.md) presented at the Rebooting the Web of Trust spring 2018 conference. Didery will improve the management, security, and user experience of anyone handling the cryptographic keys associated with [DIDs](https://w3c-ccg.github.io/did-spec/). The initial release of Didery provides two main services, a key pre-rotation service and a one-time pad encrypted storage service. Pre-rotation enables creation/rotation/revocation of key rotation histories for the key pairs associated with a root [DID](https://w3c-ccg.github.io/did-spec/). The service may be run as a rotation history service or as a set of redundant public servers. It also provides support for one-time pad encrypted private keys for recovery that works with the associated [SeedQuest](https://github.com/reputage/seedQuest) 3D key recovery mnemonic. The Didery toolkit is open-source with [JavaScript](https://github.com/reputage/didery.js) and [Python](https://github.com/reputage/didery.py) client SDKs for interacting with Didery servers. Didery helps simplify key management. 
 
-The project is built on the open source [ioflo](https://github.com/ioflo) framework and also utilizes [click](http://click.pocoo.org/5/), and [lmdb](https://lmdb.readthedocs.io/en/release/) on the back end.  The frontend is built with [Transcrypt](https://www.transcrypt.org/documentation) and [mithril.js](https://mithril.js.org/).
+The project is built on the open source [ioflo](https://github.com/ioflo) framework and also utilizes [click](http://click.pocoo.org/5/), and [lmdb](https://lmdb.readthedocs.io/en/release/) on the back end.  The frontend is built with JavaScript(ES6) and [mithril.js](https://mithril.js.org/).
 
 System Requirements
 ===================
@@ -45,7 +45,7 @@ Then run these commands:
 ```
 $ cd /path/to/didery/src/didery/static/
 $ npm install
-$ npm run-script transcrypt
+$ npm run webpack
 ```
 
 Some common issues with installing and running the software is that your system is missing some dependencies. Run these commands and try again:

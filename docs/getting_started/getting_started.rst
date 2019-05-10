@@ -38,7 +38,7 @@ Then run these commands:
 
     $ cd /path/to/didery/src/didery/static/
     $ npm install
-    $ npm run-script transcrypt
+    $ npm run webpack
 
 Some common issues with installing and running the software is that your
 system is missing some dependencies. Run these commands and try again:
