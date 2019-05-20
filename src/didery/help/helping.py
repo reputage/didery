@@ -74,7 +74,7 @@ def parseReqBody(req):
     :param req: Falcon Request object
     """
     try:
-        raw_json = req.stream.read()
+        raw_json = req.stream.read(req.content_length or 0)
     except Exception as ex:
         raise falcon.HTTPError(falcon.HTTP_400,
                                'Request Error',
