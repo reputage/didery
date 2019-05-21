@@ -5,8 +5,8 @@ python:
 matrix:
   include:
     - python: 3.7
-    dist: xenial
-    sudo: true
+      dist: xenial
+      sudo: true
 
 # Make sure libsodium dependency is present
 before_install:
