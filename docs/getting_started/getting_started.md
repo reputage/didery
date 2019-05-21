@@ -10,11 +10,11 @@ Installation
 
 This project depends on [python 3.6](https://www.python.org/downloads/).  You will need to install it if you haven't already.
 
-Clone or download the source from the [didery Github repo](https://github.com/reputage/didery.git) and install from source with:
+Clone or download the latest changes from the source on the [didery Github repo](https://github.com/reputage/didery.git) and install from source with:
 ```
 $ pip3 install -e /path/to/didery
 ```
-Or intall through Pypi with:
+Or install through PyPi with:
 ```
 $ pip3 install didery
 ```
@@ -35,6 +35,8 @@ Some common issues with installing and running the software is that your system 
 Mac
 ```
 $ brew install libsodium
+$ brew install gmp
+$ brew install gcc
 ```  
 Linux
 ```

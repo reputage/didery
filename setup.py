@@ -25,7 +25,7 @@ import os
 import re
 
 v = sys.version_info
-if v < (3, 5):
+if v < (3, 6):
     msg = "FAIL: Requires Python 3.6 or later, but setup.py was run using {}.{}.{}"
     print(msg.format(v.major, v.minor, v.micro))
     print("NOTE: Installation failed. Run setup.py using python3")
