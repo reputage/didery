@@ -24,7 +24,7 @@ def validate(req, resp, resource, params):
     :param resource: History controller object
     :param params: (dict) URI Template field names
     """
-    validator = factory.historyFactory(resource.mode, req, params)
+    validator = factory.historyFactory(resource.mode, req, params) 
     validator.validate()
 
 
