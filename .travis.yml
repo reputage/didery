@@ -1,8 +1,12 @@
 language: python
 python:
-  - "3.7"
   - "3.6"
   - "3.5"
+matrix:
+  include:
+    - python: 3.7
+    dist: xenial
+    sudo: true
 
 # Make sure libsodium dependency is present
 before_install:
@@ -13,6 +17,7 @@ before_install:
   - make && make check
   - sudo make install
   - cd ..
+  - sudo apt install gcc python-dev python3-dev libgmp3-dev
 
 install:
   - pip install -e ../didery
